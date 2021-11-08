@@ -11,24 +11,25 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"phoenixbuilder/cq-chatlogger"
 	fbauth "phoenixbuilder/cv4/auth"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/command"
+	"phoenixbuilder/minecraft/configuration"
+	"phoenixbuilder/minecraft/fbtask"
+	"phoenixbuilder/minecraft/function"
 	"phoenixbuilder/minecraft/mctype"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/minecraft/utils"
-	"phoenixbuilder/minecraft/function"
-	"phoenixbuilder/minecraft/configuration"
 	//"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/hotbarmanager"
+	"phoenixbuilder/minecraft/move"
+	"phoenixbuilder/minecraft/plugin"
+	"runtime"
+	"runtime/debug"
 	//"phoenixbuilder/minecraft/enchant"
 	"strings"
 	"syscall"
-	"runtime"
-	"runtime/debug"
-	"phoenixbuilder/minecraft/fbtask"
-	"phoenixbuilder/minecraft/plugin"
-	"phoenixbuilder/minecraft/move"
 )
 
 type FBPlainToken struct {
@@ -59,14 +60,14 @@ func main() {
 	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha " + FBVersion))
 	//if runtime.GOOS == "windows" {}
 	defer func() {
-		if err:=recover(); err!=nil {
+		if err := recover(); err != nil {
 			debug.PrintStack()
 			pterm.Error.Println("Oh no! FastBuilder Phoenix crashed! ")
 			pterm.Error.Println("Stack dump was shown above, error:")
 			pterm.Error.Println(err)
 			if runtime.GOOS == "windows" {
 				pterm.Error.Println("Press ENTER to exit.")
-				_, _=bufio.NewReader(os.Stdin).ReadString('\n')
+				_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
 			}
 			os.Exit(1)
 		}
@@ -79,6 +80,8 @@ func main() {
 	}
 	token := loadTokenPath()
 	version, err := utils.GetHash(ex)
+	//todo
+	version = "6f142932bc8fee31b6cb090bebaf3d2cf6667867822e63448722fe08bc72421f"
 	if err != nil {
 		panic(err)
 	}
@@ -124,16 +127,18 @@ func iOSAppStart(token string, version string, serverCode string, serverPasswd s
 }
 
 func runShellClient(token string, version string) {
-	code, serverPasswd, err := getRentalServerCode()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	//code, serverPasswd, err := getRentalServerCode()
+	// todo delete it
+	code, serverPasswd := "45883656", ""
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
 	runClient(token, version, code, serverPasswd)
 }
 
 func runClient(token string, version string, code string, serverPasswd string) {
-	worldchatchannel:=make(chan []string)
+	worldchatchannel := make(chan []string)
 	client := fbauth.CreateClient(worldchatchannel)
 	if token[0] == '{' {
 		token = client.GetToken("", token)
@@ -146,7 +151,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			fmt.Println("Error creating token file: ", err)
 			fmt.Println("Error ignored.")
 		} else {
-			configuration.UserToken=token
+			configuration.UserToken = token
 			_, err = fi.WriteString(token)
 			if err != nil {
 				fmt.Println("Error saving token: ", err)
@@ -155,8 +160,8 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			fi.Close()
 			fi = nil
 		}
-	}else{
-		configuration.UserToken=token
+	} else {
+		configuration.UserToken = token
 	}
 	serverCode := fmt.Sprintf("%s", strings.TrimSuffix(code, "\n"))
 	pterm.Println(pterm.Yellow(fmt.Sprintf("Server: %s", serverCode)))
@@ -176,24 +181,24 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	defer conn.Close()
 	pterm.Println(pterm.Yellow("Successfully created minecraft dialer."))
 	user := client.ShouldRespondUser()
-	configuration.RespondUser=user
+	configuration.RespondUser = user
 	// delay := 1000 //BP MMS
 	// Make the client spawn in the world: This is a blocking operation that will return an error if the
 	// client times out while spawning.
-	
-	conn.WritePacket(&packet.PlayerAction {
+
+	conn.WritePacket(&packet.PlayerAction{
 		EntityRuntimeID: conn.GameData().EntityRuntimeID,
-		ActionType: packet.PlayerActionRespawn,
+		ActionType:      packet.PlayerActionRespawn,
 	})
 	go func() {
 		for {
-			csmsg:=<-worldchatchannel
+			csmsg := <-worldchatchannel
 			command.WorldChatTellraw(conn, csmsg[0], csmsg[1])
 		}
-	} ()
-	
+	}()
+
 	plugin.StartPluginSystem(conn)
-	
+
 	/*if err := conn.DoSpawn(); err != nil {
 		pterm.Error.Println("Failed to spawn")
 		panic(err)
@@ -206,41 +211,41 @@ func runClient(token string, version string, code string, serverPasswd string) {
 
 	zeroId, _ := uuid.NewUUID()
 	oneId, _ := uuid.NewUUID()
-	configuration.ZeroId=zeroId
-	configuration.OneId=oneId
-	mctype.ForwardedBrokSender=fbtask.BrokSender
+	configuration.ZeroId = zeroId
+	configuration.OneId = oneId
+	mctype.ForwardedBrokSender = fbtask.BrokSender
 	tellraw(conn, "Welcome to FastBuilder!")
 	tellraw(conn, fmt.Sprintf("Operator: %s", user))
 	sendCommand("testforblock ~ ~ ~ air", zeroId, conn)
 	go func() {
 		for {
-			cmd, _:=getInput()
+			cmd, _ := getInput()
 			if len(cmd) == 0 {
 				continue
 			}
 			if cmd[0] == '.' {
-				ud,_:=uuid.NewUUID()
-				chann:=make(chan *packet.CommandOutput)
+				ud, _ := uuid.NewUUID()
+				chann := make(chan *packet.CommandOutput)
 				command.UUIDMap.Store(ud.String(), chann)
 				command.SendCommand(cmd[1:], ud, conn)
-				resp:=<-chann
+				resp := <-chann
 				fmt.Printf("%+v\n", resp)
-			}else if cmd[0] == '!' {
-				ud,_:=uuid.NewUUID()
-				chann:=make(chan *packet.CommandOutput)
+			} else if cmd[0] == '!' {
+				ud, _ := uuid.NewUUID()
+				chann := make(chan *packet.CommandOutput)
 				command.UUIDMap.Store(ud.String(), chann)
 				command.SendWSCommand(cmd[1:], ud, conn)
-				resp:=<-chann
+				resp := <-chann
 				fmt.Printf("%+v\n", resp)
 			}
-			if cmd=="menu" {
+			if cmd == "menu" {
 				move.OpenMenu(conn)
 				fmt.Printf("OK\n")
 				continue
 			}
-			if cmd[0] == '>'&&len(cmd)>1 {
-				umsg:=cmd[1:]
-				if(!client.CanSendMessage()) {
+			if cmd[0] == '>' && len(cmd) > 1 {
+				umsg := cmd[1:]
+				if !client.CanSendMessage() {
 					command.WorldChatTellraw(conn, "FastBuildeｒ", "Lost connection to the authentication server.")
 					break
 				}
@@ -248,8 +253,26 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			}
 			function.Process(conn, cmd)
 		}
-	} ()
-	// A loop that reads packets from the connection until it is closed.
+	}()
+
+	go cqchat.Run()
+	go func() {
+		for {
+			msg := <-cqchat.CQMessages
+			if msg == nil {
+				continue
+			}
+			fmt.Println("RECEIVE: " + msg.GetMessage())
+			uuid1, _ := uuid.NewUUID()
+			if msg.IsCommand() && cqchat.IsFilteredUser(msg.GetUser()) {
+				sendCommand(msg.GetMessage(), uuid1, conn)
+				continue
+			}
+			tellraw(conn, msg.FormatCQMessage())
+		}
+	}()
+
+	// A loop that reads pets from the connection until it is closed.
 	for {
 		// Read a packet from the connection: ReadPacket returns an error if the connection is closed or if
 		// a read timeout is set. You will generally want to return or break if this happens.
@@ -261,41 +284,41 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		switch p := pk.(type) {
 		case *packet.StructureTemplateDataResponse:
 			//fmt.Printf("RESPONSE %+v\n",p.StructureTemplate)
-			fbtask.ExportWaiter<-p.StructureTemplate
+			fbtask.ExportWaiter <- p.StructureTemplate
 			break
 		case *packet.MovePlayer:
-			if(p.EntityRuntimeID==move.OPRuntimeId) {
-				move.LastOPPitch=p.Pitch
+			if p.EntityRuntimeID == move.OPRuntimeId {
+				move.LastOPPitch = p.Pitch
 			}
 		case *packet.SetActorData:
-			if(p.EntityRuntimeID==move.OPRuntimeId) {
-				if len(p.EntityMetadata)!=1 {
+			if p.EntityRuntimeID == move.OPRuntimeId {
+				if len(p.EntityMetadata) != 1 {
 					break
 				}
-				_,isSneak:=p.EntityMetadata[91]
+				_, isSneak := p.EntityMetadata[91]
 				if isSneak {
-					move.LastOPSneak=!move.LastOPSneak
-					if(move.LastOPMouSneaked) {
-						move.LastOPMouSneaked=false
+					move.LastOPSneak = !move.LastOPSneak
+					if move.LastOPMouSneaked {
+						move.LastOPMouSneaked = false
 					}
 				}
 			}
 		/*case *packet.InventoryContent:
-			for _, item := range p.Content {
-				fmt.Printf("InventorySlot %+v\n",item.Stack.NBTData["dataField"])
-			}
-			break*/
+		for _, item := range p.Content {
+			fmt.Printf("InventorySlot %+v\n",item.Stack.NBTData["dataField"])
+		}
+		break*/
 		/*case *packet.InventorySlot:
-			fmt.Printf("Slot %d:%+v",p.Slot,p.NewItem.Stack)*/
+		fmt.Printf("Slot %d:%+v",p.Slot,p.NewItem.Stack)*/
 		case *packet.Text:
 			if p.TextType == packet.TextTypeChat {
 				if user == p.SourceName {
-					if (strings.Contains(p.Message,"a")||strings.Contains(p.Message,"A")||strings.Contains(p.Message,"An")||strings.Contains(p.Message,"an")) {
+					if strings.Contains(p.Message, "a") || strings.Contains(p.Message, "A") || strings.Contains(p.Message, "An") || strings.Contains(p.Message, "an") {
 						move.OpenMenu(conn)
 					}
-					if p.Message[0] == '>'&&len(p.Message)>1 {
-						umsg:=p.Message[1:]
-						if(!client.CanSendMessage()) {
+					if p.Message[0] == '>' && len(p.Message) > 1 {
+						umsg := p.Message[1:]
+						if !client.CanSendMessage() {
 							command.WorldChatTellraw(conn, "FasｔBuildeｒ", "Lose connection to the authentication server.")
 							break
 						}
@@ -312,10 +335,10 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				}
 			}
 		case *packet.AddPlayer:
-			if (p.Username == user) {
-				move.OPRuntimeId=p.EntityRuntimeID;
-				if(move.OPRuntimeIdReceivedChannel!=nil) {
-					move.OPRuntimeIdReceivedChannel<-true
+			if p.Username == user {
+				move.OPRuntimeId = p.EntityRuntimeID
+				if move.OPRuntimeIdReceivedChannel != nil {
+					move.OPRuntimeIdReceivedChannel <- true
 				}
 			}
 			//if (p.Username == user && enchant.AddPlayerItemChannel != nil) {
@@ -325,38 +348,38 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			//fmt.Printf("%+v\n",p.EntityMetadata)
 		case *packet.CommandOutput:
 			//if p.SuccessCount > 0 {
-				if p.CommandOrigin.UUID.String() == configuration.ZeroId.String() {
-					pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
-					if len(pos) == 0 {
-						tellraw(conn, "Invalid position")
-						break
-					}
-					configuration.GlobalFullConfig().Main().Position = mctype.Position{
-						X: pos[0],
-						Y: pos[1],
-						Z: pos[2],
-					}
-					tellraw(conn, fmt.Sprintf("Position got: %v", pos))
-					break
-				}else if p.CommandOrigin.UUID.String() == configuration.OneId.String() {
-					pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
-					if len(pos) == 0 {
-						tellraw(conn, "Invalid position")
-						break
-					}
-					configuration.GlobalFullConfig().Main().End = mctype.Position{
-						X: pos[0],
-						Y: pos[1],
-						Z: pos[2],
-					}
-					tellraw(conn, fmt.Sprintf("End Position got: %v", pos))
+			if p.CommandOrigin.UUID.String() == configuration.ZeroId.String() {
+				pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
+				if len(pos) == 0 {
+					tellraw(conn, "Invalid position")
 					break
 				}
+				configuration.GlobalFullConfig().Main().Position = mctype.Position{
+					X: pos[0],
+					Y: pos[1],
+					Z: pos[2],
+				}
+				tellraw(conn, fmt.Sprintf("Position got: %v", pos))
+				break
+			} else if p.CommandOrigin.UUID.String() == configuration.OneId.String() {
+				pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
+				if len(pos) == 0 {
+					tellraw(conn, "Invalid position")
+					break
+				}
+				configuration.GlobalFullConfig().Main().End = mctype.Position{
+					X: pos[0],
+					Y: pos[1],
+					Z: pos[2],
+				}
+				tellraw(conn, fmt.Sprintf("End Position got: %v", pos))
+				break
+			}
 			//}
 			pr, ok := command.UUIDMap.LoadAndDelete(p.CommandOrigin.UUID.String())
 			if ok {
-				pu:=pr.(chan *packet.CommandOutput)
-				pu<-p
+				pu := pr.(chan *packet.CommandOutput)
+				pu <- p
 			}
 		}
 
@@ -366,7 +389,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 func getInput() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	inp, err := reader.ReadString('\n')
-	inpl:=strings.TrimRight(inp, "\r\n")
+	inpl := strings.TrimRight(inp, "\r\n")
 	return inpl, err
 }
 
@@ -413,7 +436,7 @@ func sendCommand(commands string, UUID uuid.UUID, conn *minecraft.Conn) error {
 		UnLimited:     false,
 	}
 	return conn.WritePacket(commandRequest)*/
-	return command.SendCommand(commands,UUID,conn)
+	return command.SendCommand(commands, UUID, conn)
 }
 
 func tellraw(conn *minecraft.Conn, lines ...string) error {
@@ -425,11 +448,11 @@ func tellraw(conn *minecraft.Conn, lines ...string) error {
 
 func decideDelay(delaytype byte) int64 {
 	// Will add system check later,so don't merge into other functions.
-	if delaytype==mctype.DelayModeContinuous {
+	if delaytype == mctype.DelayModeContinuous {
 		return 1000
-	}else if delaytype==mctype.DelayModeDiscrete {
+	} else if delaytype == mctype.DelayModeDiscrete {
 		return 15
-	}else{
+	} else {
 		return 0
 	}
 }
@@ -443,10 +466,10 @@ func loadTokenPath() string {
 	homedir, err := os.UserHomeDir()
 	if err != nil {
 		fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";")
-		homedir="."
+		homedir = "."
 	}
 	fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
 	os.MkdirAll(fbconfigdir, 0755)
-	token := filepath.Join(fbconfigdir,"fbtoken")
+	token := filepath.Join(fbconfigdir, "fbtoken")
 	return token
 }
