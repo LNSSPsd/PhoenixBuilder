@@ -1,15 +1,8 @@
 # cq-chatlogger 配置
 
-#
+# websocket正向连接地址. 一般情况请选择默认.
 address: "127.0.0.1:5555"
 
-
-# 是否过滤消息. 如果为真,则过滤 filtered_group_id 中的群消息(黑名单), 反之则仅接收群消息(白名单)
-is_filtered_group: false
-
-filtered_group_id: [
-#  1098232840,
-]
 
 # 游戏内的消息将默认转发至哪个群. 如果为空, 则默认不转发, 只能通过指定别名发送指定群消息.
 normal_group_id: 123456789
@@ -27,7 +20,7 @@ group_nickname: {
 # time: 消息时间.
 # message: 消息主体. 其中表情、 图片等消息将转化为 [表情] [图片] 等纯文字形式.
 # source: 在group_id_list中定义的群昵称. 如果没有定义 则以群号代替. 若为私聊消息, 则为空值.
-# type: 消息类型. 默认有 private 和 group . 可以自定义协议端并传入其他类型. 游戏中将以大写字母呈现.
+# type: 消息类型. 默认有 private 和 group .
 # 参数可以重复, 可以省略, 也可以加一点括号或颜色符号§之类的.
 # 在游戏中仍然会受到屏蔽词影响.
 
@@ -46,20 +39,16 @@ game_message_format: "[time] [user] message (source)"
 # 游戏聊天转发至qq的消息格式. user为游戏ID, source为租赁服号. 不建议使用time参数(因为没啥必要).
 qq_message_format: "[user] message [source]"
 
-filtered_scb_title: "filtered"
-# 定义一个计分板, 以玩家分数表示在该插件中的权限
-# 玩家分数为: (如果不是使用自定义协议端, 则以下协议端默认为qq.)
-# 1: 可以收到协议端消息, 但消息不会被转发至协议端.
-# 2: 可以收到协议端消息或将消息转发至协议端.
-# 其他(或没有值): 不能收发协议端消息
 
+# 携带此tag的玩家将不能收到来自客户端的消息.
+filtered_player_tag: "filtered"
 
 # 在qq中使用命令: 选择一个前缀,来标识它是一个命令. 不要选择空字符, 它将永远无法生效.
 command_prefix: "/"
 
-# 是否选择过滤用户. 如果为真, 则仅允许 command_user 中的用户在qq中使用命令(白名单),反之仅阻止.
-is_filtered_user: false
+# 哪些用户可以在qq中使用命令. 填入qq号. 示例配置:
+# filtered_user_id: [123456789, 987654321]
+filtered_user_id: [ ]
 
-# 哪些用户可以(或不可以)在qq中使用命令. 填入qq号. 示例配置:
-# command_user: [123456789, 987654321]
-filtered_user_id: []
+# 过滤来自qq的消息交由go-cqhttp处理.
+# 详见https://docs.go-cqhttp.org/guide/eventfilter.html

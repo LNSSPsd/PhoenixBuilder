@@ -264,8 +264,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			fmt.Println(msg)
 			fmt.Println("RECEIVE: " + msg.FormatCQMessage())
 			uuid1, _ := uuid.NewUUID()
-			if msg.IsCommand() && cqchat.IsFilteredUser(msg.GetUser()) {
-
+			if msg.IsCommand() && !cqchat.IsFilteredUser(msg.GetUser()) {
 				err = command.SendCommand(msg.GetMessage(), uuid1, conn)
 				continue
 			}

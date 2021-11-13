@@ -11,6 +11,7 @@ import (
 	"strconv"
 )
 
+// 将http升级为websocket
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true
@@ -29,6 +30,7 @@ func receiveMessage(conn *websocket.Conn) {
 	fmt.Println("receive start")
 	for {
 		// todo 优化
+		// msgType为0时 消息正常接收 其他未知
 		msgType, data, err := conn.ReadMessage()
 		if err != nil {
 			fmt.Println(err)
@@ -37,6 +39,7 @@ func receiveMessage(conn *websocket.Conn) {
 		if msgType != 0 {
 			fmt.Println(string(data))
 		}
+		// 先解析出事件种类(event或message)
 		post, err := ParseMetaPost(data)
 		if post.PostType == "meta_event" && post.MetaEventType == "lifecycle" {
 			pterm.Println(pterm.Yellow("已成功连接: " + strconv.Itoa(post.SelfID)))

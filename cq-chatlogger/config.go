@@ -75,20 +75,17 @@ is_filtered_user: false
 # 哪些用户可以(或不可以)在qq中使用命令. 填入qq号. 示例配置:
 # command_user: [123456789, 987654321]
 filtered_user_id: []
-`)}
-
+`)
+}
 
 type ChatSettings struct {
 	Port              string           `yaml:"address"`
-	IsFilteredGroup   bool             `yaml:"is_filtered_group"`
-	FilteredGroupID   []int64          `yaml:"filtered_group_id"`
 	NormalGroupID     int64            `yaml:"normal_group_id"`
 	GroupNickname     map[int64]string `yaml:"group_nickname"`
 	GameMessageFormat string           `yaml:"game_message_format"`
 	QQMessageFormat   string           `yaml:"qq_message_format"`
-	FilteredScbTitle  string           `yaml:"filtered_scb_title"`
+	FilteredPlayerTag string           `yaml:"filtered_player_tag"`
 	CommandPrefix     string           `yaml:"command_prefix"`
-	IsFilteredUser    bool             `yaml:"is_filtered_user"`
 	FilteredUserID    []int64          `yaml:"filtered_user_id"`
 }
 
@@ -117,22 +114,4 @@ func init() {
 		pterm.Println(pterm.Red("WARNING: config.yml解析异常:", ErrSetting))
 	}
 	return
-}
-
-// IsFilteredUser 检查消息用户是否被过滤.
-func IsFilteredUser(user int64) bool {
-	/*如果真 且被找到: 返回false
-	如果真 且没被找到: 返回true
-	如果假 且被找到: 返回true
-	如果假 且没被找到: 返回false
-	*/
-	if user == -1 {
-		return false
-	}
-	for _, u := range Setting.FilteredUserID {
-		if u == user {
-			return !Setting.IsFilteredUser
-		}
-	}
-	return Setting.IsFilteredUser
 }

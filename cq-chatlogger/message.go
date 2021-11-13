@@ -150,7 +150,7 @@ func (msg UniversalMessage) IsCommand() bool {
 
 // TellrawCommand 将消息转为tellraw命令
 func TellrawCommand(msg string) string {
-	tag := Setting.FilteredScbTitle
+	tag := Setting.FilteredPlayerTag
 	msg = strings.ReplaceAll(msg, `\`, `\\`)
 	msg = strings.ReplaceAll(msg, `"`, `\"`)
 	cmd := fmt.Sprintf(`tellraw @a[tag=!%s] {"rawtext":[{"text": "%s"}]}`, tag, msg)

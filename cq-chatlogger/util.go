@@ -22,3 +22,13 @@ func PathExist(fp string) bool {
 	_, err := os.Stat(fp)
 	return !(err != nil)
 }
+
+// IsFilteredUser 检查用户命令是否合法是否被过滤.
+func IsFilteredUser(user int64) bool {
+	for _, u := range Setting.FilteredUserID {
+		if u == user {
+			return true
+		}
+	}
+	return false
+}
