@@ -49,7 +49,7 @@ func receiveMessage(conn *websocket.Conn) {
 			fmt.Println(action)
 			CQMessages <- action
 		}
-
+		continue
 	}
 }
 

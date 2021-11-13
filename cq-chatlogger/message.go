@@ -45,7 +45,6 @@ func (msg PrivateMessage) GetUser() int64 {
 	return msg.UserId
 }
 
-
 type PrivateMessage struct {
 	UniversalMessage
 	MetaPost
@@ -69,10 +68,11 @@ type IMessage interface {
 func GetMessageData(data []byte) (IMessage, error) {
 	msg := map[string]interface{}{}
 	err := json.Unmarshal(data, &msg)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	msgType := msg["message_type"].(string)
+	fmt.Println(msgType)
 	switch msgType {
 	case "private":
 		return PrivateMessage{}.Unmarshal(data)
@@ -87,7 +87,19 @@ func (msg UniversalMessage) Unmarshal(data []byte) (IMessage, error) {
 	err := json.Unmarshal(data, &msg)
 	return msg, err
 }
+func (msg PrivateMessage) Unmarshal(data []byte) (IMessage, error) {
+	err := json.Unmarshal(data, &msg)
+	return msg, err
+}
 
+func (msg GroupMessage) Unmarshal(data []byte) (IMessage, error) {
+	err := json.Unmarshal(data, &msg)
+	return msg, err
+}
+
+//func (msg UniversalMessage) GetCommand() string {
+//
+//}
 // FormatCQMessage 按配置文件格式化消息.
 func (msg UniversalMessage) FormatCQMessage() string {
 	raw := Setting.GameMessageFormat
@@ -97,14 +109,12 @@ func (msg UniversalMessage) FormatCQMessage() string {
 	return raw
 }
 
-
 func (msg PrivateMessage) FormatCQMessage() string {
 	raw := msg.UniversalMessage.FormatCQMessage()
 	raw = strings.ReplaceAll(raw, "time", time.Unix(msg.Time, 0).Format("15:04:05"))
 	raw = strings.ReplaceAll(raw, "user", msg.Sender.Nickname)
 	return raw
 }
-
 
 // GetSource 返回当前信息的来源. source为在group_id_list中定义的群昵称. 如果没有定义 则以群号代替. 若为私聊消息, 则为空值.
 func (msg UniversalMessage) GetSource() string {
@@ -143,6 +153,6 @@ func TellrawCommand(msg string) string {
 	tag := Setting.FilteredScbTitle
 	msg = strings.ReplaceAll(msg, `\`, `\\`)
 	msg = strings.ReplaceAll(msg, `"`, `\"`)
-	cmd :=fmt.Sprintf(`tellraw @a[tag=!%s] {"rawtext":[{"text": "%s"}]}`, tag, msg)
+	cmd := fmt.Sprintf(`tellraw @a[tag=!%s] {"rawtext":[{"text": "%s"}]}`, tag, msg)
 	return cmd
 }

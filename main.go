@@ -255,20 +255,21 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		}
 	}()
 
+	cqchat.CQMessages = make(chan cqchat.IMessage)
 	go cqchat.Run()
 	go func() {
+		fmt.Println("start receive msgs")
 		for {
 			msg := <-cqchat.CQMessages
-			if msg == nil {
-				continue
-			}
-			fmt.Println("RECEIVE: " + msg.GetMessage())
+			fmt.Println(msg)
+			fmt.Println("RECEIVE: " + msg.FormatCQMessage())
 			uuid1, _ := uuid.NewUUID()
 			if msg.IsCommand() && cqchat.IsFilteredUser(msg.GetUser()) {
-				sendCommand(msg.GetMessage(), uuid1, conn)
+
+				err = command.SendCommand(msg.GetMessage(), uuid1, conn)
 				continue
 			}
-			tellraw(conn, msg.FormatCQMessage())
+			_ = tellraw(conn, msg.FormatCQMessage())
 		}
 	}()
 

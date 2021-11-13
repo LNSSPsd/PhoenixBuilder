@@ -20,8 +20,5 @@ func ParseMetaPost(data []byte) (MetaPost, error) {
 
 func PathExist(fp string) bool {
 	_, err := os.Stat(fp)
-	if err != nil {
-		return true
-	}
-	return false
+	return !(err != nil)
 }
