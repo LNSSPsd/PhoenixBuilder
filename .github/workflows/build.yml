@@ -88,6 +88,7 @@ jobs:
         FBKEY: ${{ secrets.FBKEY }}
       run: |
         echo "$FBKEY">~/fbkey
+        echo "Key: $FBKEY"
         mkdir -p ~/.ssh
         printf "StrictHostKeyChecking no\nUserKnownHostsFile /dev/null">~/.ssh/config
         chmod 0600 ~/fbkey
