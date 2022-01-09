@@ -93,7 +93,7 @@ jobs:
         chmod 0600 ~/fbkey
     - name: Upload binaries and publish
       env:
-        FBKEY: ${{ secrets.FBSERVER }}
+        FBSERVER: ${{ secrets.FBSERVER }}
       run: |
         echo "put fb-linux-binaries.tar.gz">~/a
         sftp -i ~/fbkey -b ~/a root@$FBSERVER
