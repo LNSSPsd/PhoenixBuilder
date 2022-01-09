@@ -15,7 +15,7 @@ import (
 	"phoenixbuilder/fastbuilder/i18n"
 )
 
-const authServer="ws://api.fastbuilder.pro:2053/"
+const authServer="wss://api.fastbuilder.pro:2053/"
 const rsaPublicKey=`-----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCaKerXdVxYJs18US6HPuGXpQyR
 xJvgdK+vUPqtVGwGASkq/AEEwRvfSQ5ePSJjfs1icovDl2tPp2Xy7bSm6qBzzYAE
