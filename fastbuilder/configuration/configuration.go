@@ -75,6 +75,7 @@ func CreateFullConfig() *FullConfig {
 var RespondUser string
 var ZeroId uuid.UUID
 var OneId uuid.UUID
+var IsOp bool
 
 var UserToken string
 
