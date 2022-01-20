@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "..\\..\\..\\GoObserver"
+		},
+		{
+			"path": "..\\..\\..\\go-cqhttp-1.0.0-beta7-fix2"
+		}
+	],
+	"settings": {}
+}

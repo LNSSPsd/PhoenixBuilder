@@ -7,14 +7,16 @@ import (
 
 type MetaPost struct {
 	Time          int64  `json:"time"`
-	PostType      string `json:"post_type"`
+	PostType      string `json:"post_type"`   // 得到消息类型, 进一步解析
 	SelfID        int    `json:"self_id"`
 	MetaEventType string `json:"meta_event_type"`
+	Echo 		  string
 }
 
 func ParseMetaPost(data []byte) (MetaPost, error) {
 	post := MetaPost{}
-	err := json.Unmarshal(data, &post)
+	
+	err := json.Unmarshal(data, &post)//处理并返回
 	return post, err
 }
 

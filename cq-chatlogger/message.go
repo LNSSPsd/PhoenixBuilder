@@ -3,6 +3,7 @@ package cqchat
 import (
 	"encoding/json"
 	"fmt"
+	"phoenixbuilder/minecraft/protocol/packet"
 	"regexp"
 	"strconv"
 	"strings"
@@ -33,18 +34,6 @@ type UniversalMessage struct {
 	MessageType string `json:"message_type"`
 }
 
-func (msg UniversalMessage) GetMessage() string {
-	return msg.Message
-}
-
-func (msg UniversalMessage) GetUser() int64 {
-	return -1
-}
-
-func (msg PrivateMessage) GetUser() int64 {
-	return msg.UserId
-}
-
 type PrivateMessage struct {
 	UniversalMessage
 	MetaPost
@@ -55,6 +44,28 @@ type PrivateMessage struct {
 type GroupMessage struct {
 	PrivateMessage
 	GroupID int64 `json:"group_id"`
+}
+
+type QMessage struct {
+	Action string      `json:"action"`
+	Params interface{} `json:"params"`
+	// struct{
+	// 		UserID string `json:"user_id"`
+	// 		Message string `json:"message"`
+	// }
+	Echo string `json:"echo"`
+}
+
+func (msg UniversalMessage) GetMessage() string {
+	return msg.Message
+}
+
+func (msg UniversalMessage) GetUser() int64 {
+	return -1
+}
+
+func (msg PrivateMessage) GetUser() int64 {
+	return msg.UserId
 }
 
 type IMessage interface {
@@ -77,6 +88,7 @@ func GetMessageData(data []byte) (IMessage, error) {
 	case "private":
 		return PrivateMessage{}.Unmarshal(data)
 	case "group":
+		fmt.Println("收到群消息!")
 		return GroupMessage{}.Unmarshal(data)
 	default:
 		return UniversalMessage{}.Unmarshal(data)
@@ -103,7 +115,6 @@ func (msg GroupMessage) Unmarshal(data []byte) (IMessage, error) {
 // FormatCQMessage 按配置文件格式化消息.
 func (msg UniversalMessage) FormatCQMessage() string {
 	raw := Setting.GameMessageFormat
-	raw = strings.ReplaceAll(raw, "source", msg.GetSource())
 	raw = strings.ReplaceAll(raw, "message", GetRawTextFromCQMessage(msg.Message))
 	raw = strings.ReplaceAll(raw, "type", strings.ToUpper(msg.MessageType))
 	return raw
@@ -113,6 +124,12 @@ func (msg PrivateMessage) FormatCQMessage() string {
 	raw := msg.UniversalMessage.FormatCQMessage()
 	raw = strings.ReplaceAll(raw, "time", time.Unix(msg.Time, 0).Format("15:04:05"))
 	raw = strings.ReplaceAll(raw, "user", msg.Sender.Nickname)
+	return raw
+}
+
+func (msg GroupMessage) FormatCQMessage() string {
+	raw := msg.PrivateMessage.FormatCQMessage()
+	raw = strings.ReplaceAll(raw, "source", msg.GetSource())
 	return raw
 }
 
@@ -155,4 +172,15 @@ func TellrawCommand(msg string) string {
 	msg = strings.ReplaceAll(msg, `"`, `\"`)
 	cmd := fmt.Sprintf(`tellraw @a[tag=!%s] {"rawtext":[{"text": "%s"}]}`, tag, msg)
 	return cmd
+}
+
+// format the messages from Minecraft.
+func FormatMCMessage(msg packet.Text) string {
+	raw := Setting.QQMessageFormat
+	fmt.Printf("世界名称: %s", Conn.GameData().WorldName)
+	raw = strings.ReplaceAll(raw, strings.ReplaceAll("source", "\n", ""), ServerID)
+	raw = strings.ReplaceAll(raw, "message", msg.Message)
+	raw = strings.ReplaceAll(raw, "user", msg.SourceName)
+	raw = strings.ReplaceAll(raw, "time", time.Now().GoString())
+	return raw
 }

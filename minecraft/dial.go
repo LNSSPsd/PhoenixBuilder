@@ -6,7 +6,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
-	fbauth "phoenixbuilder/cv4/auth"
+	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -91,10 +91,10 @@ func (dialer Dialer) Dial(network string, address string) (conn *Conn, err error
 	if dialer.ServerCode != "" {
 		data, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
 		pubKeyData := base64.StdEncoding.EncodeToString(data)
-		chainAddr, code, err := dialer.Client.Auth(dialer.ServerCode, dialer.Password, pubKeyData, dialer.Token, dialer.Version)
+		chainAddr, code, err := dialer.Client.Auth(dialer.ServerCode, dialer.Password, pubKeyData, dialer.Token, "206c045295c6061185a6b145f475c2e6c309c7e8e652c5ee0011f97d7dd2daac")
 		chainAndAddr := strings.Split(chainAddr,"|")
 		if err != nil {
-			if code == -3 {
+			if (code == -3) {
 				homedir, err := os.UserHomeDir()
 				if err != nil {
 					fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";")
