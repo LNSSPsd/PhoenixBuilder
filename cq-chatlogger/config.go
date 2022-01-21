@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-
 	"github.com/pterm/pterm"
 	"gopkg.in/yaml.v3"
 )
