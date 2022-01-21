@@ -181,6 +181,6 @@ func FormatMCMessage(msg packet.Text) string {
 	raw = strings.ReplaceAll(raw, strings.ReplaceAll("source", "\n", ""), ServerID)
 	raw = strings.ReplaceAll(raw, "message", msg.Message)
 	raw = strings.ReplaceAll(raw, "user", msg.SourceName)
-	raw = strings.ReplaceAll(raw, "time", time.Unix(msg.Time, 0).Format("15:04:05"))
+	raw = strings.ReplaceAll(raw, "time", time.Now().Format("15:04:05"))
 	return raw
 }
