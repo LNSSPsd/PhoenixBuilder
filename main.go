@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	cqchat "phoenixbuilder/cq-chatlogger"
 	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/fastbuilder/command"
@@ -306,6 +307,26 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		}
 	} ()
 
+	cqchat.CQMessages = make(chan cqchat.IMessage)
+	cqchat.MCMessages = make(chan *packet.Text)
+	cqchat.GlobalConn(conn, code)
+	go cqchat.Run()
+
+	go func() {
+		fmt.Println("start receive msgs")
+		for {
+			msg := <-cqchat.CQMessages
+			fmt.Println(msg)
+			fmt.Println("RECEIVE: " + msg.FormatCQMessage())
+			uuid1, _ := uuid.NewUUID()
+			if msg.IsCommand() && !cqchat.IsFilteredUser(msg.GetUser()) {
+				err = command.SendCommand(msg.GetMessage(), uuid1, conn)
+				continue
+			}
+			_ = command.SendCommand(cqchat.TellrawCommand(msg.FormatCQMessage()), uuid1, conn)
+		}
+	}()
+
 	// A loop that reads packets from the connection until it is closed.
 	for {
 		// Read a packet from the connection: ReadPacket returns an error if the connection is closed or if
@@ -391,6 +412,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		/*case *packet.InventorySlot:
 			fmt.Printf("Slot %d:%+v",p.Slot,p.NewItem.Stack)*/
 		case *packet.Text:
+			cqchat.MCMessages <- p
 			if p.TextType == packet.TextTypeChat {
 				if user == p.SourceName {
 					if p.Message[0] == '>'&&len(p.Message)>1 {
