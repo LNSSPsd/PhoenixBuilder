@@ -1,11 +1,10 @@
-# FastBuilder Phoenix （websocket support）
+# FastBuilder Phoenix 
 
 ## Description
 
->  在原来的基础上支持额外正向websocket连接，以拓展更多功能.通信格式主要适配 Mrs4s/go-cqhttp .
->  forked from LNSSPsd/PhoenixBuilder
+> FastBuilder is a structure generating tool for Minecraft Bedrock Edition that supporting various platforms. The Phoenix ver. was designed for the rental server of the Minecraft Netease Edition. Currently supports generating Euclid geometry and ACME(mcacblock) · schematic file(NBT data of blocks would be disposed)'s structures, and images painting.
 
-
+**NOTE: FastBuilder Phoenix is a commercial software!**
 
 ### Principle
 
