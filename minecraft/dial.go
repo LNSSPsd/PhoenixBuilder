@@ -117,7 +117,6 @@ func (d Dialer) DialTimeout(network, address string, timeout time.Duration) (*Co
 // If a connection is not established before the context passed is cancelled, DialContext returns an error.
 func (d Dialer) DialContext(ctx context.Context, network, address string) (conn *Conn, err error) {
 	key, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
-
 	var chainData string
 	if d.ServerCode != "" {
 		data, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
@@ -136,6 +135,7 @@ func (d Dialer) DialContext(ctx context.Context, network, address string) (conn 
 				token := filepath.Join(fbconfigdir, "fbtoken")
 				os.Remove(token)
 			}
+
 			return nil, err
 		}
 		chainData = chainAndAddr[0]
@@ -155,7 +155,8 @@ func (d Dialer) DialContext(ctx context.Context, network, address string) (conn 
 		if err != nil {
 			break
 		}
-		netConn, err = dialer.DialContext(ctx, addressWithPongPort(pong, address))
+		address = addressWithPongPort(pong, address)
+		netConn, err = dialer.DialContext(ctx, address)
 	default:
 		// If not set to 'raknet', we fall back to the default net.Dial method to find a proper connection for
 		// the network passed.
