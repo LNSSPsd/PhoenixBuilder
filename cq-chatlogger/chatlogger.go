@@ -57,7 +57,7 @@ func receiveMessage(cqconn *websocket.Conn) {
 			if err != nil || action == nil {
 				continue
 			}
-			fmt.Println(action)
+			// fmt.Println(action)
 			CQMessages <- action
 		}
 		continue
@@ -93,7 +93,7 @@ func sendMessage(cqconn *websocket.Conn) {
 }
 //websockect链接
 func handleFunc(w http.ResponseWriter, r *http.Request) {
-	cqconn, _ := upgrader.Upgrade(w, r, nil)//websocket链接通道?
+	cqconn, _ := upgrader.Upgrade(w, r, nil)//websocket链接通道
 	// 这个conn是和gocq连接的
 	// 所有和游戏内的conn连接(发包)的操作全部在main.go里
 	go receiveMessage(cqconn)

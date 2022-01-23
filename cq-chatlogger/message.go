@@ -177,7 +177,7 @@ func TellrawCommand(msg string) string {
 // format the messages from Minecraft.
 func FormatMCMessage(msg packet.Text) string {
 	raw := Setting.QQMessageFormat
-	fmt.Printf("世界名称: %s", Conn.GameData().WorldName)
+	// fmt.Printf("世界名称: %s", Conn.GameData().WorldName)
 	raw = strings.ReplaceAll(raw, strings.ReplaceAll("source", "\n", ""), ServerID)
 	raw = strings.ReplaceAll(raw, "message", msg.Message)
 	raw = strings.ReplaceAll(raw, "user", msg.SourceName)
