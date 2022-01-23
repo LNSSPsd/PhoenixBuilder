@@ -49,3 +49,7 @@ filtered_user_id: [1758489207, ]
 
 # 过滤来自qq的消息交由go-cqhttp处理.
 # 详见https://docs.go-cqhttp.org/guide/eventfilter.html
+
+
+# 是否转发游戏内系统消息(如角色死亡)
+is_forward_sys_message: false

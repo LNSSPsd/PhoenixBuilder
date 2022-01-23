@@ -74,6 +74,7 @@ type ChatSettings struct {
 	FilteredPlayerTag string           `yaml:"filtered_player_tag"`
 	CommandPrefix     string           `yaml:"command_prefix"`
 	FilteredUserID    []int64          `yaml:"filtered_user_id"`
+	IsForwardSysMessage bool           `yaml:"is_forward_sys_message"`
 }
 
 var Setting ChatSettings
