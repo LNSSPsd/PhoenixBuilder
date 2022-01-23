@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	cqchat "phoenixbuilder/cq-chatlogger"
@@ -334,7 +333,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		fmt.Println("start receive msgs")
 		for {
 			msg := <-cqchat.CQMessages
-			fmt.Println(msg)
 			fmt.Println("RECEIVE: " + msg.FormatCQMessage())
 			uuid1, _ := uuid.NewUUID()
 			if msg.IsCommand() && !cqchat.IsFilteredUser(msg.GetUser()) {
