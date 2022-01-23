@@ -114,5 +114,5 @@ var I18nDict_cn map[uint16]string = map[uint16]string{
 	Auth_InvalidFBVersion: "FastBuilder 版本无效，请更新。",
 	Notify_TurnOnCmdFeedBack: "FastBuilder 需要 sendcommandfeedback 为 true，请输入:\"/gamerule sendcommandfeedfack true\"并重启 FastBuilder。",
 	Notify_NeedOp: "需要 OP 权限以正常工作。",
-	
+	RestartAfter3Second: "将在3秒后尝试重启, 若多次失败请检查报错.",
 }

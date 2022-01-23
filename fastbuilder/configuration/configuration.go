@@ -31,20 +31,15 @@ func CreateFullConfig() *FullConfig {
 		Execute: "",
 		Block: IronBlock,
 		OldBlock: AirBlock,
-		/*Begin: types.Position{
-			X: 0,
-			Y: 0,
-			Z: 0,
-		},*/
-		End: types.Position{
-			X: 0,
-			Y: 0,
-			Z: 0,
-		},
 		Position: types.Position{
 			X: 200,
 			Y: 100,
 			Z: 200,
+		},
+		End: types.Position{
+			X: 0,
+			Y: 0,
+			Z: 0,
 		},
 		Radius:    5,
 		Length:    0,
@@ -75,6 +70,7 @@ func CreateFullConfig() *FullConfig {
 var RespondUser string
 var ZeroId uuid.UUID
 var OneId uuid.UUID
+var IsOp bool
 
 var UserToken string
 
