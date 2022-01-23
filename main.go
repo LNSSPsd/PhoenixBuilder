@@ -140,6 +140,14 @@ func runShellClient(token string, version string) {
 }
 
 func runClient(token string, version string, code string, serverPasswd string) {
+	defer func ()  {
+		if err := recover(); err != nil {
+			debug.PrintStack()
+			pterm.Error.Println(err)
+			pterm.Info.Println(I18n.T(I18n.RestartAfter3Second))
+			runClient(token, version, code, serverPasswd)
+		}
+	} ()
 	worldchatchannel := make(chan []string)
 	client := fbauth.CreateClient(worldchatchannel)
 	if token[0] == '{' {

@@ -2,7 +2,7 @@ name: Build binaries
 
 on:
   push:
-    branches: [ main ]
+    branches: [ epsilon ]
     paths:
       - "version"
 
@@ -63,9 +63,9 @@ jobs:
       run: |
         make current
         make clean
-        chmod 777 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.7.6/conn.go
-        sed "s/urrentProtocol byte = 10/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.7.6/conn.go>~/conn.go
-        cp -f ~/conn.go ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.7.6/conn.go
+        chmod 777 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
+        sed "s/urrentProtocol byte = 10/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go>~/conn.go
+        cp -f ~/conn.go ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
     - name: Build
       run: |
         export THEOS=~/theos
@@ -82,7 +82,7 @@ jobs:
         rm build/phoenixbuilder-macos-x86_64
         ls -lh build/>release.txt
         mv release.txt build/release-list.txt
-        tar -czf fb-linux-binaries.tar.gz build/*
+        tar -czf fb-linux-binaries-v2.tar.gz build/*
     - name: Load Key
       env:
         FBKEY: ${{ secrets.FBKEY }}
@@ -95,9 +95,9 @@ jobs:
       env:
         FBSERVER: ${{ secrets.FBSERVER }}
       run: |
-        echo "put fb-linux-binaries.tar.gz">~/a
+        echo "put fb-linux-binaries-v2.tar.gz">~/a
         sftp -i ~/fbkey -b ~/a root@$FBSERVER
-        ssh -i ~/fbkey root@$FBSERVER "mkdir -p fbbinaries;mv fb-linux-binaries.tar.gz fbbinaries/;cd fbbinaries;tar -xzf *.tar.gz;rm *.tar.gz;mv build/* ./;rm -rf build;cd ~/cv4;node updateHashes.js ../fbbinaries/hashes.json;mv ../fbbinaries/* /var/www/prostorage/"
+        ssh -i ~/fbkey root@$FBSERVER "mkdir -p fbbinariesv2;mv fb-linux-binaries-v2.tar.gz fbbinariesv2/;cd fbbinariesv2;tar -xzf *.tar.gz;rm *.tar.gz;mv build/* ./;rm -rf build;cd ~/cv4;node updateV2Hashes.js ../fbbinariesv2/hashes.json;mv ../fbbinariesv2/* /var/www/prostorage/epsilon/"
 
 
 
