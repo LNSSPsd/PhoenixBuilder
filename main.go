@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	cqchat "phoenixbuilder/cq-chatlogger"
@@ -147,6 +148,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			pterm.Error.Println(err)
 			pterm.Info.Println(I18n.T(I18n.RestartAfter3Second))
 			runClient(token, version, code, serverPasswd)
+			
 		}
 	} ()
 	worldchatchannel := make(chan []string)
@@ -317,13 +319,18 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			}
 		}
 	}()
-
+    
 	cqchat.CQMessages = make(chan cqchat.IMessage)
 	cqchat.MCMessages = make(chan *packet.Text)
 	cqchat.GlobalConn(conn, code)
-	go cqchat.Run()
 
+	
+	if !cqchat.Has_Connected{
+		cqchat.Has_Connected = true
+		go cqchat.Run()
+	}
 	go func() {
+		
 		fmt.Println("start receive msgs")
 		for {
 			msg := <-cqchat.CQMessages
@@ -337,7 +344,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			_ = command.SendCommand(cqchat.TellrawCommand(msg.FormatCQMessage()), uuid1, conn)
 		}
 	}()
-
+	
 	// A loop that reads packets from the connection until it is closed.
 	for {
 		// Read a packet from the connection: ReadPacket returns an error if the connection is closed or if

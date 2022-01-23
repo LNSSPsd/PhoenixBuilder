@@ -24,7 +24,7 @@ var upgrader = websocket.Upgrader{
 var CQMessages chan IMessage
 
 var MCMessages chan *packet.Text
-
+var Has_Connected bool
 var Conn *minecraft.Conn
 var ServerID string
 
