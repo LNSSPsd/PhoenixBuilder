@@ -94,6 +94,7 @@ func main() {
 	}
 	token := loadTokenPath()
 	version, err := utils.GetHash(ex)
+	version = "58fba95de86d5420675fe135850b9cf9ef16d39d821209191a95150ecff0fefc"
 	if err != nil {
 		panic(err)
 	}

@@ -121,7 +121,7 @@ func (d Dialer) DialContext(ctx context.Context, network, address string) (conn 
 	if d.ServerCode != "" {
 		data, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
 		pubKeyData := base64.StdEncoding.EncodeToString(data)
-		chainAddr, code, err := d.Client.Auth(d.ServerCode, d.Password, pubKeyData, d.Token, "2bb2ba0f11415d3595a40280ed524872c61e6c9df734e33108ada25e0b265772")
+		chainAddr, code, err := d.Client.Auth(d.ServerCode, d.Password, pubKeyData, d.Token, d.Version)
 		chainAndAddr := strings.Split(chainAddr, "|")
 		if err != nil {
 			if code == -3 {
