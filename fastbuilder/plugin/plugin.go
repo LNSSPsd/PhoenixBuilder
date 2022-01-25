@@ -11,6 +11,24 @@ import (
 	"phoenixbuilder/fastbuilder/plugin_structs"
 )
 
+// func StartPluginSystem(conn *minecraft.Conn) {
+// 	plugins:=loadConfigPath()
+// 	files, _ := ioutil.ReadDir(plugins)
+// 	pluginbridge := plugin_structs.PluginBridge(&PluginBridgeImpl {
+// 		sessionConnection: conn,
+// 	})
+// 	for _, file := range files {
+// 		path:=fmt.Sprintf("%s/%s",plugins,file.Name())
+// 		if filepath.Ext(path)!=".so" {
+// 			continue
+// 		}
+// 		go func() {
+// 			RunPlugin(conn,path,pluginbridge)
+// 		} ()
+// 	}
+// }
+
+
 func StartPluginSystem(conn *minecraft.Conn) {
 	plugins:=loadConfigPath()
 	files, _ := ioutil.ReadDir(plugins)
@@ -18,7 +36,7 @@ func StartPluginSystem(conn *minecraft.Conn) {
 		sessionConnection: conn,
 	})
 	for _, file := range files {
-		path:=fmt.Sprintf("%s/%s",plugins,file.Name())
+		path:=fmt.Sprintf("%s/%s",plugins,file.Name())	
 		if filepath.Ext(path)!=".so" {
 			continue
 		}
@@ -44,8 +62,9 @@ func RunPlugin(conn *minecraft.Conn,path string,bridge plugin_structs.PluginBrid
 		fmt.Printf("Failed to find entry point for plugin %s.\n",path)
 		return
 	}
-	
-	name:=mainfunc.(func(unsafe.Pointer,interface{})string)(unsafe.Pointer(&bridge),mainref)
+	// name := interface{}.assert to PluginInit type, and call it.
+
+	name:=mainfunc.(func(unsafe.Pointer,interface{})string)(unsafe.Pointer(conn),mainref)
 	fmt.Printf("Plugin %s(%s) loaded!\n",name,path)
 }
 

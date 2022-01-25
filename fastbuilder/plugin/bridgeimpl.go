@@ -15,6 +15,12 @@ type PluginBridgeImpl struct {
 	sessionConnection *minecraft.Conn
 }
 
+// unsafe!
+func (br *PluginBridgeImpl) WritePacket (pk packet.Packet) error {
+	return br.sessionConnection.WritePacket(pk)
+}
+
+
 func (*PluginBridgeImpl) ConvertFunctionChainItemList(list map[string]plugin_structs.FunctionChainItem) interface{} {
 	outmap:=make(map[string]*function.FunctionChainItem)
 	for key, val := range list {
