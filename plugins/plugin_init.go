@@ -1,7 +1,9 @@
 package main
 
 import (
-	"plugin_example/plugin_structs"
+	"phoenixbuilder/fastbuilder/plugin_structs"
+	"plugin"
+	// "plugin_example/plugin_structs"
 	"unsafe"
 )
 
@@ -25,3 +27,5 @@ func PluginInit(bridgeif unsafe.Pointer,mainref interface{}) string {
 	mainfunc:=mainref.(func(plugin_structs.PluginBridge)string)
 	return mainfunc(bridge)
 }
+
+var Plugin plugin.Plugin

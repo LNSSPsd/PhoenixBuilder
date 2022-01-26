@@ -16,6 +16,7 @@ type PluginBridge interface {
 	// "CB" stands for callback.
 	SendCommandCB(command string, cb func([]CommandOutputMessage,string))
 	SendWSCommandCB(command string, cb func([]CommandOutputMessage,string))
+
 }
 
 type CommandOutputMessage struct {
