@@ -17,7 +17,7 @@ func PluginInit(bridgeif unsafe.Pointer,mainref interface{}) string {
 	// name:=mainfunc.(func(unsafe.Pointer,interface{})string)(unsafe.Pointer(conn),mainref)
 
 	// () operates after *,   so it references the unsafe.Pointer(it points the *Minecraft.conn and becomes referencable.)
-	// Now bridge is referenced and bridgeif is transformed into the referenced interface called PluginBridge.
+	// Now bridge is dereferenced and bridgeif is transformed into the dereferenced interface called PluginBridge.
 	// 此时PluginBridge (接口类型)被解引用, 且bridgeif这个Pointer约定为此接口, 最后解引用bridgeif, 以便传给mainfunc.
 	bridge:=*(*plugin_structs.PluginBridge)(bridgeif)
 	// assert to function with args and ret then call it.

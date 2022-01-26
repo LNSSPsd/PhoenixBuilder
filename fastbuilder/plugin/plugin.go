@@ -74,7 +74,7 @@ func RunPlugin(conn *minecraft.Conn,path string,bridge plugin_structs.PluginBrid
 	// name:=mainfunc.(func(unsafe.Pointer,interface{})string)(unsafe.Pointer(conn),mainref)
 	// fmt.Printf("Plugin %s(%s) loaded!\n",name,path)
 
-	// now, mainfunc is defered 
+	// now, mainfunc is referedced
 }
 
 func loadConfigPath() string {
