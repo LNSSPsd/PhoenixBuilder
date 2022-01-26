@@ -38,6 +38,7 @@ type DoubleModule struct {
 	Entity          *Entity
 }
 
+
 var takenBlocks map[*ConstBlock]*Block = make(map[*ConstBlock]*Block)
 
 func CreateBlock(name string,data int16) *Block {

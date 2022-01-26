@@ -29,6 +29,12 @@ import (
 // }
 
 
+type Plugin struct {
+	Priority int
+	Main func(bridge plugin_structs.PluginBridge) string // return name of the plugin
+
+}
+
 func StartPluginSystem(conn *minecraft.Conn) {
 	plugins:=loadConfigPath()
 	files, _ := ioutil.ReadDir(plugins)
@@ -62,8 +68,9 @@ func RunPlugin(conn *minecraft.Conn,path string,bridge plugin_structs.PluginBrid
 		fmt.Printf("Failed to find entry point for plugin %s.\n",path)
 		return
 	}
-	// name := interface{}.assert to PluginInit type, and call it.
-
+	// interface{}.assert to PluginInit type, and call it.
+	// mainfunc断言为含pointer和接口参的函数 并调用,返回插件名
+	// conn的引用转为unsafe.Pointer
 	name:=mainfunc.(func(unsafe.Pointer,interface{})string)(unsafe.Pointer(conn),mainref)
 	fmt.Printf("Plugin %s(%s) loaded!\n",name,path)
 }
