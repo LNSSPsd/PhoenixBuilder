@@ -11,6 +11,7 @@ import (
 	"phoenixbuilder/fastbuilder/plugin_structs"
 )
 
+
 func StartPluginSystem(conn *minecraft.Conn) {
 	plugins:=loadConfigPath()
 	files, _ := ioutil.ReadDir(plugins)
@@ -29,11 +30,11 @@ func StartPluginSystem(conn *minecraft.Conn) {
 }
 
 
-type Plugin struct {
-	Priority int
-	Main func(plugin_structs.PluginBridge)string // return name of the plugin
+// type Plugin struct {
+// 	Priority int
+// 	Main func(plugin_structs.PluginBridge)string // return name of the plugin
     
-}
+// }
 
 // func StartPluginSystem(conn *minecraft.Conn) {
 // 	plugins:=loadConfigPath()

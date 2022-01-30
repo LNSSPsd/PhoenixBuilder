@@ -1,12 +1,15 @@
 package plugin_structs
 
+import "phoenixbuilder/minecraft/protocol/packet"
+
 type PluginBridge interface {
+	WritePacket(pk packet.Packet) error  // unsafe!
 	ConvertFunctionChainItemList(list map[string]FunctionChainItem) interface{}
 	RegisterBuilder(name string, function func(config MainConfig, blc chan *Module) error) bool
 	// --> function.RegisterFunction
 	RegisterFunction(function Function)
 	// --> function.RegisterEnum
-	RegisterEnum(desc string, parser func(string)byte, inv byte) int
+	RegisterEnum(desc string, parser func(string) byte, inv byte) int
 	// --> command.Tellraw -> command.SendChat
 	Tellraw(message string) error
 	// --> command.SendChat
@@ -14,38 +17,37 @@ type PluginBridge interface {
 	// --> command.SendSizukanaCommand
 	SendCommand(command string) error
 	// "CB" stands for callback.
-	SendCommandCB(command string, cb func([]CommandOutputMessage,string))
-	SendWSCommandCB(command string, cb func([]CommandOutputMessage,string))
-
+	SendCommandCB(command string, cb func([]CommandOutputMessage, string))
+	SendWSCommandCB(command string, cb func([]CommandOutputMessage, string))
 }
 
 type CommandOutputMessage struct {
-	Success bool
-	Message string
+	Success    bool
+	Message    string
 	Parameters []string
 }
 
 type Function struct {
-	Name string
+	Name          string
 	OwnedKeywords []string
-	
-	FunctionType byte
-	SFMinSliceLen uint16
+
+	FunctionType    byte
+	SFMinSliceLen   uint16  // min args
 	SFArgumentTypes []byte
 	FunctionContent interface{} // Regular/Simple: func(interface{}(~~*minecraft.Conn~~),interface{})
-				    // Continue: map[string]*FunctionChainItem
+	// Continue: map[string]*FunctionChainItem
 }
 
 type FunctionChainItem struct {
-	FunctionType byte
+	FunctionType  byte
 	ArgumentTypes []byte
-	Content interface{}
+	Content       interface{}
 }
 
 const (
-	FunctionTypeSimple    = 0 // End of simple chain
-	FunctionTypeContinue  = 1 // Simple chain
-	FunctionTypeRegular   = 2
+	FunctionTypeSimple   = 0 // End of simple chain
+	FunctionTypeContinue = 1 // Simple chain
+	FunctionTypeRegular  = 2
 )
 
 const (
@@ -54,4 +56,3 @@ const (
 	SimpleFunctionArgumentInt     = 2
 	//SimpleFunctionArgumentEnum  = ---->
 )
-

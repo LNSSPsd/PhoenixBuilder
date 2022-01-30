@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	cqchat "phoenixbuilder/cq-chatlogger"
+	plugin_beta "phoenixbuilder/fastbuilder/plugin_beta"
 	"phoenixbuilder/fastbuilder/command"
 	"phoenixbuilder/fastbuilder/configuration"
 	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
@@ -351,7 +352,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		if err != nil {
 			panic(err)
 		}
-
+		
 		switch p := pk.(type) {
 		case *packet.PyRpc:
 			//fmt.Printf("PyRpc!\n")

@@ -21,6 +21,7 @@ func (br *PluginBridgeImpl) WritePacket (pk packet.Packet) error {
 }
 
 
+
 func (*PluginBridgeImpl) ConvertFunctionChainItemList(list map[string]plugin_structs.FunctionChainItem) interface{} {
 	outmap:=make(map[string]*function.FunctionChainItem)
 	for key, val := range list {
