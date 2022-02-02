@@ -51,8 +51,7 @@ func (pls *PluginManager) notify(pk packet.Packet) {
 		if reflect.TypeOf(pk) != plugin.rule {
 			continue
 		}
-		plugin
-		
+		plugin		
 		plugin.PacketSender <- pk
 		
 		}
