@@ -88,3 +88,4 @@ func loadConfigPath() string {
 	os.MkdirAll(fbconfigdir, 0755)
 	return fbconfigdir
 }
+

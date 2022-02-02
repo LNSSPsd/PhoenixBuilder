@@ -1,24 +1,62 @@
 package plugin_beta
 
-type mainFunction interface{} // Return true if it blocks packets.
-// e.g. Main(logger ) 
+import (
+	"fmt"
+	"phoenixbuilder/minecraft"
+	"phoenixbuilder/minecraft/protocol/packet"
+	"reflect"
+	"plugin"
+	
+	"time"
+)
+
+// function that has been registered
+// type RegisteredFunction func(interface{})
+
+// e.g. RegisterFunction {
+//
+//
+// }
+
+/*
+e.g.
+
+func _MainFunction(ps PluginSystem)  {
+	fn := func (pk packet.Text)  {
+		// ps.Conn.WritePacket()
+		ps.Logger.log("hi!")
+	}
+	plugin := RegisteredPlugin {
+		Singleton: false,
+		Block: true,
+		Priority: 5,
+		Name: "tpa",
+		Main: fn,
+	}
+	ps.RegisterFunc(plugin)
+}
+*/
+
 
 type RegisteredPlugin struct {
-	Priority uint64
-	MainFunction mainFunction
-	Logger *pluginLogger
+	
+	Singleton bool
+	Block bool // true if it blocks packets.
+	Priority int
+	Name string
+	Main interface{}
 
+	 // True: Only one example can exist at the same time
+	
 }
 
-type PluginSystem struct {	
-	Plugins []RegisteredPlugin
 
+// show plugins
+type IPluginSystem interface {
+	RegisterFunc(RegisteredPlugin)
+	RegisterChan(chan interface{})
+	// UnregisterFunc()
 }
 
-func (pl *PluginSystem) LoadPlugin()
+func (pl RegisteredPlugin) Notify()
 
-func (pl *PluginSystem) LoadPluginFrom()
-
-func (pl *PluginSystem) RegisterFunction()
-
-func (pl *PluginSystem) UnregisterFunction()

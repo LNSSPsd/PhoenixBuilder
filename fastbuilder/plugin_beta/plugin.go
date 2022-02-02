@@ -1,41 +1,31 @@
 package plugin_beta
 
 import (
-	 
+	"log"
 	"os"
 	"path/filepath"
-	"fmt"
+	"phoenixbuilder/minecraft"
+	"phoenixbuilder/minecraft/protocol/packet"
 )
 
 
-
-func StartPluginSystem () {
-	logger := pluginLogger{
-
+func StartPluginSystem (conn *minecraft.Conn) {
+	manager := PluginManager {
+		conn: conn,
+		Logger: &log.Logger{},
+		PacketReceiver: make(chan packet.Packet),
 	}
-	plugins:=loadConfigPath()
-	files, _ := ioutil.ReadDir(plugins)
-	pluginbridge := plugin_structs.PluginBridge(&PluginBridgeImpl {
-		sessionConnection: conn,
-	})
-	for _, file := range files {
-		path:=fmt.Sprintf("%s/%s",plugins,file.Name())
-		if filepath.Ext(path)!=".so" {
-			continue
-		}
-		go func() {
-			RunPlugin(conn,path,pluginbridge)
-		} ()
-	}
+	manager.Logger.SetPrefix("[PLUGIN]")
+	manager.loadPlugin()
+	manager.notify()
 }
 
-func loadConfigPath() string {
+
+func loadPluginDir() (string, error) {
 	homedir, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Println("[PLUGIN] WARNING - Failed to obtain the user's home directory. made homedir=\".\";\n")
 		homedir="."
 	}
-	fbconfigdir := filepath.Join(homedir, ".config/fastbuilder/plugins")
-	os.MkdirAll(fbconfigdir, 0755)
-	return fbconfigdir
+	plugindir := filepath.Join(homedir, ".config/fastbuilder/plugins")
+	return plugindir, err
 }

@@ -8,12 +8,10 @@ import (
 	
 )
 
-var IsLogFile bool
-
 type pluginLogger struct{
 	logger log.Logger
 	prefix string
-
+	
 	Mu sync.Mutex
 }
 
@@ -21,23 +19,29 @@ type pluginLogger struct{
 // 第一层是log.logger本身噢.
 // It seems to be the second abstraction level and therefore be written.
 // the first level is log.Logger, I think.
-func (l *pluginLogger) setPlugin (pluginName string) {
+
+func LoggerInit() *pluginLogger {
+	lg := pluginLogger{logger: log.Logger{}}
+	return lg.init()
+}
+func (l *pluginLogger) init () {
 	l.Mu.Lock()
 	defer l.Mu.Unlock()
-	l.prefix = pterm.Yellow(fmt.Sprintf("[%s]", pluginName))
+	l.prefix = pterm.Yellow(fmt.Sprintf("[%s]"))
 }
 
-func (l *pluginLogger) SPrintln (plugin struct{name string}, v ...interface{}) string {
+func (l *pluginLogger) SPrintln (v ...interface{}) string {
 	l.Mu.Lock()
 	defer l.Mu.Unlock()
-	l.setPlugin(plugin.name)
+	// l.setPlugin(l.)
 	return pterm.Sprintln(l.prefix, l.prefix)
 }
 
-func (l *pluginLogger) Println (plugin struct{name string}, v ...interface{}) {
+func (l *pluginLogger) Println (v ...interface{}) {
 	l.Mu.Lock()
 	defer l.Mu.Unlock()
-	lg := l.SPrintln(plugin, v...)
+	lg := l.SPrintln(v...)
+	
 	pterm.Println(lg)
 	if IsLogFile {
 		// todo

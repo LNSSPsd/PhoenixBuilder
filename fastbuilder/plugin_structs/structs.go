@@ -3,7 +3,7 @@ package plugin_structs
 import "phoenixbuilder/minecraft/protocol/packet"
 
 type PluginBridge interface {
-	WritePacket(pk packet.Packet) error  // unsafe!
+	// WritePacket(pk packet.Packet) error  // unsafe!
 	ConvertFunctionChainItemList(list map[string]FunctionChainItem) interface{}
 	RegisterBuilder(name string, function func(config MainConfig, blc chan *Module) error) bool
 	// --> function.RegisterFunction
