@@ -15,74 +15,84 @@ import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"plugin"
-	"reflect"
+	"sync"
+	"time"
 )
 
-// PacketSender: packet -> main
-// PacketReceiver: main -> packet
+// PacketSender: plugin -> main
+// PacketReceiver: main -> plugin
 
 type Plugin struct {
-	isInstantiate bool // 机翻, 实例化
-	Singleton bool
-	Block bool // true if it blocks packets.
-	Priority int
-	Name string
-	Main interface{}
-	PacketSender chan packet.Packet
-	rule reflect.Type
+	isInstantiate bool // 机翻, 是否已经有成员
+	singleton bool
+	block bool // true if it blocks packets.
+	priority int
+	name string
+	
+	regMu sync.RWMutex // locked when PluginManager Register and do nothing when PluginManager notify(packets)
+	packetReceivers []chan packet.Packet  // plugins get it and push Packet to main process.
+
+	packetSender chan packet.Packet
+	rule func(pk packet.Packet) bool // assert pk and return ok. It should be simplified.
+}
+
+
+func(pl *Plugin) appendReceiver() {
+
 }
 
 type IPlugin interface {
-	Start(manager PluginManager, PacketReceiver chan packet.Packet) (error)
+	Start(manager PluginManager)
 }
 
 
 type PluginManager struct {	
 	conn *minecraft.Conn
-	plugins map[Plugin]IPlugin
 	Logger *log.Logger
-	PacketReceiver chan packet.Packet // plugins get it and push Packet to main process.
+	
+	regMu sync.RWMutex
+	plugins map[*Plugin]IPlugin
+
 }
 	
-
-func (pls *PluginManager) notify(pk packet.Packet) {
-	for plugin, iplugin := range pls.plugins {
+// routine it
+func (plm *PluginManager) notify(pk packet.Packet) {
+	for plugin, iplugin := range plm.plugins {
 		// filter first
-		if reflect.TypeOf(pk) != plugin.rule {
+		if !plugin.rule(pk) {
 			continue
 		}
-		plugin		
-		plugin.PacketSender <- pk
-		
+		if !plugin.Singleton && plugin.isInstantiate {
+			iplugin.Start(*plm)
 		}
+		plugin.packetSender <- pk
 	}
 }
 
-// routine it.
-func (pls *PluginManager) forward() {
 
-	for {
-		pk := <- pls.PacketReceiver	
-		if pk == nil { continue }
-		// todo check the type of pk!!
-		pls.conn.WritePacket(pk)
-	}
-}// if pk.Unmarshal()
+// type A, B, C, D, E... struct{} (All kinds of packet.Packet)
+// func fu(i packet.Packet, j packet.Packet) {
+
+//     if type(reflect.ValueOf(i)) == type(reflect.ValueOf(j)) {
+//         ...
+//     }
+// }
+
 
 // from /phoenixbuilder/fastbuilder/plugin/plugin.go
-func (pls *PluginManager) loadPlugin() error {
+func (plm *PluginManager) loadPlugin() error {
 	defer func ()  {
 		if err := recover(); err != nil {
-			pls.Logger.Printf("[WARNING] Failed to load plugins completely: %s", err)
+			plm.Logger.Printf("[WARNING] Failed to load plugins completely: %s", err)
 		}
 	}()
 	plugindir, err := loadPluginDir()
 	
 	err = os.MkdirAll(plugindir, 0755)
-	if err != nil { pls.Logger.Panicln("Failed to mkdir"); return err }
+	if err != nil { plm.Logger.Panicln("Failed to mkdir"); return err }
 	
 	plugins, err := ioutil.ReadDir(plugindir)
-	if err != nil { pls.Logger.Panicln("Failed to read direction."); return err}
+	if err != nil { plm.Logger.Panicln("Failed to read direction."); return err}
 	
 	for _, plugindir := range plugins {
 		path:=fmt.Sprintf("%s/%s",plugins, plugindir.Name())
@@ -90,9 +100,9 @@ func (pls *PluginManager) loadPlugin() error {
 			continue
 		}
 
-		err := pls.initPlugin(path)
+		err := plm.initPlugin(path)
 		if err != nil {
-			pls.Logger.Printf("Failed to load plugin: %s", path) 
+			plm.Logger.Printf("Failed to load plugin: %s", path) 
 			continue
 		}
 	}	
@@ -100,13 +110,13 @@ func (pls *PluginManager) loadPlugin() error {
 }
 
 
-func (pls *PluginManager) initPlugin(path string) error {
+func (plm *PluginManager) initPlugin(path string) error {
 	pl, err := plugin.Open( path )
 	if err != nil { return err }
 	plug, err := pl.Lookup("Baka")
 	if err != nil { return err }
 	plugin := *plug.(*IPlugin)
-	// plugin.Start(pls, )
+	// plugin.Start(plm, )
 }
 
 
@@ -115,15 +125,50 @@ func (pls *PluginManager) initPlugin(path string) error {
 // 插件可以选择单例, 这样当一个handle return前, 不会有新handle产生.
 // 当同一插件的不同handle间想要通信时, 应使用指针方法.
 // 牺牲了插件编写的简洁性, 换来了一个莫名其妙但是或许有时候会派上用场的特性.
-func (pls *PluginManager) RegisterPlugin(singleton bool, block bool, priority int, name string, pksender chan packet.Packet, rule reflect.Type) {
+
+// 后来经过2401PT讲解才知道,这原来是一个很平常不过的方法啊
+func (plm *PluginManager) RegisterPlugin(singleton bool, block bool, priority int, name string, pksender chan packet.Packet, rule func(pk packet.Packet) bool) {
+	
 	pl := Plugin{
 		isInstantiate: false,
-		Singleton: singleton,
-		Block: block,
-		Priority: priority,
-		Name: name,
-		PacketSender: pksender,
+		singleton: singleton,
+		block: block,
+		priority: priority,
+		name: name,
+		
 		rule: rule,
 	}
-	pls.plugins = append(pls.plugins, pl)
+	plm.plugins = append(plm.plugins, pl)
 }
+
+// Channels that are registered can be losesd. Plugins need to care if the states of receivement from channels is true.
+// e.g. value, ok := plm.GetPacket()
+
+// It returns a memory address.
+
+func (plm *PluginManager) RegisterChan(regipl IPlugin, lifetime int) <-chan packet.Packet {
+	// regipl: 注册方
+	
+	receiver := make(chan packet.Packet)
+	for pl, ipl := range plm.plugins {
+		if ipl == regipl {
+			pl.regMu.RLock()
+			defer pl.regMu.RUnlock()
+			pl.packetReceivers = append(pl.packetReceivers, receiver)
+			return receiver
+		}
+	}
+	return nil // it shouldn't be returned
+}
+
+func (plm *PluginManager) SendPacket(pk packet.Packet) {
+	plm.conn.WritePacket(pk)
+}
+
+// // 装饰IPlugin的Start, 用于记录插件有多少个正在运行的routine
+// func (pl *Plugin) WaitGroupDecorator( fn func(manager PluginManager)) func(PluginManager){
+// 	return func (manager PluginManager)  {
+		
+// 		result := fn(manager)
+// 	}
+// }
