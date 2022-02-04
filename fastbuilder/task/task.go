@@ -142,11 +142,6 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 	}
 	fcfg := configuration.ConcatFullConfig(cfg, configuration.GlobalFullConfig().Delay())
 	dcfg := fcfg.Delay()
-	/*if cfg.Execute == "" {
-		return nil
-	}
-	Needless since it will be checked in function module.
-	*/
 	und, _ := uuid.NewUUID()
 	command.SendWSCommand("gamemode c", und, conn)
 	blockschannel := make(chan *types.Module, 10240)
@@ -198,7 +193,12 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 		isFastMode := false
 		if dcfg.DelayMode==types.DelayModeDiscrete||dcfg.DelayMode==types.DelayModeNone {
 			isFastMode=true
+		}else{
+			//isFastMode=false
+			command.SendWSCommand("gamemode c", und, conn)
+			command.SendWSCommand("gamerule sendcommandfeedback true", und, conn)
 		}
+		request:=command.AllocateRequestString()
 		for {
 			task.ContinueLock.Lock()
 			task.ContinueLock.Unlock()
@@ -221,32 +221,44 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 			if blkscounter%20 == 0 {
 				u_d, _ := uuid.NewUUID()
 				command.SendWSCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y,curblock.Point.Z),u_d, conn)
+				// SettingsCommand is unable to teleport the player.
 			}
 			blkscounter++
 			if !cfg.ExcludeCommands && curblock.CommandBlockData != nil {
 				if curblock.Block != nil {
-					request:=command.SetBlockRequest(curblock, cfg)
-					tuid, _ := uuid.NewUUID()
+					command.SetBlockRequest(request,curblock, cfg)
 					if !isFastMode {
-						wchan:=make(chan *packet.CommandOutput)
-						command.UUIDMap.Store(tuid.String(),wchan)
-						command.SendWSCommand(request,tuid, conn)
-						<-wchan
+						//<-time.After(time.Second)
+						wc:=make(chan bool)
+						command.BlockUpdateSubscribeMap.Store(protocol.BlockPos{int32(curblock.Point.X),int32(curblock.Point.Y),int32(curblock.Point.Z)},wc)
+						command.SendSizukanaCommand(*request,conn)
+						select {
+						case <-wc:
+							break
+						case <-time.After(time.Second*2):
+							command.BlockUpdateSubscribeMap.Delete(protocol.BlockPos{int32(curblock.Point.X),int32(curblock.Point.Y),int32(curblock.Point.Z)})
+						}
+						close(wc)
 					}else{
-						command.SendWSCommand(request,tuid, conn)
+						command.SendSizukanaCommand(*request,conn)
 					}
 				}
 				cbdata:=curblock.CommandBlockData
 				if(cfg.InvalidateCommands){
 					cbdata.Command="|"+cbdata.Command
 				}
-				u_d, _ := uuid.NewUUID()
 				if !isFastMode {
-					wchan:=make(chan *packet.CommandOutput)
-					command.UUIDMap.Store(u_d.String(),wchan)
-					command.SendWSCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y+1,curblock.Point.Z),u_d, conn)
-					<-wchan
-					close(wchan)
+					UUID:=uuid.New()
+					w:=make(chan *packet.CommandOutput)
+					command.UUIDMap.Store(UUID.String(), w)
+					command.SendWSCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y+1,curblock.Point.Z), UUID, conn)
+					select {
+					case <-time.After(time.Second):
+						command.UUIDMap.Delete(UUID.String())
+						break
+					case <-w:
+					}
+					close(w)
 				}
 				conn.WritePacket(&packet.CommandBlockUpdate {
 					Block: true,
@@ -260,19 +272,22 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 					TickDelay: cbdata.TickDelay,
 					ExecuteOnFirstTick: cbdata.ExecuteOnFirstTick,
 				})
-			}else if curblock.Block != nil || (curblock.CommandBlockData == nil&&curblock.Block != nil) {
-				request := command.SetBlockRequest(curblock, cfg)
-				err := command.SendSizukanaCommand(request, conn)
+			}else if curblock.ChestSlot != nil {
+				command.ReplaceItemRequest(request, curblock, cfg)
+				command.SendSizukanaCommand(*request, conn)
+			}else{
+				command.SetBlockRequest(request, curblock, cfg)
+				err := command.SendSizukanaCommand(*request, conn)
 				if err != nil {
 					panic(err)
 				}
-			}else if curblock.Entity != nil {
+			}/*else if curblock.Entity != nil {
 				//request := command.SummonRequest(curblock, cfg)
 				//err := command.SendSizukanaCommand(request, conn)
 				//if err != nil {
 				//	panic(err)
 				//}
-			}
+			}*/
 			if dcfg.DelayMode==types.DelayModeContinuous {
 				time.Sleep(time.Duration(dcfg.Delay) * time.Microsecond)
 			}else if dcfg.DelayMode==types.DelayModeDiscrete {
@@ -283,6 +298,7 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 				}
 			}
 		}
+		command.FreeRequestStringPtr(request)
 	} ()
 	go func() {
 		if task.Type==types.TaskTypeAsync {

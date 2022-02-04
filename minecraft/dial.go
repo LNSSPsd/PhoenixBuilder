@@ -1,30 +1,28 @@
 package minecraft
 
 import (
+	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
 	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
+	"path/filepath"
 	"encoding/base64"
 	"fmt"
-	"path/filepath"
-	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
-	"phoenixbuilder/minecraft/internal/resource"
-
 	"github.com/google/uuid"
 	"github.com/sandertv/go-raknet"
-
+	"phoenixbuilder/minecraft/internal/resource"
 	//"phoenixbuilder/minecraft/auth"
+	"phoenixbuilder/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol/login"
+	"phoenixbuilder/minecraft/protocol/packet"
 	"io/ioutil"
 	"log"
 	rand2 "math/rand"
 	"net"
 	"os"
-	"phoenixbuilder/minecraft/protocol"
-	"phoenixbuilder/minecraft/protocol/login"
-	"phoenixbuilder/minecraft/protocol/packet"
 	"strconv"
 	"strings"
 	"time"
@@ -51,9 +49,9 @@ type Dialer struct {
 	// Phoenix Token
 	Token string
 	// Phoenix Auth Client
-	Client     *fbauth.Client
+	Client *fbauth.Client
 	ServerCode string
-	Password   string
+	Password string
 
 	// PacketFunc is called whenever a packet is read from or written to the connection returned when using
 	// Dialer.Dial(). It includes packets that are otherwise covered in the connection sequence, such as the
@@ -117,25 +115,25 @@ func (d Dialer) DialTimeout(network, address string, timeout time.Duration) (*Co
 // If a connection is not established before the context passed is cancelled, DialContext returns an error.
 func (d Dialer) DialContext(ctx context.Context, network, address string) (conn *Conn, err error) {
 	key, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+
 	var chainData string
 	if d.ServerCode != "" {
 		data, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
 		pubKeyData := base64.StdEncoding.EncodeToString(data)
 		chainAddr, code, err := d.Client.Auth(d.ServerCode, d.Password, pubKeyData, d.Token, d.Version)
-		chainAndAddr := strings.Split(chainAddr, "|")
+		chainAndAddr := strings.Split(chainAddr,"|")
 		if err != nil {
-			if code == -3 {
+			if (code == -3) {
 				homedir, err := os.UserHomeDir()
 				if err != nil {
 					fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";")
-					homedir = "."
+					homedir="."
 				}
 				fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
 				os.MkdirAll(fbconfigdir, 0755)
-				token := filepath.Join(fbconfigdir, "fbtoken")
+				token := filepath.Join(fbconfigdir,"fbtoken")
 				os.Remove(token)
 			}
-
 			return nil, err
 		}
 		chainData = chainAndAddr[0]
@@ -155,8 +153,7 @@ func (d Dialer) DialContext(ctx context.Context, network, address string) (conn 
 		if err != nil {
 			break
 		}
-		address = addressWithPongPort(pong, address)
-		netConn, err = dialer.DialContext(ctx, address)
+		netConn, err = dialer.DialContext(ctx, addressWithPongPort(pong, address))
 	default:
 		// If not set to 'raknet', we fall back to the default net.Dial method to find a proper connection for
 		// the network passed.
@@ -186,15 +183,15 @@ func (d Dialer) DialContext(ctx context.Context, network, address string) (conn 
 		clearXBLIdentityData(&conn.identityData)
 		request = login.EncodeOffline(conn.identityData, conn.clientData, key)
 	} else {*/
-	// We login as an Android device and this will show up in the 'titleId' field in the JWT chain, which
-	// we can't edit. We just enforce Android data for logging in.
-	setAndroidData(&conn.clientData)
+		// We login as an Android device and this will show up in the 'titleId' field in the JWT chain, which
+		// we can't edit. We just enforce Android data for logging in.
+		setAndroidData(&conn.clientData)
 
-	request = login.Encode(chainData, conn.clientData, key)
-	identityData, _, _, _ := login.Parse(request)
-	// If we got the identity data from Minecraft auth, we need to make sure we set it in the Conn too, as
-	// we are not aware of the identity data ourselves yet.
-	conn.identityData = identityData
+		request = login.Encode(chainData, conn.clientData, key)
+		identityData, _, _, _ := login.Parse(request)
+		// If we got the identity data from Minecraft auth, we need to make sure we set it in the Conn too, as
+		// we are not aware of the identity data ourselves yet.
+		conn.identityData = identityData
 	//}
 	c := make(chan struct{})
 	go listenConn(conn, d.ErrorLog, c)

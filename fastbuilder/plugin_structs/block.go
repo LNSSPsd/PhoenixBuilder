@@ -5,13 +5,23 @@ type Entity string
 type Module struct {
 	Block  *Block
 	CommandBlockData *CommandBlockData
-	Entity *Entity
+	ChestData *ChestData
+	//Entity *Entity
 	Point  Position
+}
+
+type ChestData []ChestSlot
+
+type ChestSlot struct {
+	Name string
+	Count uint8
+	Damage uint16
+	Slot uint8
 }
 
 type Block struct {
 	Name *string
-	Data int16
+	Data uint16
 }
 
 type CommandBlockData struct {
@@ -28,7 +38,7 @@ type CommandBlockData struct {
 
 type ConstBlock struct {
 	Name string
-	Data int16
+	Data uint16
 }
 
 type DoubleModule struct {
@@ -38,10 +48,9 @@ type DoubleModule struct {
 	Entity          *Entity
 }
 
-
 var takenBlocks map[*ConstBlock]*Block = make(map[*ConstBlock]*Block)
 
-func CreateBlock(name string,data int16) *Block {
+func CreateBlock(name string,data uint16) *Block {
 	return &Block {
 		Name:&name,
 		Data:data,

@@ -15,13 +15,6 @@ type PluginBridgeImpl struct {
 	sessionConnection *minecraft.Conn
 }
 
-// unsafe!
-func (br *PluginBridgeImpl) WritePacket (pk packet.Packet) error {
-	return br.sessionConnection.WritePacket(pk)
-}
-
-
-
 func (*PluginBridgeImpl) ConvertFunctionChainItemList(list map[string]plugin_structs.FunctionChainItem) interface{} {
 	outmap:=make(map[string]*function.FunctionChainItem)
 	for key, val := range list {
@@ -51,7 +44,7 @@ func (*PluginBridgeImpl) RegisterBuilder(name string, function_cont func(config 
 						Data:curblock.Block.Data,
 					},
 					CommandBlockData: &convcbdata,
-					Entity: (*types.Entity)(curblock.Entity),
+					//Entity: (*types.Entity)(curblock.Entity),
 					Point: types.Position {
 						curblock.Point.X,
 						curblock.Point.Y,
@@ -148,4 +141,10 @@ func (br *PluginBridgeImpl) SendWSCommandCB(cmd string, cb func([]plugin_structs
 		arr[i]=plugin_structs.CommandOutputMessage(c)
 	}
 	cb(arr,unk)
+}
+
+var ChatEventListeners []func(string,string) = []func(string,string){}
+
+func (br *PluginBridgeImpl) SubscribeChat(cb func(string, string)) {
+	ChatEventListeners=append(ChatEventListeners, cb)
 }

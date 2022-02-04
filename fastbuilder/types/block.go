@@ -4,13 +4,21 @@ package types
 type Module struct {
 	Block  *Block
 	CommandBlockData *CommandBlockData
-	Entity *Entity
+	//Entity *Entity
+	ChestSlot *ChestSlot
 	Point  Position
+}
+
+type RuntimeModule struct {
+	BlockRuntimeId uint32 // The current total count of runtime ids didn't exceed 65536
+	CommandBlockData *CommandBlockData
+	ChestData *ChestData
+	Point Position
 }
 
 type Block struct {
 	Name *string
-	Data int16
+	Data uint16
 }
 
 type CommandBlockData struct {
@@ -25,9 +33,18 @@ type CommandBlockData struct {
 	NeedRedstone bool
 }
 
+type ChestData []ChestSlot
+
+type ChestSlot struct {
+	Name string
+	Count uint8
+	Damage uint16
+	Slot uint8
+}
+
 type ConstBlock struct {
 	Name string
-	Data int16
+	Data uint16
 }
 
 type DoubleModule struct {
@@ -39,7 +56,7 @@ type DoubleModule struct {
 
 var takenBlocks map[*ConstBlock]*Block = make(map[*ConstBlock]*Block)
 
-func CreateBlock(name string,data int16) *Block {
+func CreateBlock(name string,data uint16) *Block {
 	return &Block {
 		Name:&name,
 		Data:data,
@@ -52,7 +69,7 @@ func (req *ConstBlock) Take() *Block {
 		return block
 	}
 	block=&Block {
-		Name:&req.Name, //ConstBlock shouldn't be destroyed
+		Name:&req.Name, //ConstBlock won't be destroyed
 		Data:req.Data,
 	}
 	takenBlocks[req]=block

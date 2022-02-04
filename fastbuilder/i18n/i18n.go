@@ -134,7 +134,6 @@ const (
 	Auth_InvalidFBVersion //113
 	Notify_TurnOnCmdFeedBack
 	Notify_NeedOp
-	RestartAfter3Second
 )
 
 var LangDict map[string]map[uint16]string = map[string]map[uint16]string {

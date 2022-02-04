@@ -10,8 +10,10 @@ import (
 	fbtask "phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/builder"
 	"phoenixbuilder/minecraft"
-	"github.com/google/uuid"
+	//"github.com/google/uuid"
 	"phoenixbuilder/fastbuilder/i18n"
+	"phoenixbuilder/fastbuilder/world_provider"
+	"phoenixbuilder/dragonfly/server/block/cube"
 )
 
 
@@ -188,7 +190,7 @@ func InitInternalFunctions() {
 					if(I18n.HasTranslationFor(I18n.Get_Warning)) {
 						command.Tellraw(conn, I18n.T(I18n.Get_Warning))
 					}
-					command.SendCommand("gamerule sendcommandfeedback true",uuid.New(),conn)
+					command.SendSizukanaCommand("gamerule sendcommandfeedback true",conn)
 					command.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",configuration.RespondUser),configuration.ZeroId,conn)
 				},
 			},
@@ -198,7 +200,7 @@ func InitInternalFunctions() {
 					if(I18n.HasTranslationFor(I18n.Get_Warning)) {
 						command.Tellraw(conn, I18n.T(I18n.Get_Warning))
 					}
-					command.SendCommand("gamerule sendcommandfeedback true",uuid.New(),conn)
+					command.SendSizukanaCommand("gamerule sendcommandfeedback true",conn)
 					command.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",configuration.RespondUser),configuration.ZeroId,conn)
 				},
 			},
@@ -208,7 +210,7 @@ func InitInternalFunctions() {
 					if(I18n.HasTranslationFor(I18n.Get_Warning)) {
 						command.Tellraw(conn, I18n.T(I18n.Get_Warning))
 					}
-					command.SendCommand("gamerule sendcommandfeedback true",uuid.New(),conn)
+					command.SendSizukanaCommand("gamerule sendcommandfeedback true",conn)
 					command.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",configuration.RespondUser),configuration.OneId,conn)
 				},
 			},
@@ -403,6 +405,20 @@ func InitInternalFunctions() {
 				return
 			}
 			command.Tellraw(conn, fmt.Sprintf("%s, ID=%d.",I18n.T(I18n.TaskCreated),task.TaskId))
+		},
+	})
+	RegisterFunction(&Function {
+		Name: "test",
+		OwnedKeywords: []string {"test"},
+		FunctionType:FunctionTypeSimple,
+		SFMinSliceLen: 1,
+		FunctionContent: func(conn *minecraft.Conn,_ []interface{}) {
+			pos:=configuration.GlobalFullConfig().Main().Position
+			world_provider.NewWorld(conn)
+			blk:=world_provider.CurrentWorld.Block(cube.Pos{pos.X,pos.Y,pos.Z})
+			name, properties:=blk.EncodeBlock()
+			command.Tellraw(conn, fmt.Sprintf("Block ID: %s",name))
+			command.Tellraw(conn, fmt.Sprintf("NBT: %+v",properties))
 		},
 	})
 }

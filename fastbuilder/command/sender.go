@@ -6,9 +6,11 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"github.com/google/uuid"
 	"sync"
+	"fmt"
 )
 
 var UUIDMap sync.Map//= make(map[string]func(*minecraft.Conn,*[]protocol.CommandOutputMessage))
+var BlockUpdateSubscribeMap sync.Map
 
 func ClearUUIDMap() {
 	UUIDMap=sync.Map{}
@@ -63,5 +65,6 @@ func SendChat(content string, conn *minecraft.Conn) error {
 		SourceName: idd.DisplayName,
 		Message: content,
 		XUID: idd.XUID,
+		PlayerRuntimeID: fmt.Sprintf("%d",conn.GameData().EntityUniqueID),
 	})
 }
