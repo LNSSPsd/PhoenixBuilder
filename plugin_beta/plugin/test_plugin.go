@@ -1,7 +1,6 @@
 package test_plugin
 
 import (
-	"fmt"
 	"phoenixbuilder/minecraft/protocol/packet"
 	conn "phoenixbuilder/plugin_beta"
 )
