@@ -5,11 +5,13 @@ import (
 	"os"
 	"path/filepath"
 	"phoenixbuilder/minecraft"
+	"phoenixbuilder/minecraft/protocol/packet"
 	"sync"
 )
 
 
-func StartPluginSystem (conn *minecraft.Conn) *PluginManager{
+func StartPluginSystem (conn *minecraft.Conn) chan packet.Packet{
+	receiver := make(chan packet.Packet)
 	manager := PluginManager {
 		conn: conn,
 		Logger: &log.Logger{},
@@ -22,7 +24,11 @@ func StartPluginSystem (conn *minecraft.Conn) *PluginManager{
 	if err != nil {
 		manager.Logger.Println("Plugin system crashed")
 	}
-	return &manager
+	go func ()  {
+		manager.Notify(<-receiver)
+	}()
+	return receiver
+
 }
 
 

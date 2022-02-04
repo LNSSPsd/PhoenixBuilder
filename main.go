@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	plugin_beta "phoenixbuilder/plugin_beta"
 	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/fastbuilder/command"
@@ -244,6 +245,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	} ()
 	
 	plugin.StartPluginSystem(conn)
+	receiver := plugin_beta.StartPluginSystem(conn)
 
 	function.InitInternalFunctions()
 	fbtask.InitTaskStatusDisplay(conn)
@@ -323,10 +325,11 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		// Read a packet from the connection: ReadPacket returns an error if the connection is closed or if
 		// a read timeout is set. You will generally want to return or break if this happens.
 		pk, err := conn.ReadPacket()
+		
 		if err != nil {
 			panic(err)
 		}
-
+		receiver <- pk
 		switch p := pk.(type) {
 		case *packet.PyRpc:
 			//fmt.Printf("PyRpc!\n")

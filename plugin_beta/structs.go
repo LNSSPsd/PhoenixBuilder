@@ -56,8 +56,8 @@ type PluginManager struct {
 	plugins        map[IPlugin]*Plugin
 }
 
-
-func (plm *PluginManager) notify(pk packet.Packet) {
+// DON'T use it in your plugin
+func (plm *PluginManager) Notify(pk packet.Packet) {
 	
 	for iplugin, plugin := range plm.plugins {
 		for _, recv := range plugin.packetReceivers {
