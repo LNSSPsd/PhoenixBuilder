@@ -225,7 +225,7 @@ func MakeBannner(build string) *fyne.Container {
 		Right = container.NewGridWithColumns(3, DebugBtn, InformBtn, ThemeToggleBtn.Btn)
 	}
 	Banner = container.NewBorder(nil, &widget.Separator{},
-		widget.NewLabel("fastbuilder.fyne.gui (Alpha) "+build),
+		widget.NewLabel("FB.Gui (Alpha) "+build),
 		Right,
 		widget.NewLabel(""),
 	)
