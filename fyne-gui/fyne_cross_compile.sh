@@ -1,6 +1,6 @@
 ICON="-icon unbundled_assets/Icon.png"
 VERSION="-app-version 0.0.4"
-APPID=' -app-id "fastbuilder.fyne.gui"'
+APPID=' -app-id fastbuilder.fyne.gui'
 APPBUILD='-app-build 197'
 ARGS="$ICON $VERSION $APPID $APPBUILD"
 
