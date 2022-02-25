@@ -1,3 +1,5 @@
+// +build !fyne_gui
+
 #include "command.h"
 #include <stdint.h>
 #include <string.h>

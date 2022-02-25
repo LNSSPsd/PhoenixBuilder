@@ -9,7 +9,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/sandertv/go-raknet"
+	raknet "phoenixbuilder/go_raknet_1_9_1"
 	"phoenixbuilder/minecraft/internal"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/login"

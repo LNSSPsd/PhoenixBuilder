@@ -1,7 +1,7 @@
 package minecraft
 
 import (
-	"github.com/sandertv/go-raknet"
+	raknet "phoenixbuilder/go_raknet_1_9_1"
 	"net"
 	"strconv"
 	"sync"

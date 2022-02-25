@@ -1,3 +1,5 @@
+// +build !fyne_gui
+
 package command
 
 /*

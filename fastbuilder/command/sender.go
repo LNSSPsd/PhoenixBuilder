@@ -1,12 +1,14 @@
+// +build !fyne_gui
+
 package command
 
 import (
+	"fmt"
+	"github.com/google/uuid"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
-	"github.com/google/uuid"
 	"sync"
-	"fmt"
 )
 
 var UUIDMap sync.Map//= make(map[string]func(*minecraft.Conn,*[]protocol.CommandOutputMessage))

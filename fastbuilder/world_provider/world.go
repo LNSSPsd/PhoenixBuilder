@@ -1,12 +1,18 @@
 package world_provider
 
 import (
-	"phoenixbuilder/minecraft"
 	"phoenixbuilder/dragonfly/server/world"
+	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
 var CurrentWorld *world.World = nil
+
+// we let this function auto init when programme start
+// not init it in every session, nor explicit init it, pay attention please
+func init() {
+	InitRuntimeIdsWithoutMinecraftPrefix()
+}
 
 func Create(conn *minecraft.Conn) *world.World {
 	intw:=world.New(&StubLogger{},32)
@@ -26,6 +32,3 @@ func DestroyWorld() {
 	ChunkCache=nil
 }
 
-func Init() {
-	InitRuntimeIdsWithoutMinecraftPrefix()
-}

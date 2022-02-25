@@ -1,21 +1,24 @@
+// +build !fyne_gui
+
 package task
+
 import (
-	"phoenixbuilder/fastbuilder/types"
-	"phoenixbuilder/fastbuilder/parsing"
+	"fmt"
+	"github.com/google/uuid"
+	"go.uber.org/atomic"
 	"phoenixbuilder/fastbuilder/builder"
 	"phoenixbuilder/fastbuilder/command"
 	"phoenixbuilder/fastbuilder/configuration"
+	"phoenixbuilder/fastbuilder/i18n"
+	"phoenixbuilder/fastbuilder/parsing"
+	"phoenixbuilder/fastbuilder/types"
+	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
-	"phoenixbuilder/minecraft"
-	"phoenixbuilder/fastbuilder/i18n"
-	"go.uber.org/atomic"
-	"sync"
-	"fmt"
-	"time"
 	"runtime"
 	"strings"
-	"github.com/google/uuid"
+	"sync"
+	"time"
 )
 
 const (

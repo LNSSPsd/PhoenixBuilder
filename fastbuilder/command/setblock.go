@@ -1,3 +1,5 @@
+// +build !fyne_gui
+
 package command
 
 // extern void SetBlockRequestInternal(void *preallocatedStr, int x, int y, int z, const char *blockName, unsigned short data, const char *method);

@@ -77,3 +77,5 @@ rust/
 *.pyc
 *.pyo
 private/
+.DS_Store
+fyne-gui/tmp_workspace

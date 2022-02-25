@@ -3,13 +3,13 @@ package world
 import (
 	"context"
 	"fmt"
+	"github.com/go-gl/mathgl/mgl64"
+	"go.uber.org/atomic"
+	"math/rand"
 	"phoenixbuilder/dragonfly/server/block/cube"
 	"phoenixbuilder/dragonfly/server/entity/physics"
 	"phoenixbuilder/dragonfly/server/internal"
 	"phoenixbuilder/dragonfly/server/world/chunk"
-	"github.com/go-gl/mathgl/mgl64"
-	"go.uber.org/atomic"
-	"math/rand"
 	"sync"
 	"time"
 )
@@ -1614,7 +1614,7 @@ func (w *World) chunk(pos ChunkPos) (*chunkData, error) {
 
 		c.Unlock()
 		w.chunkMu.Lock()
-		w.calculateLight(c.Chunk, pos)
+		//w.calculateLight(c.Chunk, pos)
 	}
 	w.lastChunk, w.lastPos = c, pos
 	w.chunkMu.Unlock()

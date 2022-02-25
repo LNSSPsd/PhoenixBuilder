@@ -1,3 +1,5 @@
+// +build !fyne_gui
+
 #pragma once
 #include "_cgo_export.h"
 
