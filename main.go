@@ -265,7 +265,8 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		nbtconstructor.InitNBTConstructor()
 	}
 	fbtask.InitTaskStatusDisplay(conn)
-	world_provider.Init()
+	// see fastbuiler/world provider/world line 11, sorry for that
+	//world_provider.init()
 	move.ConnectTime=conn.GameData().ConnectTime
 	move.Position=conn.GameData().PlayerPosition
 	move.Pitch=conn.GameData().Pitch
