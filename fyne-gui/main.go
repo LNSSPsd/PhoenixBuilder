@@ -67,7 +67,7 @@ func main() {
 
 	go func() {
 		// popup a network permission dialog
-		http.Get("http://captive.apple.com")
+		http.Get("1.1.1.1")
 	}()
 
 	appTheme = my_theme.NewTheme()
