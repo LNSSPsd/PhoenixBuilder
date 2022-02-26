@@ -2,13 +2,13 @@ package main
 
 import (
 	"io/fs"
-	"net/http"
 	bridge_write_path "phoenixbuilder/fastbuilder/bdump/path"
 	bridge_read_path "phoenixbuilder/fastbuilder/builder/path"
 	"phoenixbuilder_fyne_gui/gui/assets"
 	"phoenixbuilder_fyne_gui/gui/global"
 	"phoenixbuilder_fyne_gui/gui/profiles"
 	my_theme "phoenixbuilder_fyne_gui/gui/theme"
+	"phoenixbuilder_fyne_gui/network_popup"
 
 	"fyne.io/fyne/v2/storage"
 
@@ -65,10 +65,12 @@ func main() {
 	appStorage := app.Storage()
 	//appStorage.Create("config.yaml")
 
-	go func() {
-		// popup a network permission dialog
-		http.Get("1.1.1.1")
-	}()
+	network_popup.PopupNetwork()
+
+	//go func() {
+	//	// popup a network permission dialog
+	//	http.Get("1.1.1.1")
+	//}()
 
 	appTheme = my_theme.NewTheme()
 	setThemeChineseFont(appTheme)
