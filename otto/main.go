@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/robertkrimen/otto"
+	"io/ioutil"
+	"os"
 )
 
 type Runnable interface {
@@ -14,29 +16,30 @@ type Runnable interface {
 type OttoKeeper interface {
 	// try to compile script and then insert host(golang) func
 	LoadNewScript(script string,name string) (Runnable,error)
-	// actually is a pack of vm.Set, but each Runnable will be automatically set this
-	SetHostEnv(name string, ottoValue interface{})
+	// actually is a pack of VM.Set, but each Runnable will be automatically set this
+	SetInitFn(func(vm *otto.Otto,name string))
 }
 
 type RunnableAlpha struct {
-	name string
-	vm *otto.Otto
-	compiledScript string
+	Name string
+	VM             *otto.Otto
+	Script string
+	OnResultCallback func(Result string,err error)
 }
 
 func (runnable *RunnableAlpha) Run() (string,error) {
-	finalVal, err := runnable.vm.Run(runnable.compiledScript)
+	finalVal, err := runnable.VM.Run(runnable.Script)
 	Errorf:=func(fmtStr string,a ...interface{}) error {
-		return fmt.Errorf("JS-Script(%v): "+fmtStr,runnable.name,a)
+		return fmt.Errorf("JS-Script(%v): "+fmtStr,runnable.Name,a)
 	}
 	if err != nil {
 		return "", Errorf("Runtime Error (%v)",err)
 	}else{
-		err := runnable.vm.Set("finalVal", finalVal)
+		err := runnable.VM.Set("finalVal", finalVal)
 		if err != nil {
 			return "", Errorf("cannot set final result (%v)",err)
 		}
-		jsonResult, err :=runnable.vm.Run("JSON.stringify(finalVal)")
+		jsonResult, err :=runnable.VM.Run("JSON.stringify(finalVal)")
 		if err != nil {
 			return "", Errorf("cannot stringify final result (%v)",err)
 		}
@@ -48,15 +51,69 @@ func (runnable *RunnableAlpha) Run() (string,error) {
 	}
 }
 
-type OttoKeeperAlpha struct {
-
+func (Runnable *RunnableAlpha) RunInRoutine(){
+	go func() {
+		result, err := Runnable.Run()
+		if err != nil {
+			Runnable.OnResultCallback("",fmt.Errorf("RuntimeError"))
+		}else{
+			Runnable.OnResultCallback(result,err)
+		}
+	}()
 }
 
-func LoadNewScript(script string,name string) (Runnable,error){
+type OttoKeeperAlpha struct {
+	initFn func(vm *otto.Otto,name string)
+}
 
+func (oa *OttoKeeperAlpha)LoadNewScript(script string,name string) Runnable {
+	vm:=otto.New()
+	oa.initFn(vm,name)
+	return &RunnableAlpha{Name: name,VM: vm,Script:script,OnResultCallback: func(Result string, err error) {}}
+}
+
+func MakeWaitConnect() (func(),func(call otto.FunctionCall) otto.Value){
+	initC:=make(chan struct{})
+	return func() {
+		close(initC)
+	},
+	func(call otto.FunctionCall) otto.Value {
+		<-initC
+		return otto.Value{}
+	}
+}
+
+func MakeGeneralUserInput()(chan string,func(fbCmd otto.FunctionCall) otto.Value){
+	cmdChan:=make(chan string)
+	return cmdChan, func(call otto.FunctionCall) otto.Value {
+		fbCmd, _ := call.Argument(0).ToString()
+		cmdChan<-fbCmd
+		return otto.Value{}
+	}
 }
 
 func main() {
-
+	ottoHostWaitConnect,ottoVMWaitConnect:=MakeWaitConnect()
+	initFn:=func(vm *otto.Otto,name string) {
+		err := vm.Set("FB_WaitConnect", ottoVMWaitConnect)
+		if err!=nil{
+			panic(err)
+		}
+	}
+	ottoKeeper:=&OttoKeeperAlpha{initFn}
+	file, err := os.OpenFile("in.js",os.O_RDONLY,0755)
+	if err != nil {
+		panic(err)
+	}
+	all, err := ioutil.ReadAll(file)
+	if err != nil {
+		panic(err)
+	}
+	script := ottoKeeper.LoadNewScript(string(all), "测试脚本")
+ 	finalResult, err :=script.Run()
+	 if err!=nil{
+		 panic(err)
+	 }
+	 fmt.Println(finalResult)
 }
 
