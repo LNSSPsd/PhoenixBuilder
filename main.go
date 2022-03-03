@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -32,6 +34,7 @@ import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/ottoVM"
 	"runtime"
 	"runtime/debug"
 	"strings"
@@ -152,6 +155,22 @@ func runShellClient(token string, version string) {
 }
 
 func runClient(token string, version string, code string, serverPasswd string) {
+	vmHostBridge:=&ottoVM.HostBridge{}
+	vmHostBridge.Init(true)
+	vmHostBridge.HostQueryExpose= map[string]func() string{
+		"user_name": func() string {
+			return configuration.RespondUser
+		},
+		"sha_token": func() string {
+			h := sha256.New()
+			h.Write([]byte(configuration.UserToken))
+			return base64.RawStdEncoding.EncodeToString(h.Sum(nil))
+		},
+	}
+	ottoKeeper:=&ottoVM.OttoKeeperAlpha{}
+	ottoKeeper.SetInitFn(vmHostBridge.GetVMInitFn())
+	runScript(args.StartupScript(),ottoKeeper)
+
 	worldchatchannel:=make(chan []string)
 	client := fbauth.CreateClient(worldchatchannel)
 	if token[0] == '{' {
@@ -212,6 +231,23 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		bridgeConn=conn
 		bridgeInitFinished()
 	}
+
+	// ottoVM
+	vmHostBridge.HostSetSendCmdFunc(func(mcCmd string, waitResponse bool) *packet.CommandOutput {
+		ud,_:=uuid.NewUUID()
+		chann:=make(chan *packet.CommandOutput)
+		if waitResponse{command.UUIDMap.Store(ud.String(), chann)}
+		command.SendCommand(mcCmd, ud, conn)
+		if waitResponse{
+			resp:=<-chann
+			return resp
+		}else {
+			return nil
+		}
+	})
+	vmHostBridge.HostConnectEstablished()
+	defer vmHostBridge.HostConnectTerminate()
+
 	pterm.Println(pterm.Yellow(I18n.T(I18n.ConnectionEstablished)))
 	user := client.ShouldRespondUser()
 	configuration.RespondUser=user
@@ -283,10 +319,11 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	go func() {
 		logger,closeFn :=makeLogFile()
 		defer closeFn()
-		reader:=bufio.NewReader(os.Stdin)
+		//reader:=bufio.NewReader(os.Stdin)
 		for {
 			//cmd, _:=getInput()
-			inp, _ := reader.ReadString('\n')
+			//inp, _ := reader.ReadString('\n')
+			inp:=vmHostBridge.HostUser2FBInputHijack()
 			logger.Println(inp)
 			cmd:=strings.TrimRight(inp,"\r\n")
 			if len(cmd) == 0 {
@@ -318,6 +355,12 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				command.Tellraw(conn, "[ench] command \"simpleconstruct <nbt_json>\" or       ")
 				command.Tellraw(conn, "[ench] \"construct <filename>\" instead.               ")
 				continue
+			}
+			if strings.HasPrefix(cmd,"script"){
+				cmdArgs:=strings.Split(cmd," ")
+				if len(cmdArgs)>1 {
+					runScript(cmdArgs[1], ottoKeeper)
+				}
 			}
 			if cmd=="move" {
 				go func() {
@@ -367,6 +410,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		// Read a packet from the connection: ReadPacket returns an error if the connection is closed or if
 		// a read timeout is set. You will generally want to return or break if this happens.
 		pk, err := conn.ReadPacket()
+		vmHostBridge.HostPumpMcPacket(pk)
 		if err != nil {
 			panic(err)
 		}
@@ -594,6 +638,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			}
 		}
 	}
+
 }
 
 func runDebugClient() {
@@ -772,4 +817,24 @@ func makeLogFile() (*log.Logger,func()) {
 		return log.New(os.Stdout,"",log.Ldate|log.Ltime), func() {}
 	}
 	return log.New(logFile, "", log.Ldate|log.Ltime), func() {logFile.Close()}
+}
+
+func runScript(scriptPath string,ottoKeeper ottoVM.OttoKeeper){
+	scriptPath=strings.TrimSpace(scriptPath)
+	if scriptPath!=""{
+		fmt.Println("load script: "+scriptPath)
+		_,fileName:=path.Split(scriptPath)
+		file, err := os.OpenFile(scriptPath,os.O_RDONLY,0755)
+		if err != nil {
+			fmt.Println(err)
+		}
+		all, err := ioutil.ReadAll(file)
+		if err != nil {
+			fmt.Println(err)
+		}
+		script := ottoKeeper.LoadNewScript(string(all), fileName)
+		script.RunInRoutine(func(Result string, err error) {
+			fmt.Printf("Script[%v]\nerr=%v\nresult=%v\n",fileName,err,Result)
+		})
+	}
 }
