@@ -14,6 +14,7 @@ char args_muteWorldChat=0;
 char args_noPyRpc=0;
 char args_noNBT=0;
 char use_startup_script=0;
+char *startup_script;
 
 void print_help(const char *self_name) {
 	printf("%s [options]\n",self_name);
