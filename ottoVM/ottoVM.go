@@ -88,6 +88,7 @@ func (runnable *RunnableAlpha) GetName() string{
 
 type OttoKeeperAlpha struct {
 	initFn func(r Runnable)
+	AllVms []*RunnableAlpha
 }
 
 func (oa *OttoKeeperAlpha)LoadNewScript(script string,name string) Runnable {
@@ -95,6 +96,10 @@ func (oa *OttoKeeperAlpha)LoadNewScript(script string,name string) Runnable {
 	vm:=otto.New()
 	ra:=&RunnableAlpha{Name: name,VM: vm,Script:script}
 	oa.initFn(ra)
+	if oa.AllVms==nil{
+		oa.AllVms=make([]*RunnableAlpha,0)
+	}
+	oa.AllVms=append(oa.AllVms,ra)
 	return ra
 }
 

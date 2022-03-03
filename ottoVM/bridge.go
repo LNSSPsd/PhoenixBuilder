@@ -66,6 +66,11 @@ func (hb *HostBridge) Init(isCli bool)  {
 	hb.HostQueryExpose= map[string]func() string{}
 }
 
+func (hb *HostBridge)RemoveAllCallbacks(){
+	hb.vmCbsCount= map[uint32]uint64{}
+	hb.vmCbs= map[uint32]map[uint64]func(packet.Packet){}
+}
+
 func (hb *HostBridge)GetVMInitFn() func(r Runnable) {
 	initFn:=func(r Runnable) {
 		vm:=r.GetVM()

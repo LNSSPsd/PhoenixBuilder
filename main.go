@@ -362,6 +362,22 @@ func runClient(token string, version string, code string, serverPasswd string) {
 					runScript(cmdArgs[1], ottoKeeper)
 				}
 			}
+			if strings.HasPrefix(cmd,"reload"){
+				vmHostBridge.RemoveAllCallbacks()
+				for _,vm :=range ottoKeeper.AllVms{
+					go func() {
+						vm.VM.Interrupt <- func() {
+							panic(fmt.Errorf("Reload"))
+						}
+						fmt.Println("Script "+vm.Name+"Killed")
+					}()
+				}
+				ottoKeeper.AllVms=make([]*ottoVM.RunnableAlpha,0)
+				cmdArgs:=strings.Split(cmd," ")
+				if len(cmdArgs)>1 {
+					runScript(cmdArgs[1], ottoKeeper)
+				}
+			}
 			if cmd=="move" {
 				go func() {
 					/*var counter int=0
