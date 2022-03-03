@@ -1,21 +1,23 @@
 package task
+
 import (
-	"phoenixbuilder/fastbuilder/types"
-	"phoenixbuilder/fastbuilder/parsing"
+	"fmt"
+	"github.com/google/uuid"
+	"go.uber.org/atomic"
+	"phoenixbuilder/bridge/bridge_fmt"
 	"phoenixbuilder/fastbuilder/builder"
 	"phoenixbuilder/fastbuilder/command"
 	"phoenixbuilder/fastbuilder/configuration"
+	"phoenixbuilder/fastbuilder/i18n"
+	"phoenixbuilder/fastbuilder/parsing"
+	"phoenixbuilder/fastbuilder/types"
+	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
-	"phoenixbuilder/minecraft"
-	"phoenixbuilder/fastbuilder/i18n"
-	"go.uber.org/atomic"
-	"sync"
-	"fmt"
-	"time"
 	"runtime"
 	"strings"
-	"github.com/google/uuid"
+	"sync"
+	"time"
 )
 
 const (
@@ -177,8 +179,20 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 				Total: total,
 				BeginTime: t1,
 			}
+			skipBlocks:=int(cfg.ResumeFrom*float64(task.AsyncInfo.Total)/100.0)
+			skipBlocks-=10
+			if skipBlocks<=0{
+				skipBlocks=0
+			}else{
+				if skipBlocks>task.AsyncInfo.Total{
+					skipBlocks=task.AsyncInfo.Total
+				}
+				bridge_fmt.Printf(I18n.T(I18n.Task_ResumeBuildFrom)+"\n",skipBlocks)
+			}
 			for _, blk := range blocks {
-				blockschannel <- blk
+				if task.AsyncInfo.Built>skipBlocks{
+					blockschannel <- blk
+				}
 				task.AsyncInfo.Built++
 			}
 			close(blockschannel)
@@ -187,6 +201,10 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 		task.State=TaskStateRunning
 	}
 	go func() {
+		isWindows:=false
+		if runtime.GOOS == "windows" {
+			isWindows=true
+		}
 		t1 := time.Now()
 		blkscounter := 0
 		tothresholdcounter := 0
@@ -289,7 +307,12 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 				//}
 			}*/
 			if dcfg.DelayMode==types.DelayModeContinuous {
-				time.Sleep(time.Duration(dcfg.Delay) * time.Microsecond)
+				if isWindows{
+					// the timer in windows is not the same as that in other system
+					time.Sleep(time.Duration(dcfg.Delay/10) * time.Microsecond)
+				}else{
+					time.Sleep(time.Duration(dcfg.Delay) * time.Microsecond)
+				}
 			}else if dcfg.DelayMode==types.DelayModeDiscrete {
 				tothresholdcounter++
 				if tothresholdcounter>=dcfg.DelayThreshold {
@@ -345,11 +368,13 @@ func InitTaskStatusDisplay(conn *minecraft.Conn) {
 			TaskMap.Range(func (_tid interface{}, _v interface{}) bool {
 				tid, _:=_tid.(int64)
 				v, _:=_v.(*Task)
+
 				addstr:=fmt.Sprintf("Task ID %d - %s - %s [%s]",tid,v.Config.Main().Execute,GetStateDesc(v.State),types.MakeTaskType(v.Type))
 				if v.Type==types.TaskTypeAsync && v.State == TaskStateRunning {
 					addstr=fmt.Sprintf("%s\nProgress: %s",addstr,ProgressThemes[0](&v.AsyncInfo))
 				}
 				displayStrs=append(displayStrs,addstr)
+				command.AdditionalTitleCb(addstr)
 				return true
 			})
 			displayStrs=append(displayStrs, ExtraDisplayStrings...)

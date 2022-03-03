@@ -77,4 +77,5 @@ rust/
 *.pyc
 *.pyo
 private/
+android_pack
 .DS_Store

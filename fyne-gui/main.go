@@ -2,12 +2,12 @@ package main
 
 import (
 	"io/fs"
+	"phoenixbuilder/fastbuilder/args"
 	bridge_write_path "phoenixbuilder/fastbuilder/bdump/path"
 	bridge_read_path "phoenixbuilder/fastbuilder/builder/path"
 	"phoenixbuilder_fyne_gui/gui/assets"
 	"phoenixbuilder_fyne_gui/gui/global"
 	"phoenixbuilder_fyne_gui/gui/profiles"
-	"phoenixbuilder/fastbuilder/args"
 	my_theme "phoenixbuilder_fyne_gui/gui/theme"
 	"phoenixbuilder_fyne_gui/platform_helper"
 
@@ -23,6 +23,8 @@ var topWindow fyne.Window
 var appTheme *my_theme.MyTheme
 
 func main() {
+	args.ParseArgs()
+	//args.SetShouldDisableHashCheck()
 	bridge_write_path.CreateFile = func(p string) (bridge_write_path.FileWriter, error) {
 		uri, err := storage.ParseURI(p)
 		if err != nil {
@@ -62,7 +64,7 @@ func main() {
 		return file, nil
 	}
 
-	app := app.NewWithID("fastbuilder.fyne.gui")
+	app := app.NewWithID("pro.fastbuilder.app")
 	appStorage := app.Storage()
 	//appStorage.Create("config.yaml")
 
@@ -73,18 +75,10 @@ func main() {
 	appTheme.SetLight()
 	app.Settings().SetTheme(appTheme)
 
-	topWindow = app.NewWindow("fastbuilder.fyne.gui")
+	topWindow = app.NewWindow("PhoenixBuilder")
 	icon := canvas.NewImageFromResource(assets.ResourceIconPng)
 	icon.FillMode = canvas.ImageFillContain
 	app.SetIcon(icon.Resource)
-	//iconRes, err := utils.LoadFromAssets("Icon", "Icon.png")
-	//if err == nil {
-	//	icon := canvas.NewImageFromResource(iconRes)
-	//	icon.FillMode = canvas.ImageFillContain
-	//	app.SetIcon(icon.Resource)
-	//} else {
-	//	dialog.ShowError(fmt.Errorf("无法加载图标：\n\n%v", err), topWindow)
-	//}
 	topWindow.SetMaster()
 
 	majorContent := container.NewMax()
@@ -101,11 +95,13 @@ func main() {
 		majorContent.Refresh()
 	}
 
-	global.MakeThemeToggleBtn(app, appTheme)
-	global.MakeInformPopButton(topWindow)
+	global.MakeBannerAndSettings(args.GetFBVersion(),app,topWindow,setContent,getContent)
+
+	//global.MakeThemeToggleBtn(app, appTheme)
+	//global.MakeInformPopButton(topWindow)
 	// global.MakeDebugButton(app, setContent, getContent)
-	global.MakeReadMePopupButton(topWindow)
-	global.MakeBannner(args.GetFBVersion())
+	//global.MakeReadMePopupButton(topWindow)
+	//global.MakeBanner(args.GetFBVersion())
 
 	//vsplit := container.NewVSplit(debugContent, majorContent)
 	//vsplit.Offset = 0.05

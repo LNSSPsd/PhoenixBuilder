@@ -59,6 +59,7 @@ func (g *GUI) makeForm(config *SessionConfigWithName) fyne.CanvasObject {
 	}
 
 	fbPasswordEntry := widget.NewEntryWithData(binding.BindString(&config.Config.FBPassword))
+	fbPasswordEntry.Password = true
 	fbPasswordEntry.OnChanged = func(s string) {
 		config.Config.FBPassword = s
 	}
@@ -86,6 +87,7 @@ func (g *GUI) makeForm(config *SessionConfigWithName) fyne.CanvasObject {
 	}
 	serverPasswdEntry := widget.NewEntryWithData(binding.BindString(&config.Config.ServerPasswd))
 	serverPasswdEntry.PlaceHolder = "(没有密码就留空)"
+	serverPasswdEntry.Password = true
 	languageSelector := widget.NewRadioGroup([]string{"中文", "English"}, func(lang string) {
 		if lang == "中文" {
 			config.Config.Lang = "zh_CN"
@@ -110,7 +112,7 @@ func (g *GUI) makeForm(config *SessionConfigWithName) fyne.CanvasObject {
 
 	var developerOptions fyne.CanvasObject
 	if !config.Config.IsDeveloper() {
-		developerOptions = widget.NewLabel("你不是开发者，无法设置这些选项")
+		developerOptions = widget.NewLabel("请在源码中启用")
 	} else {
 		developerOptions = container.NewVBox(
 			widget.NewCheckWithData("NoPyRPC", binding.BindBool(&config.Config.NoPyRPC)),

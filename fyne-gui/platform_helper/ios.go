@@ -2,9 +2,23 @@
 
 package platform_helper
 
-// void NetworkRequest();
+/*
+#cgo CFLAGS: -fobjc-arc
+
+void NetworkRequest();
+void playBackgroundMusic();
+void stopBackgroundMusic();
+*/
 import "C"
 
 func DoNetworkRequest() {
 	C.NetworkRequest()
+}
+
+func RunBackground() {
+	C.playBackgroundMusic()
+}
+
+func StopBackground() {
+	C.stopBackgroundMusic()
 }
