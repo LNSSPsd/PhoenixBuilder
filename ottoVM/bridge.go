@@ -82,6 +82,8 @@ func (hb *HostBridge)GetVMInitFn() func(r Runnable) {
 		}
 		// common functions
 		addTimeOut(vm)
+		// add websocket function!
+		addWebsocket(vm)
 
 		// function FB_WaitConnect() None
 		if err := vm.Set("FB_WaitConnect",

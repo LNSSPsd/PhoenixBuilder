@@ -6,6 +6,7 @@
   - 租赁服菜单
   - 登录登出
   - 聊天信息记录 
+  - 群服互通
 
 的实现不需要再修改fb的程序了，而可以简单的通过加载js脚本实现
 
@@ -72,7 +73,8 @@ function FB_ReadFile(fileName string) string
 // websocket 连接
 // sendMessage 实现为 func(string) 可以用来主动发送数据
 // onMessage在收到数据时会被调用
-function websocketConnectV1(serverAddress string,onMessage func(string)) sendMessage
+// 注意，无论是收还是发，都只接受text(string)类型的数据
+function FB_websocketConnectV1(serverAddress string,onMessage func(string)) sendMessage
 
 // 很遗憾，otto 只是js解释器，而没有 eventloop，我们必须自己实现一些常用功能
 FB_setTimeout(function,delayInMillionSecond int)
@@ -229,10 +231,131 @@ FB_WaitConnect()
 LogString("成功连接到 MC")
 ```
 
-## 其他
+- example04.js
+  本脚本演示了websocket功能   
+  假设一台webscoket 服务器运行在地址 ws://localhost:8888/ws_test 上   
+  我们现在要与其通信
 
 ```
-// PacketType 可用值:
+// 当接收到新消息时，这个函数会被调用
+function onNewMessage(newMessage) {
+    FB_Println(newMessage)
+}
+
+// 连接到 ws://localhost:8888/ws_test 上
+sendFn=FB_websocketConnectV1("ws://localhost:8888/ws_test",onNewMessage)
+
+// 使用返回的发送函数向服务器发送消息
+sendFn("hello ws!")
+```
+
+## 其他
+以下内容会被自动插入到用户脚本的开头
+```
+function FB_GeneralCmd(fbCmd){
+    r=_FB_GeneralCmd(fbCmd)
+    if(r instanceof Error){
+        throw r
+    }
+    return r
+}
+
+function FB_SendMCCmd(mcCmd){
+    r=_FB_SendMCCmd(mcCmd)
+    if(r instanceof Error){
+        throw r
+    }
+    return r
+}
+
+function FB_SendMCCmdAndGetResult(mcCmd){
+    r=_FB_SendMCCmdAndGetResult(mcCmd)
+    if(r instanceof Error){
+        throw r
+    }
+    return JSON.parse(r)
+}
+
+function FB_RequireUserInput(hint){
+    r=_FB_RequireUserInput(hint)
+    if(r instanceof Error){
+        throw r
+    }
+    return r
+}
+
+function FB_Println(msg){
+    r=_FB_Println(msg)
+    if(r instanceof Error){
+        throw r
+    }
+    return r
+}
+
+function FB_RegPackCallBack(packetType,callBackFn){
+    r=_FB_RegPackCallBack(packetType,function (jsonPacket) {
+        // console.log(jsonPacket)
+        callBackFn(JSON.parse(jsonPacket))
+    })
+    if (r instanceof Error){
+        throw r
+    }
+    return r
+}
+
+// 订阅聊天信息
+// 实际上只是对 golang 函数 _FB_RegPackCallBack 的重新利用
+function FB_RegChat(callBackFn){
+    r=_FB_RegPackCallBack("IDText",function (jsonPacket) {
+        chatMsg=JSON.parse(jsonPacket)
+        SourceName=chatMsg["SourceName"]
+        Message=chatMsg["Message"]
+        callBackFn(SourceName,Message)
+    })
+    if (r instanceof Error){
+        throw r
+    }
+    return r
+}
+
+function FB_Query(info){
+    r=_FB_Query(info)
+    if (r instanceof Error){
+        throw r
+    }
+    return r
+}
+
+function FB_SaveFile(fileName,data){
+    if (_FB_SaveFile(fileName,data) instanceof Error){
+        throw r
+    }
+}
+
+function FB_ReadFile(fileName){
+    r=_FB_ReadFile(fileName)
+    if (r instanceof Error){
+        throw r
+    }
+    return r
+}
+
+function FB_websocketConnectV1(serverAddress,onMessage) {
+    r=_websocketConnectV1(serverAddress,function (newMessage) {
+        if(newMessage instanceof Error){
+            throw newMessage
+        }
+        onMessage(newMessage)
+    })
+    if(r instanceof Error){
+        throw r
+    }
+    return r
+}
+```
+PacketType 可用值:
+```
+
 "IDLogin"
 "IDPlayStatus"
 "IDServerToClientHandshake"

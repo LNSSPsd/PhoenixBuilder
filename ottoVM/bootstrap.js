@@ -85,3 +85,16 @@ function FB_ReadFile(fileName){
     }
     return r
 }
+
+function FB_websocketConnectV1(serverAddress,onMessage) {
+    r=_websocketConnectV1(serverAddress,function (newMessage) {
+        if(newMessage instanceof Error){
+            throw newMessage
+        }
+        onMessage(newMessage)
+    })
+    if(r instanceof Error){
+        throw r
+    }
+    return r
+}
