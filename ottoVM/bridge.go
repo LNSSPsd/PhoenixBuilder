@@ -100,6 +100,20 @@ func (hb *HostBridge)GetVMInitFn() func(r Runnable) {
 			},
 		); err!=nil{fmt.Println(err)}
 
+		// function FB_WaitConnectAsync(onConnectFn func()) None
+		if err := vm.Set("_FB_WaitConnectAsync",
+			func(call otto.FunctionCall) otto.Value {
+				if !call.Argument(0).IsFunction(){
+					return FBcallError("FB_WaitConnectAsync","onConnectFn is not a callback fn")
+				}
+				go func() {
+					hb.vmWaitConnect(name)
+					call.Argument(0).Call(otto.UndefinedValue())
+				}()
+				return otto.Value{}
+			},
+		); err!=nil{fmt.Println(err)}
+
 
 		// function FB_GeneralCmd(fbCmd string) None
 		if err := vm.Set("_FB_GeneralCmd",
@@ -154,6 +168,34 @@ func (hb *HostBridge)GetVMInitFn() func(r Runnable) {
 			},
 		); err!=nil{fmt.Println(err)}
 
+		// function FB_SendMCCmdAndGetResultAsync(mcCmd string, onResult func(map[string]interface{}))
+		if err := vm.Set(
+			"_FB_SendMCCmdAndGetResultAsync",
+			func(call otto.FunctionCall) otto.Value {
+				if len(call.ArgumentList)<1|| call.ArgumentList[0].IsUndefined(){
+					return FBcallError("FB_SendMCCmdAndGetResultAsync","no argument mcCmd provided!")
+				}
+				if !hb.isConnect{
+					return FBDisconnetedError("FB_SendMCCmdAndGetResult")
+				}
+				if !call.Argument(1).IsFunction(){
+					return FBcallError("FB_SendMCCmdAndGetResultAsync","onResult is not a callback fn")
+				}
+				mcCmd,_:=call.Argument(0).ToString()
+				go func() {
+					cmd_output:=hb.vmMcCmd(mcCmd,true)
+					strObj, _ :=json.Marshal(cmd_output)
+					jsObj,err:= otto.ToValue(string(strObj))
+					if err==nil{
+						call.Argument(1).Call(otto.UndefinedValue(),jsObj)
+					}else{
+						call.Argument(1).Call(otto.UndefinedValue(),FBReturnError("FB_SendMCCmdAndGetResult",err.Error()))
+					}
+				}()
+				return otto.Value{}
+			},
+		); err!=nil{fmt.Println(err)}
+
 		// function FB_RequireUserInput(hint string) string
 		if err := vm.Set(
 			"_FB_RequireUserInput",
@@ -167,6 +209,29 @@ func (hb *HostBridge)GetVMInitFn() func(r Runnable) {
 					return val
 				}
 				return FBReturnError("FB_RequireUserInput",err.Error())
+			},
+		); err!=nil{fmt.Println(err)}
+
+		// function FB_RequireUserInputAsync(hint string, onInput(string))
+		if err := vm.Set(
+			"_FB_RequireUserInputAsync",
+			func(call otto.FunctionCall) otto.Value {
+				if len(call.ArgumentList)<1|| call.ArgumentList[0].IsUndefined(){
+					return FBcallError("FB_RequireUserInputAsync","no argument hint provided!")
+				}
+				hint, _ :=call.Argument(0).ToString()
+				if !call.Argument(1).IsFunction(){
+					return FBcallError("FB_RequireUserInputAsync","onInput is not a callback fn")
+				}
+				go func() {
+					val,err:=vm.ToValue(hb.vmRequireUserInput(name,hint))
+					if err!=nil{
+						call.Argument(1).Call(otto.UndefinedValue(),FBReturnError("FB_RequireUserInputAsync",err.Error()))
+					}else{
+						call.Argument(1).Call(otto.UndefinedValue(),val)
+					}
+				}()
+				return otto.Value{}
 			},
 		); err!=nil{fmt.Println(err)}
 

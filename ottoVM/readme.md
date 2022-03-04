@@ -83,6 +83,29 @@ FB_setInterval
 FB_clearTimeout
 FB_clearInterval
 ```
+1.5.1 以后的版本（不包括1.5.1）的新功能
+```
+// fetch (异步http请求)
+见 example05.js
+var x = fetch('https://storage.fastbuilder.pro').then(function(r) {
+    r.text().then(function(d) {
+        FB_Println(r.statusText)
+        for (var k in r.headers._headers) {
+            FB_Println(k + ':', r.headers.get(k))
+        }
+        FB_Println(d)
+    });
+});
+
+//FB_WaitConnect,FB_SendMCCmdAndGetResult,FB_RequireUserInput
+//的异步版本 FB_WaitConnectAsync,FB_SendMCCmdAndGetResultAsync,FB_RequireUserInputAsync
+function FB_WaitConnectAsync(onConnected func()) None
+function FB_SendMCCmdAndGetResultAsync(mcCmd,onCmdResponse func(result)) None
+function FB_RequireUserInputAsync(hint,onInput func(userInput)) None
+// 见 example06.js
+
+
+```
 
 ## 示例脚本？
 - example00.js  
@@ -266,9 +289,34 @@ var x = fetch('https://storage.fastbuilder.pro').then(function(r) {
 FB_Println("Awaiting...")
 ```
 
+- example06.js  
+  本脚本演示了FB_WaitConnect,FB_SendMCCmdAndGetResult,FB_RequireUserInput   
+  的异步版本 FB_WaitConnectAsync,FB_SendMCCmdAndGetResultAsync,FB_RequireUserInputAsync    
+
+
+```
+FB_WaitConnectAsync(function () {
+    FB_Println("成功连接到服务器了!")
+    FB_SendMCCmdAndGetResultAsync("tp @s @r",function (pk) {
+        FB_Println("成功收到指令结果了!")
+        FB_Println(JSON.stringify(pk))
+        FB_RequireUserInputAsync("随便输入一点什么",function (userInput) {
+            FB_Println("成功接收到用户输入了！"+userInput)
+        })
+    })
+})
+```
+
 ## 其他
 以下内容会被自动插入到用户脚本的开头
 ```
+function FB_WaitConnectAsync(onConnectFn) {
+    r=_FB_WaitConnectAsync(onConnectFn)
+    if(r instanceof Error){
+        throw r
+    }
+}
+
 function FB_GeneralCmd(fbCmd){
     r=_FB_GeneralCmd(fbCmd)
     if(r instanceof Error){
@@ -293,8 +341,35 @@ function FB_SendMCCmdAndGetResult(mcCmd){
     return JSON.parse(r)
 }
 
+function FB_SendMCCmdAndGetResultAsync(mcCmd,cb) {
+    r=_FB_SendMCCmdAndGetResultAsync(mcCmd,function (strPk) {
+        if (strPk instanceof Error){
+            throw strPk
+        }else {
+            cb(JSON.parse(strPk))
+        }
+    })
+    if(r instanceof Error){
+        throw r
+    }
+}
+
 function FB_RequireUserInput(hint){
     r=_FB_RequireUserInput(hint)
+    if(r instanceof Error){
+        throw r
+    }
+    return r
+}
+
+function FB_RequireUserInputAsync(hint,onInput){
+    r=_FB_RequireUserInputAsync(hint,function (inputVal) {
+        if (inputVal instanceof Error){
+            throw inputVal
+        }else {
+            onInput(inputVal)
+        }
+    })
     if(r instanceof Error){
         throw r
     }

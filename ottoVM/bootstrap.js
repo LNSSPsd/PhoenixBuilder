@@ -1,3 +1,10 @@
+function FB_WaitConnectAsync(onConnectFn) {
+    r=_FB_WaitConnectAsync(onConnectFn)
+    if(r instanceof Error){
+        throw r
+    }
+}
+
 function FB_GeneralCmd(fbCmd){
     r=_FB_GeneralCmd(fbCmd)
     if(r instanceof Error){
@@ -22,8 +29,35 @@ function FB_SendMCCmdAndGetResult(mcCmd){
     return JSON.parse(r)
 }
 
+function FB_SendMCCmdAndGetResultAsync(mcCmd,cb) {
+    r=_FB_SendMCCmdAndGetResultAsync(mcCmd,function (strPk) {
+        if (strPk instanceof Error){
+            throw strPk
+        }else {
+            cb(JSON.parse(strPk))
+        }
+    })
+    if(r instanceof Error){
+        throw r
+    }
+}
+
 function FB_RequireUserInput(hint){
     r=_FB_RequireUserInput(hint)
+    if(r instanceof Error){
+        throw r
+    }
+    return r
+}
+
+function FB_RequireUserInputAsync(hint,onInput){
+    r=_FB_RequireUserInputAsync(hint,function (inputVal) {
+        if (inputVal instanceof Error){
+            throw inputVal
+        }else {
+            onInput(inputVal)
+        }
+    })
     if(r instanceof Error){
         throw r
     }
