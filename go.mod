@@ -3,13 +3,12 @@ module phoenixbuilder
 go 1.16
 
 require (
-	fknsrs.biz/p/ottoext v0.0.0-20170408110602-5871ae9499f3 // indirect
+	fknsrs.biz/p/ottoext v0.0.0-20170408110602-5871ae9499f3
 	github.com/GeertJohan/go.rice v1.0.2 // indirect
 	github.com/Tnze/go-mc v1.17.0
 	github.com/andybalholm/brotli v1.0.3
 	github.com/brentp/intintmap v0.0.0-20190211203843-30dc0ade9af9
 	github.com/cespare/xxhash v1.1.0
-	github.com/deoxxa/ottoext v0.0.0-20170408110602-5871ae9499f3
 	github.com/disintegration/imaging v1.6.2
 	github.com/go-gl/mathgl v1.0.0
 	github.com/google/go-cmp v0.5.7 // indirect
@@ -30,4 +29,5 @@ require (
 	golang.org/x/text v0.3.7
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0
+	rogchap.com/v8go v0.7.0
 )
