@@ -35,6 +35,8 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/ottoVM"
+	"phoenixbuilder/wayland_v8/host"
+	v8 "rogchap.com/v8go"
 	"runtime"
 	"runtime/debug"
 	"strings"
@@ -53,7 +55,17 @@ type FBPlainToken struct {
 //const FBVersion = "1.4.0"
 const FBCodeName = "Phoenix"
 
+func dummySimulation(){
+	iso := v8.NewIsolate()
+	global := v8.NewObjectTemplate(iso)
+
+	hb:= host.NewHostBridge()
+	scriptName:="test.js"
+	host.InitHostFns(iso,global,hb,scriptName)
+}
+
 func main() {
+	dummySimulation()
 	args.ParseArgs()
 	pterm.Error.Prefix = pterm.Prefix{
 		Text:  "ERROR",

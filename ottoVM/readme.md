@@ -46,7 +46,7 @@ function FB_SendMCCmdAndGetResult(mcCmd string) object
 // callbackFn 中this将被设为 undefined
 // deRegFn 的类型是 function，即在js中， deRegFn()会取消订阅这种数据包
 // packetType 所有可用值附在文末
-function FB_RegPackCallBack(packetType string,callbackFn func(object)) deRegFn
+function FB_RegPacketCallBack(packetType string,callbackFn func(object)) deRegFn
 
 // 订阅聊天信息
 // 实际上可以通过 FB_regPackCallBack 实现，但是毕竟这种信息相当常用

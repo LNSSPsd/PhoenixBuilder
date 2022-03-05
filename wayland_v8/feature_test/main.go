@@ -1,15 +1,26 @@
 package main
 
 import (
-	"fmt"
+	_ "embed"
+	"phoenixbuilder/wayland_v8/host"
 
 	v8 "rogchap.com/v8go"
 )
 
+//go:embed test.js
+var testScript []byte
+
 func main() {
-	ctx := v8.NewContext()                                  // creates a new V8 context with a new Isolate aka VM
-	ctx.RunScript("const add = (a, b) => a + b", "math.js") // executes a script on the global context
-	ctx.RunScript("const result = add(3, 4)", "main.js")    // any functions previously added to the context can be called
-	val, _ := ctx.RunScript("result", "value.js")           // return a value in JavaScript back to Go
-	fmt.Printf("addition result: %s", val)
+	iso := v8.NewIsolate()
+	global := v8.NewObjectTemplate(iso)
+
+	hb:= host.NewHostBridge()
+	scriptName:="test.js"
+	host.InitHostFns(iso,global,hb,scriptName)
+	ctx := v8.NewContext(iso, global)
+	ctx.RunScript(string(testScript), scriptName)
+
+	c:=make(chan struct{})
+	<-c
 }
+
