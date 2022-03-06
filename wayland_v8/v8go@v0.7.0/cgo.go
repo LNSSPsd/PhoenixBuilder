@@ -24,4 +24,5 @@ import (
 	_ "rogchap.com/v8go/deps/darwin_x86_64"
 	_ "rogchap.com/v8go/deps/include"
 	_ "rogchap.com/v8go/deps/linux_x86_64"
+	_ "rogchap.com/v8go/deps/ios_arm64"
 )
