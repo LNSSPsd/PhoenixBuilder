@@ -10,7 +10,13 @@
 //     });
 // })
 
-
+FB_SetName("测试脚本")
+success=FB_RequireFilePermission("data","需要访问这个文件夹来保存数据")
+if(!success){
+    FB_ScriptCrash("必须这个文件夹的权限才能工作")
+}else{
+    FB_Println("成功获得了权限!")
+}
 
 function FB_SendMCCmdAndGetResultAsync(mcCmd,cb) {
     r=_FB_SendMCCmdAndGetResultAsync(mcCmd,function (strPk) {

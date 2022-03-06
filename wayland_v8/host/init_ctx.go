@@ -3,186 +3,58 @@ package host
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"go.kuoruan.net/v8go-polyfills/fetch"
-	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"rogchap.com/v8go"
-	"time"
+	"strings"
 )
 
-type Terminator struct {
-	c chan struct{}
-	isTeminated bool
+func AllowPath(path string) bool {
+	if strings.Contains(path,"fbtoken"){
+		return false
+	}
+	if strings.Contains(path,"fb_script_permission"){
+		return false
+	}
+	return true
 }
 
-type HostBridge interface{
-	WaitConnect(t *Terminator)
-	IsConnected() bool
-	//Block(t *Terminator)
-	Println(str string,t *Terminator,scriptName string)
-	FBCmd(fbCmd string,t *Terminator)
-	MCCmd(mcCmd string,t *Terminator,waitResult bool) *packet.CommandOutput
-	GetInput(hint string,t *Terminator,scriptName string) string
-	RegPacketCallBack(packetType string,onPacket func(packet.Packet),t *Terminator) (func(),error)
-	Query(info string) string
+func LoadPermission(hb HostBridge,identifyStr string) map[string]bool{
+	permission:= map[string]bool{}
+	fullPermission:=map[string]map[string]bool{}
+	file, err := hb.LoadFile("fb_script_permission.json")
+	if err!= nil {
+		return permission
+	}
+	err = json.Unmarshal([]byte(file), &fullPermission)
+	if err != nil {
+		return permission
+	}
+	if savedPermission,ok:=fullPermission[identifyStr];ok{
+		return savedPermission
+	}
+	return permission
 }
 
-type HostBridgeBeta struct {
-	isConnected bool
-	connetWaiter chan struct{}
-	// cb funcs
-	vmCbsCount map[uint32]uint64
-	vmCbs map[uint32]map[uint64]func(packet.Packet)
-	// query
-	HostQueryExpose map[string]func()string
+func SavePermission(hb HostBridge,identifyStr string,permission map[string]bool){
+	fullPermission:=map[string]map[string]bool{}
+	file, err := hb.LoadFile("fb_script_permission.json")
+	dataToSave:=[]byte{}
+	if err== nil {
+		json.Unmarshal([]byte(file), &fullPermission)
+	}
+	fullPermission[identifyStr]=permission
+	dataToSave, _ = json.Marshal(fullPermission)
+	hb.SaveFile("fb_script_permission.json",string(dataToSave))
 }
 
-func NewHostBridge() *HostBridgeBeta {
-	return &HostBridgeBeta{
-		connetWaiter:make(chan struct{}),
-		vmCbsCount: map[uint32]uint64{},
-		vmCbs: map[uint32]map[uint64]func(packet.Packet){},
-		HostQueryExpose: map[string]func() string{
-			"user_name": func() string {
-				return "2401PT"
-			},
-			"sha_token": func() string {
-				return "sha_token12asjkdao23201"
-			},
-		},
-	}
-}
-
-func (hb *HostBridgeBeta) WaitConnect(t *Terminator)  {
-	if !hb.isConnected{
-		timer:=time.NewTimer(time.Second*1)
-		go func() {
-			<-timer.C
-			hb.isConnected=true
-			close(hb.connetWaiter)
-		}()
-	}
-	select {
-	case <-hb.connetWaiter:
-	case <-t.c:
-	}
-}
-
-func (hb *HostBridgeBeta) IsConnected() bool {
-	return hb.isConnected
-}
-
-func (hb *HostBridgeBeta) Println(str string,t *Terminator,scriptName string)  {
-	if t.isTeminated{
-		return
-	}
-	fmt.Println("["+scriptName+"]: "+str)
-}
-
-func (hb *HostBridgeBeta) FBCmd(fbCmd string,t *Terminator)  {
-	if t.isTeminated{
-		return
-	}
-	fmt.Println("[FBCmd]: "+fbCmd)
-}
-
-func (hb *HostBridgeBeta) MCCmd(mcCmd string,t *Terminator,waitResult bool) *packet.CommandOutput {
-	if t.isTeminated{
-		return nil
-	}
-	fmt.Println("[MCCmd]: "+mcCmd)
-	if waitResult{
-		return &packet.CommandOutput{
-			CommandOrigin:  protocol.CommandOrigin{
-				Origin:         1,
-				UUID:           uuid.UUID{1,2,3,4,5,6,7,83,2,13},
-				RequestID:      "RequestID",
-				PlayerUniqueID: 5,
-			},
-			OutputType:     0,
-			SuccessCount:   1,
-			OutputMessages: []protocol.CommandOutputMessage{{
-				Success:    true,
-				Message:    "hello!",
-				Parameters: nil,
-			}},
-			DataSet:        "",
-		}
-	}else{
-		return nil
-	}
-}
-
-func (hb *HostBridgeBeta) GetInput(hint string,t *Terminator,scriptName string) string{
-	if t.isTeminated{
-		return ""
+func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_scriptName string,identifyStr string) {
+	scriptName:=_scriptName
+	permission:=LoadPermission(hb,identifyStr)
+	updatePermission:= func() {
+		SavePermission(hb,identifyStr,permission)
 	}
 
-	fmt.Println("[scriptName]: "+hint)
-	if t.isTeminated{
-		return ""
-	}
-
-	return "test_input"
-}
-
-func (hb *HostBridgeBeta) RegPacketCallBack(packetType string,onPacket func(packet.Packet),t *Terminator) (func(),error){
-	packetID,ok:=PacketNameMap[packetType]
-	if !ok{
-		return nil,fmt.Errorf("no such packet type "+packetType)
-	}
-	_c,ok:=hb.vmCbsCount[packetID]
-	c:=_c
-	if !ok{
-		hb.vmCbsCount[packetID]=0
-		hb.vmCbs[packetID]=make(map[uint64]func(packet.Packet))
-		c=0
-	}
-	c+=1
-	hb.vmCbsCount[packetID]++
-	hb.vmCbs[packetID][c]=onPacket
-	go func() {
-		<-t.c
-		if _,ok:=hb.vmCbs[packetID][c];ok{
-			delete(hb.vmCbs[packetID],c)
-		}
-
-	}()
-	go func() {
-		for{
-			if cb,ok:=hb.vmCbs[packetID][c];!ok{
-				return
-			}else{
-				cb(&packet.Text{
-					TextType:         0,
-					NeedsTranslation: false,
-					SourceName:       "fakeUser",
-					Message:          "hello from routine",
-					Parameters:       nil,
-					XUID:             "",
-					PlatformChatID:   "",
-					PlayerRuntimeID:  "",
-				})
-				time.Sleep(3*time.Second)
-			}
-		}
-	}()
-	return func(){
-		fmt.Println("DeReg called!")
-		delete(hb.vmCbs[packetID],c)
-	},nil
-}
-
-func (hb *HostBridgeBeta) Query(info string) string {
-	if fn,ok :=hb.HostQueryExpose[info]; ok{
-		return fn()
-	} else{
-		return ""
-	}
-}
-
-func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,scriptName string) {
 	throwException:= func(funcName string,str string) *v8go.Value {
 		value, _ := v8go.NewValue(iso, "Crashed In Host Function ["+funcName+"], because: "+str)
 		iso.ThrowException(value)
@@ -217,7 +89,20 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,scr
 	t:=&Terminator{
 		c:           make(chan struct{}),
 		isTeminated: false,
+		TerminateHook: make([]func(),0),
 	}
+
+	// function FB_SetName(scriptName string) None
+	if err:=global.Set("FB_SetName",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			if str,ok:= hasStrIn(info,0,"FB_SetName[scriptName]"); !ok{
+				throwException("FB_SetName",str)
+			}else{
+				hb.Println("脚本["+scriptName+"]正在将自己命名为["+str+"]",t,scriptName)
+				scriptName=str
+			}
+			return nil
+		})); err!=nil{panic(err)}
 
 	// function FB_WaitConnect() None
 	if err:=global.Set("FB_WaitConnect",
@@ -344,9 +229,6 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,scr
 	// function FB_RequireUserInput(hint string) string
 	if err:=global.Set("FB_RequireUserInput",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if !hb.IsConnected(){
-				throwNotConnectedException("FB_RequireUserInput")
-			}
 			if str,ok:= hasStrIn(info,0,"FB_RequireUserInput[hint]"); !ok{
 				throwException("FB_RequireUserInput",str)
 			}else{
@@ -360,9 +242,6 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,scr
 	// function FB_RequireUserInputAsync(hint,onInput func(string)) None
 	if err:=global.Set("FB_RequireUserInputAsync",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if !hb.IsConnected(){
-				throwNotConnectedException("FB_RequireUserInputAsync")
-			}
 			if str,ok:= hasStrIn(info,0,"FB_RequireUserInputAsync[hint]"); !ok{
 				throwException("FB_RequireUserInputAsync",str)
 			}else{
@@ -414,6 +293,7 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,scr
 						deRegFn()
 						return nil
 					})
+					t.TerminateHook=append(t.TerminateHook,deRegFn)
 					return jsCbFn.GetFunction(ctx).Value
 				}
 			}
@@ -450,6 +330,7 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,scr
 					deRegFn()
 					return nil
 				})
+				t.TerminateHook=append(t.TerminateHook,deRegFn)
 				return jsCbFn.GetFunction(ctx).Value
 			}
 			return nil
@@ -461,6 +342,10 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,scr
 			if str,ok:= hasStrIn(info,0,"FB_Query[info]"); !ok{
 				throwException("FB_Query",str)
 			}else{
+				if str=="script_sha"{
+					value,_:=v8go.NewValue(iso,identifyStr)
+					return value
+				}
 				userInput:= hb.Query(str)
 				value,_:=v8go.NewValue(iso,userInput)
 				return value
@@ -468,18 +353,71 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,scr
 			return nil
 		})); err!=nil{panic(err)}
 
+	// function FB_GetAbsPath(path string) string
+	if err:=global.Set("FB_GetAbsPath",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			if str,ok:= hasStrIn(info,0,"FB_GetAbsPath[path]"); !ok{
+				throwException("FB_GetAbsPath",str)
+			}else{
+				absPath:=hb.GetAbsPath(str)
+				value,_:=v8go.NewValue(iso,absPath)
+				return value
+			}
+			return nil
+		})); err!=nil{panic(err)}
 
+	// function FB_RequireFilePermission(hint,path) isSuccess
+	if err:=global.Set("FB_RequireFilePermission",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			if hint,ok:= hasStrIn(info,1,"FB_RequireFilePermission[hint]"); !ok{
+				throwException("FB_RequireUserInput",hint)
+				return nil
+			}else{
+				if dir,ok:= hasStrIn(info,0,"FB_RequireFilePermission[hint]"); !ok{
+					throwException("FB_RequireUserInput",dir)
+					return nil
+				}else{
+					dir=hb.GetAbsPath(dir)
+					permissionKey:="VisitDir:"+dir
+					if hasPermission,ok:= permission[permissionKey];ok&&hasPermission{
+						value,_ :=v8go.NewValue(iso,true)
+						return value
+					}else{
+						for{
+							warning:="脚本["+scriptName+"]["+_scriptName+"]想访问文件夹"+dir+"的所有内容\n"+
+								"理由是:"+hint+"\n"+
+								"(警告，恶意脚本可能会删除，篡改，威胁这个文件夹下的所有文件！)\n"+
+								"是否允许? 输入[是/否/Y/y/N/n]:"
+							choose:=hb.GetInput(warning,t,scriptName)
+							if choose=="是" || choose=="Y" || choose=="y"{
+								value,_ :=v8go.NewValue(iso,true)
+								permission[permissionKey]=true
+								updatePermission()
+								return value
+							}else if choose=="否" || choose =="N"|| choose=="n"{
+								value,_ :=v8go.NewValue(iso,false)
+								return value
+							}
+							hb.Println("无效输入，请输入[是/否/Y/y/N/n]其中之一",t,scriptName)
+						}
+					}
+				}
+			}
+			return nil
+		})); err!=nil{panic(err)}
 
-	//// function FB_Query(info string) string
-	//if err := global.Set("FB_Query",
-	//	func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-	//		if str,ok:= hasStrIn(info,0,"FB_Query[info]"); !ok{
-	//			throwException("FB_Query",str)
-	//		}else {
-	//
-	//		}
-	//	},
-	//); err!=nil{fmt.Println(err)}
+	// function FB_ReadFile(path) string
+	// if permission is not granted or read fail, "" is returned
+	if err:=global.Set("FB_ReadFile",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			if str,ok:= hasStrIn(info,0,"FB_ReadFile[path]"); !ok{
+				throwException("FB_ReadFile",str)
+			}else{
+				p:=hb.GetAbsPath(str)
+
+			}
+			return nil
+		})); err!=nil{panic(err)}
 
 	// fetch
 	if err := fetch.InjectTo(iso, global); err != nil {
@@ -493,10 +431,12 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,scr
 	// function FB_ScriptCrash(string reason) None
 	if err:=global.Set("FB_ScriptCrash",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+
 			if str,ok:= hasStrIn(info,0,"FB_ScriptCrash[reson]"); !ok{
 				throwException("FB_ScriptCrash",str)
 			}else{
 				throwException("FB_ScriptCrash",str)
+				t.Terminate()
 			}
 			return nil
 		})); err!=nil{panic(err)}

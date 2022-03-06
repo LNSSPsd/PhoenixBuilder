@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"fmt"
 	"phoenixbuilder/wayland_v8/host"
 
 	v8 "rogchap.com/v8go"
@@ -16,9 +17,14 @@ func main() {
 
 	hb:= host.NewHostBridge()
 	scriptName:="test.js"
-	host.InitHostFns(iso,global,hb,scriptName)
+	script:=string(testScript)
+	identifyStr:= host.GetStringSha(script)
+	host.InitHostFns(iso,global,hb,scriptName,identifyStr)
 	ctx := v8.NewContext(iso, global)
-	ctx.RunScript(string(testScript), scriptName)
+	_, err := ctx.RunScript(script, scriptName)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 
 	c:=make(chan struct{})
 	<-c
