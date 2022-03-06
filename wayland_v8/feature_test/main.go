@@ -21,6 +21,7 @@ func main() {
 	identifyStr:= host.GetStringSha(script)
 	host.InitHostFns(iso,global,hb,scriptName,identifyStr)
 	ctx := v8.NewContext(iso, global)
+	host.CtxFunctionInject(ctx)
 	_, err := ctx.RunScript(script, scriptName)
 	if err != nil {
 		fmt.Println(err.Error())

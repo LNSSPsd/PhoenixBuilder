@@ -18,6 +18,18 @@ if(!success){
     FB_Println("成功获得了权限!")
 }
 
+data=FB_ReadFile("data1/test.txt")
+FB_Println(data)
+isSuccess=FB_SaveFile("data/test.txt","hello!")
+if (isSuccess){
+    FB_Println("文件保存成功！")
+    data=FB_ReadFile("data/test.txt")
+    FB_Println("文件内容是:"+data)
+}else{
+    FB_Println("文件保存失败！")
+}
+
+
 function FB_SendMCCmdAndGetResultAsync(mcCmd,cb) {
     r=_FB_SendMCCmdAndGetResultAsync(mcCmd,function (strPk) {
         FB_Println("_FB_SendMCCmdAndGetResultAsync")

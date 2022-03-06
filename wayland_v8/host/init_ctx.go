@@ -3,7 +3,12 @@ package host
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"go.kuoruan.net/v8go-polyfills/fetch"
+	"go.kuoruan.net/v8go-polyfills/url"
+	"go.kuoruan.net/v8go-polyfills/timers"
+	"go.kuoruan.net/v8go-polyfills/base64"
+	"os"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"rogchap.com/v8go"
 	"strings"
@@ -56,12 +61,12 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 	}
 
 	throwException:= func(funcName string,str string) *v8go.Value {
-		value, _ := v8go.NewValue(iso, "Crashed In Host Function ["+funcName+"], because: "+str)
+		value, _ := v8go.NewValue(iso, "脚本崩溃于函数 ["+funcName+"], 原因是: "+str)
 		iso.ThrowException(value)
 		return nil
 	}
 	printException:= func(funcName string,str string) *v8go.Value {
-		fmt.Println("Crashed In Host Function ["+funcName+"], because: "+str)
+		fmt.Println("脚本在函数 ["+funcName+"] 出现错误, 原因是: "+str)
 		return nil
 	}
 	throwNotConnectedException:= func(funcName string) *v8go.Value  {
@@ -91,6 +96,9 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 		isTeminated: false,
 		TerminateHook: make([]func(),0),
 	}
+	t.TerminateHook=append(t.TerminateHook, func() {
+		iso.TerminateExecution()
+	})
 
 	// function FB_SetName(scriptName string) None
 	if err:=global.Set("FB_SetName",
@@ -377,7 +385,12 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 					throwException("FB_RequireUserInput",dir)
 					return nil
 				}else{
-					dir=hb.GetAbsPath(dir)
+					dir=hb.GetAbsPath(dir)+string(os.PathSeparator)
+					if !AllowPath(dir){
+						throwException("FB_ReadFile","脚本正在试图访问禁止访问的路径，可能为恶意脚本！")
+						t.Terminate()
+						return nil
+					}
 					permissionKey:="VisitDir:"+dir
 					if hasPermission,ok:= permission[permissionKey];ok&&hasPermission{
 						value,_ :=v8go.NewValue(iso,true)
@@ -406,7 +419,7 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 			return nil
 		})); err!=nil{panic(err)}
 
-	// function FB_ReadFile(path) string
+	// function FB_ReadFile(path string) string
 	// if permission is not granted or read fail, "" is returned
 	if err:=global.Set("FB_ReadFile",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
@@ -414,19 +427,77 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 				throwException("FB_ReadFile",str)
 			}else{
 				p:=hb.GetAbsPath(str)
-
+				hasPermission:=false
+				for permissionName,_:=range permission{
+					if strings.HasPrefix(permissionName,"VisitDir:"){
+						if strings.HasPrefix(p,permissionName[len("VisitDir:"):]){
+							hasPermission=true
+							break
+						}
+					}
+				}
+				if !hasPermission{
+					throwException("FB_ReadFile","脚本正在试图访问无权限的路径，可能为恶意脚本！")
+					t.Terminate()
+					return nil
+				}
+				if !AllowPath(p){
+					throwException("FB_ReadFile","脚本正在试图访问禁止访问的路径，可能为恶意脚本！")
+					t.Terminate()
+					return nil
+				}
+				data, err := hb.LoadFile(p)
+				if err != nil {
+					value,_:=v8go.NewValue(iso,"")
+					return value
+				}
+				value,_:=v8go.NewValue(iso,data)
+				return value
 			}
 			return nil
 		})); err!=nil{panic(err)}
 
-	// fetch
-	if err := fetch.InjectTo(iso, global); err != nil {
-		panic(err)
-	}
+	// function FB_SaveFile(path string,data string) isSuccess
+	if err:=global.Set("FB_SaveFile",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			if p,ok:= hasStrIn(info,0,"FB_SaveFile[path]"); !ok{
+				throwException("FB_SaveFile",p)
+			}else{
+				if data,ok:= hasStrIn(info,1,"FB_SaveFile[data]"); !ok{
+					throwException("FB_SaveFile",data)
+				}else{
+					p:=hb.GetAbsPath(p)
+					hasPermission:=false
+					for permissionName,_:=range permission{
+						if strings.HasPrefix(permissionName,"VisitDir:"){
+							if strings.HasPrefix(p,permissionName[len("VisitDir:"):]){
+								hasPermission=true
+								break
+							}
+						}
+					}
+					if !hasPermission{
+						throwException("FB_ReadFile","脚本正在试图访问无权限的路径，可能为恶意脚本！")
+						t.Terminate()
+						return nil
+					}
+					if !AllowPath(p){
+						throwException("FB_ReadFile","脚本正在试图访问禁止访问的路径，可能为恶意脚本！")
+						t.Terminate()
+						return nil
+					}
+					err := hb.SaveFile(p,data)
+					if err != nil {
+						value,_:=v8go.NewValue(iso,false)
+						return value
+					}
+					value,_:=v8go.NewValue(iso,true)
+					return value
+				}
+			}
+			return nil
+		})); err!=nil{panic(err)}
 
-	// websocket
-
-	// special function here
 
 	// function FB_ScriptCrash(string reason) None
 	if err:=global.Set("FB_ScriptCrash",
@@ -440,12 +511,85 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 			}
 			return nil
 		})); err!=nil{panic(err)}
-	//// FB_Block
-	//if err := global.Set("FB_Block",
-	//	v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-	//		hb.Block(t)
-	//		return nil
-	//	})); err!=nil{
-	//	panic(err)
-	//}
+
+	// function FB_WaitConnect() None
+	if err:=global.Set("FB_AutoRestart",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			hb.RequireAutoRestart()
+			return nil
+		})); err!=nil{panic(err)}
+
+	// FB_websocketConnectV2(address string,onNewMessage func(msgType int,data string)) func SendMsg(msgType int, data string)
+	// 一般情况下，MessageType 为1(Text Messsage),即字符串类型，或者 0 byteArray (也被以字符串的方式传递)
+	// onNewMessage 在连接关闭时会读取到两个null值
+	if err:=global.Set("FB_WebSocketConnectV2",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			if address,ok:= hasStrIn(info,0,"FB_WebSocketConnectV2[address]"); !ok{
+				throwException("FB_WebSocketConnectV2",address)
+			}else{
+				if errStr,cbFn:=hasFuncIn(info,1,"FB_WebSocketConnectV2[onNewMessage]"); cbFn==nil{
+					throwException("FB_WebSocketConnectV2",errStr)
+				}else{
+					ctx:=info.Context()
+					conn, _, err := websocket.DefaultDialer.Dial(address, nil)
+					if err != nil {
+						return throwException("FB_WebSocketConnectV2",err.Error())
+					}
+					jsWriteFn:=v8go.NewFunctionTemplate(iso, func(writeInfo *v8go.FunctionCallbackInfo) *v8go.Value {
+						if t.isTeminated{
+							return nil
+						}
+						if len(writeInfo.Args())<2{
+							throwException("SendMsg returned by FB_websocketConnectV2","not enough arguments")
+							return nil
+						}
+						if !writeInfo.Args()[1].IsString(){
+							throwException("SendMsg returned by FB_websocketConnectV2","SendMsg[data] should be string")
+						}
+						msgType:=int(writeInfo.Args()[0].Number())
+						err := conn.WriteMessage(msgType, []byte(writeInfo.Args()[1].String()))
+						if err != nil {
+							return throwException("SendMsg returned by FB_websocketConnectV2","write fail")
+						}
+						return nil
+					})
+					go func() {
+						msgType, data, err := conn.ReadMessage()
+						if t.isTeminated{
+							return
+						}
+						if err != nil {
+							cbFn.Call(info.This(),v8go.Null(iso),v8go.Null(iso))
+							return
+						}
+						jsMsgType,_:=v8go.NewValue(iso,msgType)
+						jsMsgData,_:=v8go.NewValue(iso,string(data))
+						cbFn.Call(info.This(),jsMsgType,jsMsgData)
+					}()
+					return jsWriteFn.GetFunction(ctx).Value
+				}
+			}
+			return nil
+		})); err!=nil{panic(err)}
+
+
+	// fetch
+	if err := fetch.InjectTo(iso, global); err != nil {
+		panic(err)
+	}
+	// setTimeout, clearTimeout, setInterval and clearInterva
+	if err :=timers.InjectTo(iso, global);err!=nil{
+		panic(err)
+	}
+	//  atob and btoa
+	if err:=base64.InjectTo(iso,global);err!=nil{
+		panic(err)
+	}
+}
+
+func CtxFunctionInject(ctx *v8go.Context){
+	// URL and URLSearchParams
+	if err:=url.InjectTo(ctx);err!=nil{
+		panic(err)
+	}
 }

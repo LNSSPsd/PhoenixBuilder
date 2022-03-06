@@ -47,6 +47,9 @@ type HostBridge interface{
 	LoadFile(path string) (string,error)
 	SaveFile(path string,data string) (error)
 	GetAbsPath(path string) string
+
+	// AutoRestart
+	RequireAutoRestart()
 }
 
 
@@ -253,4 +256,8 @@ func (hb *HostBridgeBeta) SaveFile(p string, data string) (error) {
 	}
 	_, err = fp.Write([]byte(data))
 	return err
+}
+
+func (hb *HostBridgeBeta) RequireAutoRestart() {
+
 }
