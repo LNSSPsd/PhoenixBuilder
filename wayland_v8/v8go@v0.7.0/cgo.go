@@ -7,7 +7,8 @@ package v8go
 //go:generate clang-format -i --verbose -style=Chromium v8go.h v8go.cc
 
 //#cgo CXXFLAGS: -fno-rtti -fpic -std=c++14 -DV8_COMPRESS_POINTERS -DV8_31BIT_SMIS_ON_64BIT_ARCH -I${SRCDIR}/deps/include -Wall
-//#cgo LDFLAGS: -pthread -lv8 -L${SRCDIR}/deps/android_arm64 -v
+//#cgo LDFLAGS: -pthread -lv8
+//#cgo LDFLAGS: -L${SRCDIR}/deps/android_arm64
 import "C"
 
 // These imports forces `go mod vendor` to pull in all the folders that
