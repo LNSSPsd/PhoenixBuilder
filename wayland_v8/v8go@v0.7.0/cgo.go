@@ -10,7 +10,8 @@ package v8go
 //#cgo LDFLAGS: -pthread -lv8
 //#cgo android,arm64 LDFLAGS: -L${SRCDIR}/deps/android_arm64
 //#cgo darwin,amd64 LDFLAGS: -L${SRCDIR}/deps/darwin_x86_64
-//#cgo darwin,arm64 LDFLAGS: -L${SRCDIR}/deps/darwin_arm64
+//#cgo darwin,arm64,!ios LDFLAGS: -L${SRCDIR}/deps/darwin_arm64
+//#cgo ios,arm64 LDFLAGS: -L${SRCDIR}/deps/ios_arm64
 //#cgo linux,amd64 LDFLAGS: -L${SRCDIR}/deps/linux_x86_64 -ldl
 //#cgo linux,arm64 LDFLAGS: -L${SRCDIR}/deps/linux_arm64 -ldl
 import "C"
