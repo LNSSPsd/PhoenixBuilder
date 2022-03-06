@@ -15,6 +15,9 @@
 
 #include "_cgo_export.h"
 
+void __android_log_write() {}
+void __android_log_vprint() {}
+
 using namespace v8;
 
 auto default_platform = platform::NewDefaultPlatform();
