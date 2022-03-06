@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
-	"go.kuoruan.net/v8go-polyfills/fetch"
-	"go.kuoruan.net/v8go-polyfills/url"
-	"go.kuoruan.net/v8go-polyfills/timers"
 	"go.kuoruan.net/v8go-polyfills/base64"
+	"go.kuoruan.net/v8go-polyfills/fetch"
+	"go.kuoruan.net/v8go-polyfills/timers"
+	"go.kuoruan.net/v8go-polyfills/url"
 	"os"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"rogchap.com/v8go"
@@ -562,8 +562,8 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 							cbFn.Call(info.This(),v8go.Null(iso),v8go.Null(iso))
 							return
 						}
-						jsMsgType,_:=v8go.NewValue(iso,msgType)
-						jsMsgData,_:=v8go.NewValue(iso,string(data))
+						jsMsgType,err:=v8go.NewValue(iso,int32(msgType))
+						jsMsgData,err:=v8go.NewValue(iso,string(data))
 						cbFn.Call(info.This(),jsMsgType,jsMsgData)
 					}()
 					return jsWriteFn.GetFunction(ctx).Value

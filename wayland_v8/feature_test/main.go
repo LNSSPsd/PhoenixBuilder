@@ -26,7 +26,7 @@ func main() {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-
+	fmt.Println("脚本已经执行完毕")
 	c:=make(chan struct{})
 	<-c
 }
