@@ -76,6 +76,11 @@ func NewHostBridge() *HostBridgeBeta {
 			"sha_token": func() string {
 				return "sha_token12asjkdao23201"
 			},
+			"server_code": func() string {
+				return "96996635"
+			},
+			//"script_sha"
+			// return by FB_Query
 		},
 		Root: "wayland_v8/testHome",
 	}
