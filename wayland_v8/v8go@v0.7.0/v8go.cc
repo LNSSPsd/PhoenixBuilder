@@ -18,6 +18,7 @@
 extern "C" void __android_log_write() {}
 extern "C" void __android_log_vprint() {}
 
+
 using namespace v8;
 
 auto default_platform = platform::NewDefaultPlatform();
