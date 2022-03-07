@@ -53,7 +53,7 @@ func SavePermission(hb HostBridge,identifyStr string,permission map[string]bool)
 	hb.SaveFile("fb_script_permission.json",string(dataToSave))
 }
 
-func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_scriptName string,identifyStr string) {
+func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_scriptName string,identifyStr string,scriptPath string) func() {
 	scriptName:=_scriptName
 	permission:=LoadPermission(hb,identifyStr)
 	updatePermission:= func() {
@@ -301,7 +301,6 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 						deRegFn()
 						return nil
 					})
-					t.TerminateHook=append(t.TerminateHook,deRegFn)
 					return jsCbFn.GetFunction(ctx).Value
 				}
 			}
@@ -352,6 +351,9 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 			}else{
 				if str=="script_sha"{
 					value,_:=v8go.NewValue(iso,identifyStr)
+					return value
+				}else if str=="script_path"{
+					value,_:=v8go.NewValue(iso,scriptPath)
 					return value
 				}
 				userInput:= hb.Query(str)
@@ -584,6 +586,9 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 	//  atob and btoa
 	if err:=base64.InjectTo(iso,global);err!=nil{
 		panic(err)
+	}
+	return func() {
+		t.Terminate()
 	}
 }
 
