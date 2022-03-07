@@ -1,6 +1,6 @@
 // example03.js
 // 本脚本演示了一个日志功能，主要用来展示文件读写
-// 演示了 FB_setInterval，FB_ReadFile，FB_SaveFile 的功能
+// 演示了 engine.requestFilePermission，engine.getAbsPath 的功能
 
 engine.setName("日志")
 
@@ -16,9 +16,10 @@ if (!success) {
 } else {
     engine.message("成功获得了权限!")
     //获得一个文件的绝对路径
-    //absolutePath=FB_GetAbsPath("日志记录")
+    absolutePath=engine.getAbsPath("日志记录")
     //移除了 ruphane注
-    //FB_Println("绝对路径为"+absolutePath)
+    //在替代方案出现之前，还是有必要允许脚本指明自己的文件究竟存在哪里了 2401注
+    engine.message("绝对路径为"+absolutePath)
 }
 
 

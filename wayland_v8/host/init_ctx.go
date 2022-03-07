@@ -394,7 +394,12 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb HostBridge, 
 	consts := v8go.NewObjectTemplate(iso)
 	s256v, _ := v8go.NewValue(iso, identifyStr)
 	consts.Set("script_sha256", s256v)
-	consts.Set("user_name", "Not implemented")
+	consts.Set("user_name", hb.Query("user_name"))
+	consts.Set("sha_token", hb.Query("sha_token"))
+	consts.Set("server_code", hb.Query("server_code"))
+	consts.Set("fb_version", hb.Query("fb_version"))
+	consts.Set("fb_dir", hb.Query("fb_dir"))
+	consts.Set("engine_version","v8.gamma.3")
 	global.Set("consts", consts)
 	/*
 		// function FB_Query(info string) string
@@ -416,20 +421,21 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb HostBridge, 
 				}
 				return nil
 			}),
-		); err!=nil{panic(err)}
+		); err!=nil{panic(err)}*/
 
-		// function FB_GetAbsPath(path string) string
-		if err:=global.Set("FB_GetAbsPath",
-			v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-				if str,ok:= hasStrIn(info,0,"FB_GetAbsPath[path]"); !ok{
-					throwException("FB_GetAbsPath",str)
-				}else{
-					absPath:=hb.GetAbsPath(str)
-					value,_:=v8go.NewValue(iso,absPath)
-					return value
-				}
-				return nil
-			})); err!=nil{panic(err)}*/
+	// function FB_GetAbsPath(path string) string
+	// I think we should allow the script to tell user where a file is
+	if err:=engine.Set("getAbsPath",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			if str,ok:= hasStrIn(info,0,"engine.getAbsPath[path]"); !ok{
+				throwException("engine.getAbsPath",str)
+			}else{
+				absPath:=hb.GetAbsPath(str)
+				value,_:=v8go.NewValue(iso,absPath)
+				return value
+			}
+			return nil
+		})); err!=nil{panic(err)}
 
 	// function engine.requestFilePermission(hint,path) isSuccess
 	if err := engine.Set("requestFilePermission",
@@ -577,13 +583,14 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb HostBridge, 
 		})); err != nil {
 		panic(err)
 	}
-	/*
-		// function FB_WaitConnect() None
-		if err:=global.Set("FB_AutoRestart",
-			v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-				hb.RequireAutoRestart()
-				return nil
-			})); err!=nil{panic(err)}*/
+
+	// function FB_WaitConnect() None
+	// 这里做了指数退避，几次重连失败就会放缓到1小时重连一次，见 main.go 170行
+	if err:=engine.Set("autoRestart",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			hb.RequireAutoRestart()
+			return nil
+		})); err!=nil{panic(err)}
 
 	// engine.connectws(address string,onNewMessage func(msgType int,data string)) func SendMsg(msgType int, data string)
 	// 一般情况下，MessageType 为1(Text Messsage),即字符串类型，或者 0 byteArray (也被以字符串的方式传递)

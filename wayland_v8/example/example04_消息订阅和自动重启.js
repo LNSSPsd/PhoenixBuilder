@@ -1,5 +1,5 @@
 // 本脚本演示了一个菜单，并会在用户登录时主动发送提示信息
-// 演示了 FB_setTimeout，FB_RegPackCallBack，FB_GeneralCmd 的功能
+// 演示了 game.subscribePacket,engine.sendCommand,game.listenChat 的功能
 // 核心是消息及数据包订阅
 
 engine.setName("租赁服菜单")
@@ -7,6 +7,8 @@ engine.setName("租赁服菜单")
 // 打开自动重启功能，在连接断开时会自动重连
 //已经移除
 //FB_AutoRestart()
+// 这里做了指数退避，几次重连失败就会放缓到1小时重连一次，见 main.go 170行
+engine.autoRestart()
 
 // 当有新玩家时，一定会收到 IDPlayerList 数据包，现在我们从这个数据包中判断玩家是谁
 function onPlayerListUpdate(pk) {
