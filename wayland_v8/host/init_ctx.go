@@ -3,12 +3,12 @@ package host
 import (
 	"encoding/json"
 	"fmt"
-	//"github.com/gorilla/websocket"
+	"github.com/gorilla/websocket"
 	"go.kuoruan.net/v8go-polyfills/base64"
 	"go.kuoruan.net/v8go-polyfills/fetch"
 	"go.kuoruan.net/v8go-polyfills/timers"
 	"go.kuoruan.net/v8go-polyfills/url"
-	//"os"
+	"os"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"rogchap.com/v8go"
 	"strings"
@@ -55,10 +55,10 @@ func SavePermission(hb HostBridge,identifyStr string,permission map[string]bool)
 
 func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_scriptName string,identifyStr string,scriptPath string) func() {
 	scriptName:=_scriptName
-	//permission:=LoadPermission(hb,identifyStr)
-	/*updatePermission:= func() {
+	permission:=LoadPermission(hb,identifyStr)
+	updatePermission:= func() {
 		SavePermission(hb,identifyStr,permission)
-	}*/
+	}
 
 	throwException:= func(funcName string,str string) *v8go.Value {
 		value, _ := v8go.NewValue(iso, "Script crashed at ["+funcName+"] due to "+str)
@@ -288,26 +288,26 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 		}),
 	); err!=nil{panic(err)}
 
-	// function game.listenPacket(packetType,onPacketCb) deRegFn
+	// function game.subscribePacket(packetType,onPacketCb) deRegFn
 	// when deRegFn is called, onPacketCb function will no longer be called
-	if err:=game.Set("listenPacket",
+	if err:=game.Set("subscribePacket",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if str,ok:= hasStrIn(info,0,"game.listenPacket[packetType]"); !ok{
-				throwException("game.listenPacket",str)
+			if str,ok:= hasStrIn(info,0,"game.subscribePacket[packetType]"); !ok{
+				throwException("game.subscribePacket",str)
 			}else{
 				if errStr,cbFn:=hasFuncIn(info,1,"game.listenPacket[onPacketCb]"); cbFn==nil{
-					throwException("game.listenPacket",errStr)
+					throwException("game.subscribePacket",errStr)
 				}else{
 					ctx:=info.Context()
 					deRegFn, err := hb.RegPacketCallBack(str, func(pk packet.Packet) {
 						strPk, err := json.Marshal(pk)
 						if err!=nil{
-							printException("game.listenPacket","Cannot convert host packet to Json Str: "+err.Error())
+							printException("game.subscribePacket","Cannot convert host packet to Json Str: "+err.Error())
 							cbFn.Call(info.This(),v8go.Null(iso))
 						}else{
 							val, err := v8go.JSONParse(ctx,string(strPk))
 							if err != nil {
-								printException("game.listenPacket","Cannot Parse Json Packet in Host: "+str)
+								printException("game.subscribePacket","Cannot Parse Json Packet in Host: "+str)
 								cbFn.Call(ctx.Global(),v8go.Null(iso))
 								return
 							}else {
@@ -316,7 +316,7 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 						}
 					},t)
 					if err != nil {
-						return throwException("game.listenPacket",err.Error())
+						return throwException("game.subscribePacket",err.Error())
 					}
 					jsCbFn:=v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
 						deRegFn()
@@ -369,6 +369,8 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 	consts:=v8go.NewObjectTemplate(iso)
 	s256v,_:=v8go.NewValue(iso,identifyStr)
 	consts.Set("script_sha256",s256v)
+	consts.Set("user_name","Not implemented")
+	global.Set("consts",consts)
 	/*
 	// function FB_Query(info string) string
 	if err:=global.Set("FB_Query",
@@ -402,22 +404,22 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 				return value
 			}
 			return nil
-		})); err!=nil{panic(err)}
+		})); err!=nil{panic(err)}*/
 
-	// function FB_RequireFilePermission(hint,path) isSuccess
-	if err:=global.Set("FB_RequireFilePermission",
+	// function engine.requestFilePermission(hint,path) isSuccess
+	if err:=engine.Set("requestFilePermission",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if hint,ok:= hasStrIn(info,1,"FB_RequireFilePermission[hint]"); !ok{
-				throwException("FB_RequireUserInput",hint)
+			if hint,ok:= hasStrIn(info,1,"engine.requestFilePermission[hint]"); !ok{
+				throwException("engine.requestFilePermission",hint)
 				return nil
 			}else{
-				if dir,ok:= hasStrIn(info,0,"FB_RequireFilePermission[hint]"); !ok{
-					throwException("FB_RequireUserInput",dir)
+				if dir,ok:= hasStrIn(info,0,"engine.requestFilePermission[hint]"); !ok{
+					throwException("engine.requestFilePermission",dir)
 					return nil
 				}else{
 					dir=hb.GetAbsPath(dir)+string(os.PathSeparator)
 					if !AllowPath(dir){
-						throwException("FB_ReadFile","脚本正在试图访问禁止访问的路径，可能为恶意脚本！")
+						throwException("engine.requestFilePermission","The script is breaking out sandbox, aborting.")
 						t.Terminate()
 						return nil
 					}
@@ -427,34 +429,35 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 						return value
 					}else{
 						for{
-							warning:="脚本["+scriptName+"]["+_scriptName+"]想访问文件夹"+dir+"的所有内容\n"+
-								"理由是:"+hint+"\n"+
-								"(警告，恶意脚本可能会删除，篡改，威胁这个文件夹下的所有文件！)\n"+
-								"是否允许? 输入[是/否/Y/y/N/n]:"
+							warning:="Script["+scriptName+"]["+_scriptName+"]wants to access the contents of directory "+dir+".\n"+
+								"Reason "+hint+"\n"+
+								"(Warning: The script will gain the ability of REMOVING, MODIFYING, CREATING any file in this directory.)\n"+
+								"Allow the access? Give an answer[y/N]:"
 							choose:=hb.GetInput(warning,t,scriptName)
-							if choose=="是" || choose=="Y" || choose=="y"{
+							if choose=="Y" || choose=="y"{
 								value,_ :=v8go.NewValue(iso,true)
 								permission[permissionKey]=true
 								updatePermission()
 								return value
-							}else if choose=="否" || choose =="N"|| choose=="n"{
+							}else{
 								value,_ :=v8go.NewValue(iso,false)
 								return value
 							}
-							hb.Println("无效输入，请输入[是/否/Y/y/N/n]其中之一",t,scriptName)
+							//hb.Println("无效输入，请输入[是/否/Y/y/N/n]其中之一",t,scriptName)
 						}
 					}
 				}
 			}
 			return nil
-		})); err!=nil{panic(err)}
+		}),
+	); err!=nil{panic(err)}
 
-	// function FB_ReadFile(path string) string
+	// function engine.readFile(path string) string
 	// if permission is not granted or read fail, "" is returned
-	if err:=global.Set("FB_ReadFile",
+	if err:=engine.Set("readFile",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if str,ok:= hasStrIn(info,0,"FB_ReadFile[path]"); !ok{
-				throwException("FB_ReadFile",str)
+			if str,ok:= hasStrIn(info,0,"engine.readFile[path]"); !ok{
+				throwException("engine.readFile",str)
 			}else{
 				p:=hb.GetAbsPath(str)
 				hasPermission:=false
@@ -467,12 +470,12 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 					}
 				}
 				if !hasPermission{
-					throwException("FB_ReadFile","脚本正在试图访问无权限的路径，可能为恶意脚本！")
+					throwException("engine.readFile","The script is trying to access an external path (without permission), aborting.")
 					t.Terminate()
 					return nil
 				}
 				if !AllowPath(p){
-					throwException("FB_ReadFile","脚本正在试图访问禁止访问的路径，可能为恶意脚本！")
+					throwException("engine.readFile","The script is trying to access an external path (without permission), aborting.")
 					t.Terminate()
 					return nil
 				}
@@ -485,16 +488,17 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 				return value
 			}
 			return nil
-		})); err!=nil{panic(err)}
+		}),
+	); err!=nil{panic(err)}
 
-	// function FB_SaveFile(path string,data string) isSuccess
-	if err:=global.Set("FB_SaveFile",
+	// function engine.writeFile(path string,data string) isSuccess
+	if err:=engine.Set("writeFile",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if p,ok:= hasStrIn(info,0,"FB_SaveFile[path]"); !ok{
-				throwException("FB_SaveFile",p)
+			if p,ok:= hasStrIn(info,0,"engine.writeFile[path]"); !ok{
+				throwException("engine.writeFile",p)
 			}else{
-				if data,ok:= hasStrIn(info,1,"FB_SaveFile[data]"); !ok{
-					throwException("FB_SaveFile",data)
+				if data,ok:= hasStrIn(info,1,"engine.writeFile[data]"); !ok{
+					throwException("engine.writeFile",data)
 				}else{
 					p:=hb.GetAbsPath(p)
 					hasPermission:=false
@@ -507,12 +511,12 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 						}
 					}
 					if !hasPermission{
-						throwException("FB_ReadFile","脚本正在试图访问无权限的路径，可能为恶意脚本！")
+						throwException("engine.writeFile","The script is trying to access an external path (without permission), aborting.")
 						t.Terminate()
 						return nil
 					}
 					if !AllowPath(p){
-						throwException("FB_ReadFile","脚本正在试图访问禁止访问的路径，可能为恶意脚本！")
+						throwException("engine.writeFile","The script is trying to access an external path (without permission), aborting.")
 						t.Terminate()
 						return nil
 					}
@@ -526,7 +530,7 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 				}
 			}
 			return nil
-		})); err!=nil{panic(err)}*/
+		})); err!=nil{panic(err)}
 
 
 	// function engine.crash(string reason) None
@@ -547,18 +551,18 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
 			hb.RequireAutoRestart()
 			return nil
-		})); err!=nil{panic(err)}
+		})); err!=nil{panic(err)}*/
 
-	// FB_websocketConnectV2(address string,onNewMessage func(msgType int,data string)) func SendMsg(msgType int, data string)
+	// engine.connectws(address string,onNewMessage func(msgType int,data string)) func SendMsg(msgType int, data string)
 	// 一般情况下，MessageType 为1(Text Messsage),即字符串类型，或者 0 byteArray (也被以字符串的方式传递)
 	// onNewMessage 在连接关闭时会读取到两个null值
-	if err:=global.Set("FB_WebSocketConnectV2",
+	if err:=engine.Set("connectws",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if address,ok:= hasStrIn(info,0,"FB_WebSocketConnectV2[address]"); !ok{
-				throwException("FB_WebSocketConnectV2",address)
+			if address,ok:= hasStrIn(info,0,"engine.connectws[address]"); !ok{
+				throwException("engine.connectws",address)
 			}else{
-				if errStr,cbFn:=hasFuncIn(info,1,"FB_WebSocketConnectV2[onNewMessage]"); cbFn==nil{
-					throwException("FB_WebSocketConnectV2",errStr)
+				if errStr,cbFn:=hasFuncIn(info,1,"engine.connectws[onNewMessage]"); cbFn==nil{
+					throwException("engine.connectws",errStr)
 				}else{
 					ctx:=info.Context()
 					conn, _, err := websocket.DefaultDialer.Dial(address, nil)
@@ -594,13 +598,14 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 						}
 						jsMsgType,err:=v8go.NewValue(iso,int32(msgType))
 						jsMsgData,err:=v8go.NewValue(iso,string(data))
-						cbFn.Call(info.This(),jsMsgType,jsMsgData)
+						cbFn.Call(ctx.Global(),jsMsgType,jsMsgData)
 					}()
 					return jsWriteFn.GetFunction(ctx).Value
 				}
 			}
 			return nil
-		})); err!=nil{panic(err)}*/
+		}),
+	); err!=nil{panic(err)}
 
 
 	// fetch

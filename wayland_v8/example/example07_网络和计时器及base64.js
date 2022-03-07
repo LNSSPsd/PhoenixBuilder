@@ -2,7 +2,7 @@
 // 本脚本演示了fetch功能
 
 // fetch
-FB_Println("Start...")
+engine.message("Start...")
 var x = fetch('https://storage.fastbuilder.pro').then(function(r) {
     r.text().then(function(d) {
         FB_Println(r.statusText)
@@ -13,18 +13,18 @@ var x = fetch('https://storage.fastbuilder.pro').then(function(r) {
     });
 });
 
-FB_Println("Awaiting...")
+engine.message("Awaiting...")
 
 // setTimeout, clearTimeout, setInterval and clearInterval
 setTimeout(function (){
-    FB_Println("Timeout 10s")
+    engine.message("Timeout 10s")
 },1000)
 
 //  atob and btoa
-base64encodedString=btoa("raw string")
-recoveredString=atob(base64encodedString)
-FB_Println(base64encodedString)
-FB_Println(recoveredString)
+let base64encodedString=btoa("raw string")
+let recoveredString=atob(base64encodedString)
+engine.message(base64encodedString)
+engine.message(recoveredString)
 
 // URL and URLSearchParams
 // URL.revokeObjectURL()
