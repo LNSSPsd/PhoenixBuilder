@@ -93,7 +93,7 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 	}
 	t:=&Terminator{
 		c:           make(chan struct{}),
-		isTeminated: false,
+		isTerminated: false,
 		TerminateHook: make([]func(),0),
 	}
 	t.TerminateHook=append(t.TerminateHook, func() {
@@ -538,7 +538,7 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 						return throwException("FB_WebSocketConnectV2",err.Error())
 					}
 					jsWriteFn:=v8go.NewFunctionTemplate(iso, func(writeInfo *v8go.FunctionCallbackInfo) *v8go.Value {
-						if t.isTeminated{
+						if t.isTerminated{
 							return nil
 						}
 						if len(writeInfo.Args())<2{
@@ -557,7 +557,7 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 					})
 					go func() {
 						msgType, data, err := conn.ReadMessage()
-						if t.isTeminated{
+						if t.isTerminated{
 							return
 						}
 						if err != nil {

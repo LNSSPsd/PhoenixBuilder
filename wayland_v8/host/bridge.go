@@ -15,7 +15,7 @@ import (
 
 type Terminator struct {
 	c chan struct{}
-	isTeminated bool
+	isTerminated bool
 	TerminateHook []func()
 	RootFolder string
 }
@@ -27,7 +27,7 @@ func (t *Terminator) Terminate()  {
 			fmt.Println("recovery in terminate ",r)
 		}
 	}()
-	t.isTeminated=true
+	t.isTerminated=true
 	close(t.c)
 	for _,fn:=range t.TerminateHook{
 		fn()
@@ -112,7 +112,7 @@ func (hb *HostBridgeBeta) IsConnected() bool {
 }
 
 func (hb *HostBridgeBeta) Println(str string,t *Terminator,scriptName string,end...bool)  {
-	if t.isTeminated{
+	if t.isTerminated{
 		return
 	}
 	if len(end)==1 && !end[0]{
@@ -123,14 +123,14 @@ func (hb *HostBridgeBeta) Println(str string,t *Terminator,scriptName string,end
 }
 
 func (hb *HostBridgeBeta) FBCmd(fbCmd string,t *Terminator)  {
-	if t.isTeminated{
+	if t.isTerminated{
 		return
 	}
 	fmt.Println("[FBCmd]: "+fbCmd)
 }
 
 func (hb *HostBridgeBeta) MCCmd(mcCmd string,t *Terminator,waitResult bool) *packet.CommandOutput {
-	if t.isTeminated{
+	if t.isTerminated{
 		return nil
 	}
 	fmt.Println("[MCCmd]: "+mcCmd)
@@ -157,7 +157,7 @@ func (hb *HostBridgeBeta) MCCmd(mcCmd string,t *Terminator,waitResult bool) *pac
 }
 
 func (hb *HostBridgeBeta) GetInput(hint string,t *Terminator,scriptName string) string{
-	if t.isTeminated{
+	if t.isTerminated{
 		return ""
 	}
 
@@ -165,7 +165,7 @@ func (hb *HostBridgeBeta) GetInput(hint string,t *Terminator,scriptName string) 
 	userInputReader:=bufio.NewReader(os.Stdin)
 	l,_, _ :=userInputReader.ReadLine()
 	s:=strings.TrimSpace(string(l))
-	if t.isTeminated{
+	if t.isTerminated{
 		return ""
 	}
 
