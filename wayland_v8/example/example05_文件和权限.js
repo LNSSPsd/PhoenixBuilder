@@ -2,21 +2,23 @@
 // 本脚本演示了一个日志功能，主要用来展示文件读写
 // 演示了 FB_setInterval，FB_ReadFile，FB_SaveFile 的功能
 
-FB_SetName("日志")
+engine.setName("日志")
 
 // 向用户索要权限（需要玩家确认）
 // 如果用户给了权限，第二次索要时不需要玩家确认，直接就能获得
-success=FB_RequireFilePermission("日志记录","需要访问这个文件夹来保存数据")
-if(!success){
+let success = engine.requestFilePermission("日志记录", "需要访问这个文件夹来保存数据")
+if (!success) {
     // 如果你的脚本必须要文件权限才能正常工作
     // 你可以使用该函数主动崩溃脚本
-    FB_Println("没有获得权限!")
-    FB_ScriptCrash("必须这个文件夹的权限才能工作")
-}else{
-    FB_Println("成功获得了权限!")
+    engine.message("没有获得权限!")
+    engine.crash("必须这个文件夹的权限才能工作")
+    // throw new Error("必须这个文件夹的权限才能工作") 大概也行  Ruphane注
+} else {
+    engine.message("成功获得了权限!")
     //获得一个文件的绝对路径
-    absolutePath=FB_GetAbsPath("日志记录")
-    FB_Println("绝对路径为"+absolutePath)
+    //absolutePath=FB_GetAbsPath("日志记录")
+    //移除了 ruphane注
+    //FB_Println("绝对路径为"+absolutePath)
 }
 
 
@@ -26,27 +28,27 @@ if(!success){
 // 即使获取了文件夹权限，fbtoken等敏感文件也是禁止访问的（脚本会被强制停止）
 
 // 加载文件现有内容
-logData=FB_ReadFile("日志记录/日志.txt")
+logData = engine.readFile("日志记录/日志.txt")
 
 setInterval(function () {
     // 每隔十秒保存一次
-    FB_Println("保存日志到"+FB_GetAbsPath("日志记录/日志.txt"))
-    FB_SaveFile("日志记录/日志.txt",logData)
-},10000)
+    engine.message("保存日志到" +/*FB_GetAbsPath(*/"日志记录/日志.txt"/*)*/)
+    engine.writeFile("日志记录/日志.txt", logData)
+}, 10000)
 
 // 添加一行记录
 function LogString(info) {
     newDate = new Date();
-    logData=logData+newDate.toLocaleString()+": "+info+"\n"
+    logData = logData + newDate.toLocaleString() + ": " + info + "\n"
 }
 
 LogString("脚本启动")
 
 // 记录聊天信息
-FB_RegChat(function (name,msg) {
-    LogString("chat: "+name+" :"+msg)
+game.listenChat(function (name, msg) {
+    LogString("chat: " + name + " :" + msg)
 })
 
 // 等待连接到 MC
-FB_WaitConnect()
+engine.waitConnectionSync()
 LogString("成功连接到 MC")

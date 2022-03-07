@@ -1,5 +1,5 @@
 // 你可以使用该函数主动崩溃脚本
-FB_Println("在这里脚本崩溃了!")
+engine.message("在这里脚本崩溃了!")
 
 // 当重复使用 script 指令加载同一个脚本时，前一个会被停止
 // script example.js // 第一次加载
@@ -14,25 +14,25 @@ FB_Println("在这里脚本崩溃了!")
 
 
 // 当接收到新消息时，这个函数会被调用 （错误时收到null）
-function onNewMessage(msgType,newMessage) {
-    if(msgType===null&&newMessage===null){
+function onNewMessage(msgType, newMessage) {
+    if (msgType === null && newMessage === null) {
         // 网络连接中发生错误时有发生,如果可以被这个错误无法被catch
         // 例如回调函数
         // 那么回调的所有值都会被设为 null
-        FB_Println("连接已经断开！")
+        engine.message("连接已经断开！")
         return
     }
     // 正常收到消息
-    FB_Println("type: "+msgType+" message: "+newMessage)
+    engine.message("type: " + msgType + " message: " + newMessage)
 }
 
 // 连接到 ws://localhost:8888/ws_test 上，(错误需要捕获)
 try {
-    FB_WebSocketConnectV2("ws://localhost:8888/ws_test",onNewMessage)
-}catch (e) {
+    engine.connectws("ws://localhost:8888/ws_test", onNewMessage)
+} catch (e) {
     // 网络连接中发生错误时有发生,如果可以被这个错误可以被catch
     // 那么错误总是以 exception 发出的
-    FB_Println("捕捉了错误 "+e)
-}finally {
-    FB_Println("继续执行")
+    engine.message("捕捉了错误 " + e)
+} finally {
+    engine.message("继续执行")
 }

@@ -17,9 +17,6 @@
 
 extern "C" void __android_log_write() {}
 extern "C" void __android_log_vprint() {}
-extern "C" void pthread_jit_write_protect_np(int enabled) {
-	// Referenced from wasm (iOS), stubed as no wasm is used.
-}
 
 using namespace v8;
 
