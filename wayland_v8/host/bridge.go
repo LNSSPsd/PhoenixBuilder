@@ -114,7 +114,6 @@ func (hb *HostBridgeBeta) Println(str string,t *Terminator,scriptName string,end
 	}else {
 		fmt.Println("["+scriptName+"]: "+str)
 	}
-
 }
 
 func (hb *HostBridgeBeta) FBCmd(fbCmd string,t *Terminator)  {
