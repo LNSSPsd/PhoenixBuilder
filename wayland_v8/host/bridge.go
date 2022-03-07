@@ -21,8 +21,14 @@ type Terminator struct {
 }
 
 func (t *Terminator) Terminate()  {
-	close(t.c)
+	defer func() {
+		r:=recover()
+		if r!=nil{
+			fmt.Println("recovery in terminate ",r)
+		}
+	}()
 	t.isTeminated=true
+	close(t.c)
 	for _,fn:=range t.TerminateHook{
 		fn()
 	}

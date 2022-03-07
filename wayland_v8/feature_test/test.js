@@ -92,21 +92,5 @@
 // // FB_ScriptCrash("crashed here!")
 //
 
-// 当接收到新消息时，这个函数会被调用
-function onNewMessage(msgType,newMessage) {
-    FB_Println("type: "+msgType+" message: "+newMessage)
-}
-
-// 连接到 ws://localhost:8888/ws_test 上
-try {
-    sendFn=FB_WebSocketConnectV2("ws://localhost:8888/ws_test",onNewMessage)
-}catch (e) {
-    FB_Println("捕捉了错误 "+e)
-}finally {
-    FB_Println("继续执行")
-}
 
 
-// 使用返回的发送函数向服务器发送消息
-// 1 为 Msg 类型，（TextMessage）
-sendFn(1,"hello ws!")
