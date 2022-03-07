@@ -579,7 +579,7 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 	if err := fetch.InjectTo(iso, global); err != nil {
 		panic(err)
 	}
-	// setTimeout, clearTimeout, setInterval and clearInterva
+	// setTimeout, clearTimeout, setInterval and clearInterval
 	if err :=timers.InjectTo(iso, global);err!=nil{
 		panic(err)
 	}

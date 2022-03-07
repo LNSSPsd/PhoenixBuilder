@@ -18,6 +18,7 @@ type HostBridgeGamma struct {
 	isCli bool
 	connetWaiter chan struct{}
 	hostBlock chan struct{}
+	hosBlocked bool
 
 	// user input
 	vmUserInputChan    chan string
@@ -51,6 +52,7 @@ type HostBridgeGamma struct {
 func (hb *HostBridgeGamma) Init()  {
 	hb.isConnect=false
 	hb.connetWaiter=make(chan struct{})
+	hb.hosBlocked=true
 	hb.hostBlock=make(chan struct{})
 
 	hb.vmUserInputChan =make(chan string)
@@ -139,7 +141,10 @@ func (hb *HostBridgeGamma) HostPumpMcPacket(pk packet.Packet){
 }
 
 func (hb *HostBridgeGamma) WaitConnect(t *Terminator)  {
-	close(hb.hostBlock)
+	if hb.hosBlocked{
+		close(hb.hostBlock)
+		hb.hosBlocked=false
+	}
 	select {
 	case <-hb.connetWaiter:
 	case <-t.c:
@@ -147,7 +152,10 @@ func (hb *HostBridgeGamma) WaitConnect(t *Terminator)  {
 }
 
 func (hb *HostBridgeGamma) HostRemoveBlock(){
-	close(hb.hostBlock)
+	if hb.hosBlocked{
+		close(hb.hostBlock)
+		hb.hosBlocked=false
+	}
 }
 
 func (hb *HostBridgeGamma) IsConnected() bool {
@@ -203,9 +211,8 @@ func (hb *HostBridgeGamma) GetInput(hint string,t *Terminator,scriptName string)
 	// so we need a mutex
 	hb.vmUserInputMu.Lock()
 	hb.isWaitingUserInput=true
-	if hb.isCli{
-		fmt.Printf("[%v]: %v",scriptName,hint)
-	}
+	fmt.Printf("[%v]: %v",scriptName,hint)
+
 	return <-hb.vmUserInputChan
 }
 
