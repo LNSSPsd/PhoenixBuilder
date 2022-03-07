@@ -3,12 +3,12 @@ package host
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/websocket"
+	//"github.com/gorilla/websocket"
 	"go.kuoruan.net/v8go-polyfills/base64"
 	"go.kuoruan.net/v8go-polyfills/fetch"
 	"go.kuoruan.net/v8go-polyfills/timers"
 	"go.kuoruan.net/v8go-polyfills/url"
-	"os"
+	//"os"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"rogchap.com/v8go"
 	"strings"
@@ -55,18 +55,18 @@ func SavePermission(hb HostBridge,identifyStr string,permission map[string]bool)
 
 func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_scriptName string,identifyStr string,scriptPath string) func() {
 	scriptName:=_scriptName
-	permission:=LoadPermission(hb,identifyStr)
-	updatePermission:= func() {
+	//permission:=LoadPermission(hb,identifyStr)
+	/*updatePermission:= func() {
 		SavePermission(hb,identifyStr,permission)
-	}
+	}*/
 
 	throwException:= func(funcName string,str string) *v8go.Value {
-		value, _ := v8go.NewValue(iso, "脚本崩溃于函数 ["+funcName+"], 原因是: "+str)
+		value, _ := v8go.NewValue(iso, "Script crashed at ["+funcName+"] due to "+str)
 		iso.ThrowException(value)
 		return nil
 	}
 	printException:= func(funcName string,str string) *v8go.Value {
-		fmt.Println("脚本在函数 ["+funcName+"] 出现错误, 原因是: "+str)
+		fmt.Println("Script triggered an exception at ["+funcName+"] due to "+str)
 		return nil
 	}
 	throwNotConnectedException:= func(funcName string) *v8go.Value  {
@@ -99,203 +99,224 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 	t.TerminateHook=append(t.TerminateHook, func() {
 		iso.TerminateExecution()
 	})
-
-	// function FB_SetName(scriptName string) None
-	if err:=global.Set("FB_SetName",
+	engine:=v8go.NewObjectTemplate(iso)
+	global.Set("engine",engine)
+	// function engine.setName(scriptName string)
+	if err:=engine.Set("setName",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if str,ok:= hasStrIn(info,0,"FB_SetName[scriptName]"); !ok{
-				throwException("FB_SetName",str)
+			if str,ok:= hasStrIn(info,0,"engine.setName[scriptName]"); !ok{
+				throwException("engine.setName: No arguments assigned",str)
 			}else{
-				hb.Println("脚本["+scriptName+"]正在将自己命名为["+str+"]",t,scriptName)
+				hb.Println("Script \""+scriptName+"\" is naming itself as \""+str+"\"",t,scriptName)
 				scriptName=str
 			}
 			return nil
-		})); err!=nil{panic(err)}
+		}),
+	); err!=nil{panic(err)}
 
-	// function FB_WaitConnect() None
-	if err:=global.Set("FB_WaitConnect",
+	// function engine.waitConnectionSync()
+	if err:=engine.Set("waitConnectionSync",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
 			hb.WaitConnect(t)
 			return nil
-		})); err!=nil{panic(err)}
-
-	// fuunction FB_WaitConnectAsync(cb func()) None
-	if err:=global.Set("FB_WaitConnectAsync",
+		}),
+	); err!=nil{panic(err)}
+	
+	// function engine.waitConnection(cb)
+	if err:=engine.Set("waitConnection",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if errStr,cbFn:=hasFuncIn(info,0,"FB_WaitConnectAsync[cb]"); cbFn==nil{
-				throwException("FB_WaitConnectAsync",errStr)
-			}else{
-				go func() {
-					hb.WaitConnect(t)
-					cbFn.Call(info.This())
-				}()
-
+			_args:=info.Args()
+			if(len(_args)==0) {
+				throwException("engine.waitConnection(cb)"," No arguments assigned")
 			}
+			first_arg:=_args[0]
+			if(!first_arg.IsFunction()) {
+				throwException("engine.waitConnection(cb)"," Callback should be a function")
+			}
+			f, e:=first_arg.AsFunction()
+			if(e!=nil) {
+				throwException("engine.waitConnection(cb)"," Callback should be a function, but got function.")
+			}
+			go func() {
+				hb.WaitConnect(t)
+				f.Call(info.Context().Global())
+			} ()
 			return nil
-		})); err!=nil{panic(err)}
+		}),
+	); err!=nil{panic(err)}
 
-	// function FB_Println(msg string) None
-	if err:=global.Set("FB_Println",
+	// function engine.message(msg string) None
+	if err:=engine.Set("message",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if str,ok:= hasStrIn(info,0,"FB_Println[msg]"); !ok{
-				throwException("FB_Println",str)
+			if str,ok:= hasStrIn(info,0,"engine.message[msg]"); !ok{
+				throwException("engine.message",str)
 			}else{
 				hb.Println(str,t,scriptName)
 			}
 			return nil
-		})); err!=nil{panic(err)}
-
-	// function FB_GeneralCmd(fbCmd string) None
-	if err:=global.Set("FB_GeneralCmd",
+		}),
+	); err!=nil{panic(err)}
+	game:=v8go.NewObjectTemplate(iso)
+	global.Set("game",game)
+	// One shot command
+	// function game.eval(fbCmd string) None
+	if err:=game.Set("eval",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
 			if !hb.IsConnected(){
-				throwNotConnectedException("FB_GeneralCmd")
+				throwNotConnectedException("game.eval")
 			}
-			if str,ok:= hasStrIn(info,0,"FB_GeneralCmd[fbCmd]"); !ok{
-				throwException("FB_GeneralCmd",str)
+			if str,ok:= hasStrIn(info,0,"game.eval[fbCmd]"); !ok{
+				throwException("game.eval",str)
 			}else{
 				hb.FBCmd(str,t)
 			}
 			return nil
-		})); err!=nil{panic(err)}
+		}),
+	); err!=nil{panic(err)}
 
-	// function FB_SendMCCmd(mcCmd string) None
-	if err:=global.Set("FB_SendMCCmd",
+	// function game.oneShotCommand(mcCmd string) None
+	if err:=game.Set("oneShotCommand",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
 			if !hb.IsConnected(){
-				throwNotConnectedException("FB_SendMCCmd")
+				throwNotConnectedException("game.oneShotCommand")
 			}
-			if str,ok:= hasStrIn(info,0,"FB_SendMCCmd[mcCmd]"); !ok{
-				throwException("FB_SendMCCmd",str)
+			if str,ok:= hasStrIn(info,0,"game.oneShotCommand[mcCmd]"); !ok{
+				throwException("game.oneShotCommand",str)
 			}else{
 				hb.MCCmd(str,t,false)
 			}
 			return nil
-		})); err!=nil{panic(err)}
+		}),
+	); err!=nil{panic(err)}
 
-	// function FB_SendMCCmdAndGetResult(mcCmd string) jsObject
-	if err:=global.Set("FB_SendMCCmdAndGetResult",
+	// function game.sendCommandSync(mcCmd string) jsObject
+	if err:=game.Set("sendCommandSync",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
 			if !hb.IsConnected(){
-				throwNotConnectedException("FB_SendMCCmdAndGetResult")
+				throwNotConnectedException("game.sendCommandSync")
 			}
-			if str,ok:= hasStrIn(info,0,"FB_SendMCCmdAndGetResult[mcCmd]"); !ok{
-				throwException("FB_SendMCCmdAndGetResult",str)
+			if str,ok:= hasStrIn(info,0,"game.sendCommandSync[mcCmd]"); !ok{
+				throwException("game.sendCommandSync",str)
 			}else{
 				pk:= hb.MCCmd(str,t,true)
 				strPk, err := json.Marshal(pk)
 				if err != nil {
-					return throwException("FB_SendMCCmdAndGetResult","Cannot convert host packet to Json Str: "+str)
+					return throwException("game.sendCommandSync","Cannot convert host packet to Json Str: "+str)
 				}
 				value, err := v8go.JSONParse(info.Context(), string(strPk))
 				if err != nil {
-					return throwException("FB_SendMCCmdAndGetResult",str)
+					return throwException("game.sendCommandSync",str)
 				}else{
 					return value
 				}
 			}
 			return nil
-		})); err!=nil{panic(err)}
+		}),
+	); err!=nil{panic(err)}
 
-	// function FB_SendMCCmdAndGetResultAsync(mcCmd string, onResult func(jsObject)) None
+	// function game.sendCommand(mcCmd string, onResult function(jsObject)) None
 	// jsObject=null, if cannot get result in callback
-	if err:=global.Set("FB_SendMCCmdAndGetResultAsync",
+	if err:=game.Set("sendCommand",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
 			if !hb.IsConnected(){
-				throwNotConnectedException("FB_SendMCCmdAndGetResultAsync")
+				throwNotConnectedException("game.sendCommand")
 			}
-			if str,ok:= hasStrIn(info,0,"FB_SendMCCmdAndGetResultAsync[mcCmd]"); !ok{
-				throwException("FB_SendMCCmdAndGetResultAsync",str)
+			if str,ok:= hasStrIn(info,0,"game.sendCommand[mcCmd]"); !ok{
+				throwException("game.sendCommand",str)
 			}else{
-				if errStr,cbFn:=hasFuncIn(info,1,"FB_SendMCCmdAndGetResultAsync[onResult]"); cbFn==nil{
-					throwException("FB_WaitConnectAsync",errStr)
+				if _,cbFn:=hasFuncIn(info,1,"game.sendCommand[onResult]"); cbFn==nil{
+					hb.MCCmd(str,t,false)
+					return nil
 				}else{
 					ctx:=info.Context()
 					go func() {
 						pk:= hb.MCCmd(str,t,true)
 						strPk, err := json.Marshal(pk)
 						if err != nil {
-							printException("FB_SendMCCmdAndGetResultAsync","Cannot convert host packet to Json Str: "+str)
-							cbFn.Call(info.This(),v8go.Null(iso))
+							printException("game.sendCommand","Cannot convert host packet to Json Str: "+str)
+							cbFn.Call(info.Context().Global(),v8go.Null(iso))
 							return
 						}
 						val, err := v8go.JSONParse(ctx,string(strPk))
 						if err != nil {
-							printException("FB_SendMCCmdAndGetResultAsync","Cannot Parse Json Packet in Host: "+str)
-							cbFn.Call(info.This(),v8go.Null(iso))
+							printException("game.sendCommand","Cannot Parse Json Packet in Host: "+str)
+							cbFn.Call(info.Context().Global(),v8go.Null(iso))
 							return
 						}else {
-							cbFn.Call(info.This(),val)
+							cbFn.Call(info.Context().Global(),val)
 						}
 					}()
 				}
 				return nil
 			}
 			return nil
-		})); err!=nil{panic(err)}
+		}),
+	); err!=nil{panic(err)}
 
-	// function FB_RequireUserInput(hint string) string
-	if err:=global.Set("FB_RequireUserInput",
+	// function engine.questionSync(hint string) string
+	if err:=engine.Set("questionSync",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if str,ok:= hasStrIn(info,0,"FB_RequireUserInput[hint]"); !ok{
-				throwException("FB_RequireUserInput",str)
+			if str,ok:= hasStrIn(info,0,"engine.questionSync[hint]"); !ok{
+				throwException("engine.questionSync",str)
 			}else{
 				userInput:= hb.GetInput(str,t,scriptName)
 				value,_:=v8go.NewValue(iso,userInput)
 				return value
 			}
 			return nil
-		})); err!=nil{panic(err)}
+		}),
+	); err!=nil{panic(err)}
 
-	// function FB_RequireUserInputAsync(hint,onInput func(string)) None
-	if err:=global.Set("FB_RequireUserInputAsync",
+	// function question(hint,cb) None
+	if err:=engine.Set("question",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if str,ok:= hasStrIn(info,0,"FB_RequireUserInputAsync[hint]"); !ok{
-				throwException("FB_RequireUserInputAsync",str)
+			if str,ok:= hasStrIn(info,0,"engine.question[hint,cb]"); !ok{
+				throwException("engine.question",str)
 			}else{
-				if errStr,cbFn:=hasFuncIn(info,1,"FB_RequireUserInputAsync[onInput]"); cbFn==nil{
-					throwException("FB_RequireUserInputAsync",errStr)
+				if errStr,cbFn:=hasFuncIn(info,1,"engine.question[hint,cb]"); cbFn==nil{
+					throwException("engine.question",errStr)
 				}else{
 					go func() {
 						userInput:= hb.GetInput(str,t,scriptName)
 						value,_:=v8go.NewValue(iso,userInput)
-						cbFn.Call(info.This(),value)
+						cbFn.Call(info.Context().Global(),value)
 					}()
 				}
 
 			}
 			return nil
-		})); err!=nil{panic(err)}
+		}),
+	); err!=nil{panic(err)}
 
-	// function FB_RegPacketCallBack(packetType,onPacket func(jsObject)) deRegFn
-	// when deRegFn is called, onPacket function will no longer be called
-	if err:=global.Set("FB_RegPackCallBack",
+	// function game.listenPacket(packetType,onPacketCb) deRegFn
+	// when deRegFn is called, onPacketCb function will no longer be called
+	if err:=game.Set("listenPacket",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if str,ok:= hasStrIn(info,0,"FB_RegPackCallBack[packetType]"); !ok{
-				throwException("FB_RegPackCallBack",str)
+			if str,ok:= hasStrIn(info,0,"game.listenPacket[packetType]"); !ok{
+				throwException("game.listenPacket",str)
 			}else{
-				if errStr,cbFn:=hasFuncIn(info,1,"FB_RegPackCallBack[onPacket]"); cbFn==nil{
-					throwException("FB_RegPackCallBack",errStr)
+				if errStr,cbFn:=hasFuncIn(info,1,"game.listenPacket[onPacketCb]"); cbFn==nil{
+					throwException("game.listenPacket",errStr)
 				}else{
 					ctx:=info.Context()
 					deRegFn, err := hb.RegPacketCallBack(str, func(pk packet.Packet) {
 						strPk, err := json.Marshal(pk)
 						if err!=nil{
-							printException("FB_RegPackCallBack","Cannot convert host packet to Json Str: "+err.Error())
+							printException("game.listenPacket","Cannot convert host packet to Json Str: "+err.Error())
 							cbFn.Call(info.This(),v8go.Null(iso))
 						}else{
 							val, err := v8go.JSONParse(ctx,string(strPk))
 							if err != nil {
-								printException("FB_RegPackCallBack","Cannot Parse Json Packet in Host: "+str)
-								cbFn.Call(info.This(),v8go.Null(iso))
+								printException("game.listenPacket","Cannot Parse Json Packet in Host: "+str)
+								cbFn.Call(ctx.Global(),v8go.Null(iso))
 								return
 							}else {
-								cbFn.Call(info.This(),val)
+								cbFn.Call(ctx.Global(),val)
 							}
 						}
 					},t)
 					if err != nil {
-						return throwException("FB_RegPackCallBack",err.Error())
+						return throwException("game.listenPacket",err.Error())
 					}
 					jsCbFn:=v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
 						deRegFn()
@@ -305,30 +326,31 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 				}
 			}
 			return nil
-		})); err!=nil{panic(err)}
+		}),
+	); err!=nil{panic(err)}
 
-	// function FB_RegChat(onMsg func(name,msg)) deRegFn
-	if err:=global.Set("FB_RegChat",
+	// function game.listenChat(onMsg function(name,msg)) deRegFn
+	if err:=game.Set("listenChat",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if errStr,cbFn:=hasFuncIn(info,0,"FB_RegChat[onMsg]"); cbFn==nil{
-				throwException("FB_RegChat",errStr)
+			if errStr,cbFn:=hasFuncIn(info,0,"game.listenChat[onMsg]"); cbFn==nil{
+				throwException("game.listenChat",errStr)
 			}else{
 				ctx:=info.Context()
 				deRegFn, err := hb.RegPacketCallBack("IDText", func(pk packet.Packet) {
 					p := pk.(*packet.Text)
 					SourceName, err := v8go.NewValue(iso,p.SourceName)
 					if err != nil {
-						printException("FB_RegChat",err.Error())
-						cbFn.Call(info.This(),v8go.Null(iso),v8go.Null(iso))
+						printException("game.listenChat",err.Error())
+						cbFn.Call(info.Context().Global(),v8go.Null(iso),v8go.Null(iso))
 						return
 					}
 					Message, err := v8go.NewValue(iso,p.Message)
 					if err != nil {
-						printException("FB_RegChat",err.Error())
-						cbFn.Call(info.This(),v8go.Null(iso),v8go.Null(iso))
+						printException("game.listenChat",err.Error())
+						cbFn.Call(info.Context().Global(),v8go.Null(iso),v8go.Null(iso))
 						return
 					}
-					cbFn.Call(info.This(),SourceName,Message)
+					cbFn.Call(info.Context().Global(),SourceName,Message)
 				},t)
 				if err != nil {
 					return throwException("FB_RegChat",err.Error())
@@ -341,8 +363,13 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 				return jsCbFn.GetFunction(ctx).Value
 			}
 			return nil
-		})); err!=nil{panic(err)}
-
+		}),
+	); err!=nil{panic(err)}
+	
+	consts:=v8go.NewObjectTemplate(iso)
+	s256v,_:=v8go.NewValue(iso,identifyStr)
+	consts.Set("script_sha256",s256v)
+	/*
 	// function FB_Query(info string) string
 	if err:=global.Set("FB_Query",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
@@ -361,7 +388,8 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 				return value
 			}
 			return nil
-		})); err!=nil{panic(err)}
+		}),
+	); err!=nil{panic(err)}
 
 	// function FB_GetAbsPath(path string) string
 	if err:=global.Set("FB_GetAbsPath",
@@ -498,22 +526,22 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 				}
 			}
 			return nil
-		})); err!=nil{panic(err)}
+		})); err!=nil{panic(err)}*/
 
 
-	// function FB_ScriptCrash(string reason) None
-	if err:=global.Set("FB_ScriptCrash",
+	// function engine.crash(string reason) None
+	if err:=engine.Set("crash",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
 
-			if str,ok:= hasStrIn(info,0,"FB_ScriptCrash[reson]"); !ok{
-				throwException("FB_ScriptCrash",str)
+			if str,ok:= hasStrIn(info,0,"engine.crash[reason]"); !ok{
+				throwException("engine.crash",str)
 			}else{
-				throwException("FB_ScriptCrash",str)
+				throwException("engine.crash",str)
 				t.Terminate()
 			}
 			return nil
 		})); err!=nil{panic(err)}
-
+	/*
 	// function FB_WaitConnect() None
 	if err:=global.Set("FB_AutoRestart",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
@@ -572,7 +600,7 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb HostBridge,_sc
 				}
 			}
 			return nil
-		})); err!=nil{panic(err)}
+		})); err!=nil{panic(err)}*/
 
 
 	// fetch
