@@ -5,11 +5,11 @@
 engine.message("Start...")
 var x = fetch('https://storage.fastbuilder.pro').then(function (r) {
     r.text().then(function (d) {
-        FB_Println(r.statusText)
+        engine.message(r.statusText)
         for (var k in r.headers._headers) {
-            FB_Println(k + ':', r.headers.get(k))
+            engine.message(k + ':', r.headers.get(k))
         }
-        FB_Println(d)
+        engine.message(d)
     });
 });
 
