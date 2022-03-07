@@ -163,7 +163,7 @@ func (hb *HostBridgeGamma) IsConnected() bool {
 }
 
 func (hb *HostBridgeGamma) Println(str string,t *Terminator,scriptName string,end...bool)  {
-	if t.isTeminated{
+	if t.isTerminated{
 		return
 	}
 	if len(end)==1 && !end[0]{
@@ -174,14 +174,14 @@ func (hb *HostBridgeGamma) Println(str string,t *Terminator,scriptName string,en
 }
 
 func (hb *HostBridgeGamma) FBCmd(fbCmd string,t *Terminator)  {
-	if t.isTeminated{
+	if t.isTerminated{
 		return
 	}
 	hb.cliVmInputChan<-fbCmd
 }
 
 func (hb *HostBridgeGamma) MCCmd(mcCmd string,t *Terminator,waitResult bool) *packet.CommandOutput {
-	if t.isTeminated{
+	if t.isTerminated{
 		return nil
 	}
 	return hb.vmMcCmd(mcCmd,waitResult)
@@ -193,7 +193,7 @@ func (hb *HostBridgeGamma) HostWaitScriptBlock(){
 }
 
 func (hb *HostBridgeGamma) GetInput(hint string,t *Terminator,scriptName string) string{
-	if t.isTeminated{
+	if t.isTerminated{
 		return ""
 	}
 	// if FB is not connected to MC, at this time
@@ -202,7 +202,7 @@ func (hb *HostBridgeGamma) GetInput(hint string,t *Terminator,scriptName string)
 		userInputReader:=bufio.NewReader(os.Stdin)
 		l,_, _ :=userInputReader.ReadLine()
 		s:=strings.TrimSpace(string(l))
-		if t.isTeminated{
+		if t.isTerminated{
 			return ""
 		}
 		return s
@@ -231,7 +231,7 @@ func (hb *HostBridgeGamma) RegPacketCallBack(packetType string,onPacket func(pac
 	c+=1
 	hb.vmCbsCount[packetID]++
 	hb.vmCbs[packetID][c]= func(p packet.Packet) {
-		if t.isTeminated{
+		if t.isTerminated{
 			return
 		}
 		onPacket(p)
