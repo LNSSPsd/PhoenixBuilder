@@ -8,7 +8,7 @@ engine.setName("紧急救援")
 // 询问用户是否要停用所有命令方块
 let choose = engine.questionSync("是否要紧急停止所有命令方块? 输入y:")
 if (choose === "y") {
-    // 当作为启动脚本运行时，FB将暂停连接到MC，直到 FB_WaitConnect 被调用
+    // **当作为启动脚本运行时，FB将暂停连接到MC，直到 engine.waitConnectionSync 被调用**
     engine.waitConnectionSync()
     // 在连接到MC后，立刻发送指令
     game.sendCommand("gamerule commandblocksenabled false")
