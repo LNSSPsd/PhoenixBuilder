@@ -13,6 +13,7 @@ import (
 	"go.kuoruan.net/v8go-polyfills/timers"
 	"go.kuoruan.net/v8go-polyfills/url"
 	"rogchap.com/v8go"
+	"phoenixbuilder/fastbuilder/script"
 )
 
 const JSVERSION="v8.gamma.3"
@@ -27,9 +28,9 @@ func AllowPath(path string) bool {
 	return true
 }
 
-func LoadPermission(hb HostBridge, identifyStr string) map[string]bool {
-	permission := map[string]bool{}
-	fullPermission := map[string]map[string]bool{}
+func LoadPermission(hb script.HostBridge,identifyStr string) map[string]bool{
+	permission:= map[string]bool{}
+	fullPermission:=map[string]map[string]bool{}
 	file, err := hb.LoadFile("fb_script_permission.json")
 	if err != nil {
 		return permission
@@ -44,8 +45,8 @@ func LoadPermission(hb HostBridge, identifyStr string) map[string]bool {
 	return permission
 }
 
-func SavePermission(hb HostBridge, identifyStr string, permission map[string]bool) {
-	fullPermission := map[string]map[string]bool{}
+func SavePermission(hb script.HostBridge,identifyStr string,permission map[string]bool){
+	fullPermission:=map[string]map[string]bool{}
 	file, err := hb.LoadFile("fb_script_permission.json")
 	dataToSave := []byte{}
 	if err == nil {
@@ -56,11 +57,11 @@ func SavePermission(hb HostBridge, identifyStr string, permission map[string]boo
 	hb.SaveFile("fb_script_permission.json", string(dataToSave))
 }
 
-func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb HostBridge, _scriptName string, identifyStr string, scriptPath string) func() {
-	scriptName := _scriptName
-	permission := LoadPermission(hb, identifyStr)
-	updatePermission := func() {
-		SavePermission(hb, identifyStr, permission)
+func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb script.HostBridge,_scriptName string,identifyStr string,scriptPath string) func() {
+	scriptName:=_scriptName
+	permission:=LoadPermission(hb,identifyStr)
+	updatePermission:= func() {
+		SavePermission(hb,identifyStr,permission)
 	}
 
 	throwException := func(funcName string, str string) *v8go.Value {
@@ -94,11 +95,7 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb HostBridge, 
 		}
 		return "", function
 	}
-	t := &Terminator{
-		c:             make(chan struct{}),
-		isTerminated:  false,
-		TerminateHook: make([]func(), 0),
-	}
+	t := script.NewTerminator()
 	t.TerminateHook = append(t.TerminateHook, func() {
 		iso.TerminateExecution()
 	})
@@ -389,22 +386,17 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb HostBridge, 
 			}
 			return nil
 		}),
-	); err != nil {
-		panic(err)
+	); err!=nil{panic(err)}
+	
+	consts:=v8go.NewObjectTemplate(iso)
+	s256v,_:=v8go.NewValue(iso,identifyStr)
+	consts.Set("script_sha256",s256v)
+	//consts.Set("user_name","Not implemented")
+	for k,v:=range hb.GetQueries() {
+		val,_:=v8go.NewValue(iso,v())
+		consts.Set(k,val)
 	}
-
-	consts := v8go.NewObjectTemplate(iso)
-	s256v, _ := v8go.NewValue(iso, identifyStr)
-	consts.Set("script_sha256", s256v)
-	consts.Set("script_path",scriptPath)
-	//consts.Set("script_author",)
-	consts.Set("user_name", hb.Query("user_name"))
-	consts.Set("sha_token", hb.Query("sha_token"))
-	consts.Set("server_code", hb.Query("server_code"))
-	consts.Set("fb_version", hb.Query("fb_version"))
-	consts.Set("fb_dir", hb.Query("fb_dir"))
-	consts.Set("engine_version",JSVERSION)
-	global.Set("consts", consts)
+	global.Set("consts",consts)
 	/*
 		// function FB_Query(info string) string
 		if err:=global.Set("FB_Query",
@@ -613,7 +605,7 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb HostBridge, 
 						return throwException("FB_WebSocketConnectV2", err.Error())
 					}
 					jsWriteFn := v8go.NewFunctionTemplate(iso, func(writeInfo *v8go.FunctionCallbackInfo) *v8go.Value {
-						if t.isTerminated {
+						if t.Terminated() {
 							return nil
 						}
 						if len(writeInfo.Args()) < 2 {
@@ -632,7 +624,7 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb HostBridge, 
 					})
 					go func() {
 						msgType, data, err := conn.ReadMessage()
-						if t.isTerminated {
+						if t.Terminated() {
 							return
 						}
 						if err != nil {

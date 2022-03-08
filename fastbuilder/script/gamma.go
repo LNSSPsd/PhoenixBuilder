@@ -1,4 +1,4 @@
-package host
+package script
 
 import (
 	"bufio"
@@ -192,17 +192,21 @@ func (hb *HostBridgeGamma) HostWaitScriptBlock() {
 	<-hb.hostBlock
 }
 
-func (hb *HostBridgeGamma) GetInput(hint string, t *Terminator, scriptName string) string {
+func (hb *HostBridgeGamma) GetQueries() map[string]func()string {
+	return hb.HostQueryExpose
+}
+
+func (hb *HostBridgeGamma) GetInput(hint string,t *Terminator,scriptName string) string{
 	if t.isTerminated {
 		return ""
 	}
 	// if FB is not connected to MC, at this time
-	if !hb.IsConnected() {
-		fmt.Print("[scriptName]: " + hint)
-		userInputReader := bufio.NewReader(os.Stdin)
-		l, _, _ := userInputReader.ReadLine()
-		s := strings.TrimSpace(string(l))
-		if t.isTerminated {
+	if !hb.IsConnected(){
+		fmt.Print("[scriptName]: "+hint)
+		userInputReader:=bufio.NewReader(os.Stdin)
+		l,_, _ :=userInputReader.ReadLine()
+		s:=strings.TrimSpace(string(l))
+		if t.isTerminated{
 			return ""
 		}
 		return s
