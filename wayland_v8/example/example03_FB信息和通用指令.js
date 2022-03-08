@@ -29,6 +29,8 @@ currentPlayersList.forEach(function (playerName) {
 
 
 // consts里所包含的信息
+// 具体哪些信息可以被获得还在讨论中
+// 所以这不是最终版本
 // 脚本内容的哈希值
 engine.message(consts.script_sha256)
 // 脚本所在路径
