@@ -1,4 +1,4 @@
-package host
+package script
 
 import (
 	"bufio"
@@ -14,11 +14,26 @@ import (
 	"github.com/google/uuid"
 )
 
+var PacketNameMap map[string]uint32
+// Will be initialized by wayland_v8/host.
+
 type Terminator struct {
 	c             chan struct{}
 	isTerminated  bool
 	TerminateHook []func()
 	RootFolder    string
+}
+
+func NewTerminator() *Terminator {
+	return &Terminator {
+		c: make(chan struct{}),
+		isTerminated: false,
+		TerminateHook: make([]func(), 0),
+	}
+}
+
+func (t *Terminator) Terminated() bool {
+	return t.isTerminated
 }
 
 func (t *Terminator) Terminate() {
@@ -39,9 +54,10 @@ type HostBridge interface {
 	// wait fb-mc connection
 	WaitConnect(t *Terminator)
 	IsConnected() bool
-	Println(str string, t *Terminator, scriptName string, end ...bool)
-	RegPacketCallBack(packetType string, onPacket func(packet.Packet), t *Terminator) (func(), error)
-	Query(info string) string
+	Println(str string,t *Terminator,scriptName string,end...bool)
+	RegPacketCallBack(packetType string,onPacket func(packet.Packet),t *Terminator) (func(),error)
+	//Query(info string) string
+	GetQueries() map[string]func()string
 
 	// if Get input is called before mc started, mc start will be blocked
 	GetInput(hint string, t *Terminator, scriptName string) string
@@ -122,8 +138,12 @@ func (hb *HostBridgeBeta) Println(str string, t *Terminator, scriptName string, 
 	}
 }
 
-func (hb *HostBridgeBeta) FBCmd(fbCmd string, t *Terminator) {
-	if t.isTerminated {
+func (hb *HostBridgeBeta) GetQueries() map[string]func()string {
+	return hb.HostQueryExpose
+}
+
+func (hb *HostBridgeBeta) FBCmd(fbCmd string,t *Terminator)  {
+	if t.isTerminated{
 		return
 	}
 	fmt.Println("[FBCmd]: " + fbCmd)
@@ -270,3 +290,4 @@ func (hb *HostBridgeBeta) SaveFile(p string, data string) error {
 func (hb *HostBridgeBeta) RequireAutoRestart() {
 
 }
+

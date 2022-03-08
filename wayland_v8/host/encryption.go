@@ -4,9 +4,8 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"fmt"
 	"io"
-	"rogchap.com/v8go"
+	//"rogchap.com/v8go"
 )
 
 func aesEncrypt(_text,_key string) (string,error){
@@ -47,7 +46,7 @@ func aesEncrypt(_text,_key string) (string,error){
 	// time, for a given key.
 	return string(gcm.Seal(nonce, nonce, text, nil)),nil
 }
-
+/*
 func aesDecrypt(iso *v8go.Isolate) *v8go.ObjectTemplate {
 
-}
+}*/
