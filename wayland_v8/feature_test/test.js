@@ -92,5 +92,11 @@
 // // FB_ScriptCrash("crashed here!")
 //
 
+var rawData="原始字符串"
+var key="fastbuilder.js.v8.gamme"
 
+var encryptedData=encryption.aesEncrypt(rawData,key)
+engine.message("这是加密后的字符串:"+encryptedData.cipherText)
 
+var recoveredData=encryption.aesDecrypt(encryptedData.cipherText,key,encryptedData.iv)
+engine.message("这是解密后的字符串:"+recoveredData)

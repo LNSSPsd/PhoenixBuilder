@@ -1,52 +1,63 @@
 package host
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/rand"
-	"io"
+	"encoding/hex"
 	//"rogchap.com/v8go"
 )
 
-func aesEncrypt(_text,_key string) (string,error){
-	text := []byte(_text)
-	key := make([]byte,32)
-	copy(key,_key)
-
-	// generate a new aes cipher using our 32 byte long key
-	c, err := aes.NewCipher(key)
-	// if there are any errors, handle them
-	if err != nil {
-		return "",err
-	}
-
-	// gcm or Galois/Counter Mode, is a mode of operation
-	// for symmetric key cryptographic block ciphers
-	// - https://en.wikipedia.org/wiki/Galois/Counter_Mode
-	gcm, err := cipher.NewGCM(c)
-	// if any error generating new GCM
-	// handle them
-	if err != nil {
-		return "",err
-	}
-
-	// creates a new byte array the size of the nonce
-	// which must be passed to Seal
-	nonce := make([]byte, gcm.NonceSize())
-	// populates our nonce with a cryptographically secure
-	// random sequence
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
-		return "",err
-	}
-
-	// here we encrypt our text using the Seal function
-	// Seal encrypts and authenticates plaintext, authenticates the
-	// additional data and appends the result to dst, returning the updated
-	// slice. The nonce must be NonceSize() bytes long and unique for all
-	// time, for a given key.
-	return string(gcm.Seal(nonce, nonce, text, nil)),nil
+//
+func PKCS7Padding(ciphertext []byte, blockSize int) []byte {
+	padding := blockSize - len(ciphertext)%blockSize
+	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(ciphertext, padtext...)
 }
-/*
-func aesDecrypt(iso *v8go.Isolate) *v8go.ObjectTemplate {
 
-}*/
+func PKCS7UnPadding(origData []byte) []byte {
+	length := len(origData)
+	unpadding := int(origData[length-1])
+	return origData[:(length - unpadding)]
+}
+
+
+//AesEncrypt 加密函数
+func aesEncrypt(_plaintext, _key string) (string,string, error) {
+	plaintext:=[]byte(_plaintext)
+	key := []byte(_key)
+	key32:=make([]byte,32)
+	copy(key32,key)
+	c := make([]byte, aes.BlockSize+len(plaintext))
+	iv := c[:aes.BlockSize]
+
+	block, err := aes.NewCipher(key32)
+	if err != nil {
+		return "","", err
+	}
+	blockSize := block.BlockSize()
+	plaintext = PKCS7Padding(plaintext, blockSize)
+	blockMode := cipher.NewCBCEncrypter(block, iv)
+	crypted := make([]byte, len(plaintext))
+	blockMode.CryptBlocks(crypted, plaintext)
+	return hex.EncodeToString(crypted),hex.EncodeToString(iv), nil
+}
+
+// AesDecrypt 解密函数
+func aesDecrypt(_ciphertext, _key, _iv string) (string, error) {
+	ciphertext, _ :=hex.DecodeString(_ciphertext)
+	key := []byte(_key)
+	iv, _ :=hex.DecodeString(_iv)
+	key32:=make([]byte,32)
+	copy(key32,key)
+	block, err := aes.NewCipher(key32)
+	if err != nil {
+		return "", err
+	}
+	blockSize := block.BlockSize()
+	blockMode := cipher.NewCBCDecrypter(block, iv[:blockSize])
+	origData := make([]byte, len(ciphertext))
+	blockMode.CryptBlocks(origData, ciphertext)
+	origData = PKCS7UnPadding(origData)
+	return string(origData), nil
+}

@@ -12,8 +12,8 @@ import (
 	"go.kuoruan.net/v8go-polyfills/fetch"
 	"go.kuoruan.net/v8go-polyfills/timers"
 	"go.kuoruan.net/v8go-polyfills/url"
-	"rogchap.com/v8go"
 	"phoenixbuilder/fastbuilder/script"
+	"rogchap.com/v8go"
 )
 
 const JSVERSION="v8.gamma.3"
@@ -391,6 +391,7 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb script.HostBri
 	consts:=v8go.NewObjectTemplate(iso)
 	s256v,_:=v8go.NewValue(iso,identifyStr)
 	consts.Set("script_sha256",s256v)
+	consts.Set("engine_version",JSVERSION)
 	//consts.Set("user_name","Not implemented")
 	for k,v:=range hb.GetQueries() {
 		val,_:=v8go.NewValue(iso,v())
@@ -659,21 +660,54 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb script.HostBri
 
 	// encryption encryption.aesEncrypt(text, key)
 	encryption:=v8go.NewObjectTemplate(iso)
+	global.Set("encryption", encryption)
 	if err := encryption.Set("aesEncrypt",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
 			if text, ok := hasStrIn(info, 0, "encryption.aesEncrypt[text]"); !ok {
 				throwException("encryption.aesEncrypt", text)
 			} else {
-				if key, ok := hasStrIn(info, 0, "encryption.aesEncrypt[key]"); !ok {
+				if key, ok := hasStrIn(info, 1, "encryption.aesEncrypt[key]"); !ok {
 					throwException("encryption.aesEncrypt", key)
 				} else {
-					encryptOut,err := aesEncrypt(text,key)
+					encryptOut,iv,err := aesEncrypt(text,key)
 					if err!=nil{
 						throwException("encryption.aesEncrypt",err.Error())
 						return nil
 					}else{
-						value, _ := v8go.NewValue(iso, encryptOut)
-						return value
+						result:=v8go.NewObjectTemplate(iso)
+						jsEncryptOut, _ := v8go.NewValue(iso, encryptOut)
+						jsIV, _ := v8go.NewValue(iso, iv)
+						result.Set("cipherText",jsEncryptOut)
+						result.Set("iv",jsIV)
+						obj,_:=result.NewInstance(info.Context())
+						return obj.Value
+					}
+				}
+			}
+			return nil
+		}),
+	); err != nil {
+		panic(err)
+	}
+	if err := encryption.Set("aesDecrypt",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			if text, ok := hasStrIn(info, 0, "encryption.aesDecrypt[text]"); !ok {
+				throwException("encryption.aesDecrypt", text)
+			} else {
+				if key, ok := hasStrIn(info, 1, "encryption.aesDecrypt[key]"); !ok {
+					throwException("encryption.aesDecrypt", key)
+				} else {
+					if iv, ok := hasStrIn(info, 2, "encryption.aesDecrypt[iv]"); !ok {
+						throwException("encryption.aesDecrypt", key)
+					} else{
+						decryptOut,err := aesDecrypt(text,key,iv)
+						if err!=nil{
+							throwException("encryption.aesDecrypt",err.Error())
+							return nil
+						}else{
+							value, _ := v8go.NewValue(iso, decryptOut)
+							return value
+						}
 					}
 				}
 			}

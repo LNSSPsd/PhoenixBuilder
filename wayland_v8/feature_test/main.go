@@ -3,6 +3,7 @@ package main
 import (
 	_ "embed"
 	"fmt"
+	"phoenixbuilder/fastbuilder/script"
 	"phoenixbuilder/wayland_v8/host"
 
 	v8 "rogchap.com/v8go"
@@ -15,11 +16,11 @@ func main() {
 	iso := v8.NewIsolate()
 	global := v8.NewObjectTemplate(iso)
 
-	hb:= host.NewHostBridge()
+	hb:= script.NewHostBridge()
 	scriptName:="test.js"
 	script:=string(testScript)
 	identifyStr:= host.GetStringSha(script)
-	host.InitHostFns(iso,global,hb,scriptName,identifyStr)
+	host.InitHostFns(iso,global,hb,scriptName,identifyStr,"scriptPath")
 	ctx := v8.NewContext(iso, global)
 	host.CtxFunctionInject(ctx)
 	_, err := ctx.RunScript(script, scriptName)
