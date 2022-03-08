@@ -31,6 +31,8 @@ currentPlayersList.forEach(function (playerName) {
 // consts里所包含的信息
 // 脚本内容的哈希值
 engine.message(consts.script_sha256)
+// 脚本所在路径
+engine.message(consts.script_path)
 //用户名
 engine.message(consts.user_name)
 //用户FB token 的哈希值

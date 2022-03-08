@@ -15,6 +15,8 @@ import (
 	"rogchap.com/v8go"
 )
 
+const JSVERSION="v8.gamma.3"
+
 func AllowPath(path string) bool {
 	if strings.Contains(path, "fbtoken") {
 		return false
@@ -394,12 +396,14 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb HostBridge, 
 	consts := v8go.NewObjectTemplate(iso)
 	s256v, _ := v8go.NewValue(iso, identifyStr)
 	consts.Set("script_sha256", s256v)
+	consts.Set("script_path",scriptPath)
+	//consts.Set("script_author",)
 	consts.Set("user_name", hb.Query("user_name"))
 	consts.Set("sha_token", hb.Query("sha_token"))
 	consts.Set("server_code", hb.Query("server_code"))
 	consts.Set("fb_version", hb.Query("fb_version"))
 	consts.Set("fb_dir", hb.Query("fb_dir"))
-	consts.Set("engine_version","v8.gamma.3")
+	consts.Set("engine_version",JSVERSION)
 	global.Set("consts", consts)
 	/*
 		// function FB_Query(info string) string
@@ -660,6 +664,33 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb HostBridge, 
 	if err := base64.InjectTo(iso, global); err != nil {
 		panic(err)
 	}
+
+	// encryption encryption.aesEncrypt(text, key)
+	encryption:=v8go.NewObjectTemplate(iso)
+	if err := encryption.Set("aesEncrypt",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			if text, ok := hasStrIn(info, 0, "encryption.aesEncrypt[text]"); !ok {
+				throwException("encryption.aesEncrypt", text)
+			} else {
+				if key, ok := hasStrIn(info, 0, "encryption.aesEncrypt[key]"); !ok {
+					throwException("encryption.aesEncrypt", key)
+				} else {
+					encryptOut,err := aesEncrypt(text,key)
+					if err!=nil{
+						throwException("encryption.aesEncrypt",err.Error())
+						return nil
+					}else{
+						value, _ := v8go.NewValue(iso, encryptOut)
+						return value
+					}
+				}
+			}
+			return nil
+		}),
+	); err != nil {
+		panic(err)
+	}
+
 	return func() {
 		t.Terminate()
 	}
