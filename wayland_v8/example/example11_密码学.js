@@ -1,122 +1,26 @@
-// 暂时，我们只提供了一个简单的，基于 AES 的字符串加密和解密的实现
-var rawData="这是要被加密的字符串"
-var key="fastbuilder.js.v8.gamme"
+// 我们在fb的js解释器中内置了 Crypto.js 的部分库
+// 包括 aes,md5,rc4,sha256,tripledes,hmac-md5,hmac-256
 
-var encryptedData=encryption.aesEncrypt(rawData,key)
-engine.message("这是加密后的字符串"+encryptedData.cipherText)
+// 以下是以 aes 库为例的一个演示
 
-var recoveredData=encryption.aesDecrypt(encryptedData.cipherText,key,encryptedData.iv)
-engine.message("这是解密后的字符串"+recoveredData)
+const kPassphrase = "pass";
+const ivStr = 'v8.gamma.crypto'
+let pass = '这是原始字符串'
 
-// 其实际 golang 实现为:
-// 密码学实现：
-// func PKCS7Padding(ciphertext []byte, blockSize int) []byte {
-//     padding := blockSize - len(ciphertext)%blockSize
-//     padtext := bytes.Repeat([]byte{byte(padding)}, padding)
-//     return append(ciphertext, padtext...)
-// }
-//
-// func PKCS7UnPadding(origData []byte) []byte {
-//     length := len(origData)
-//     unpadding := int(origData[length-1])
-//     return origData[:(length - unpadding)]
-// }
-//AesEncrypt 加密函数
-// func aesEncrypt(_plaintext, _key string) (string,string, error) {
-//     plaintext:=[]byte(_plaintext)
-//     key := []byte(_key)
-//     key32:=make([]byte,32)
-//     copy(key32,key)
-//     c := make([]byte, aes.BlockSize+len(plaintext))
-//     iv := c[:aes.BlockSize]
-//
-//     block, err := aes.NewCipher(key32)
-//     if err != nil {
-//         return "","", err
-//     }
-//     blockSize := block.BlockSize()
-//     plaintext = PKCS7Padding(plaintext, blockSize)
-//     blockMode := cipher.NewCBCEncrypter(block, iv)
-//     crypted := make([]byte, len(plaintext))
-//     blockMode.CryptBlocks(crypted, plaintext)
-//     return hex.EncodeToString(crypted),hex.EncodeToString(iv), nil
-// }
-//
-// // AesDecrypt 解密函数
-// func aesDecrypt(_ciphertext, _key, _iv string) (string, error) {
-//     ciphertext, _ :=hex.DecodeString(_ciphertext)
-//     key := []byte(_key)
-//     iv, _ :=hex.DecodeString(_iv)
-//     key32:=make([]byte,32)
-//     copy(key32,key)
-//     block, err := aes.NewCipher(key32)
-//     if err != nil {
-//         return "", err
-//     }
-//     blockSize := block.BlockSize()
-//     blockMode := cipher.NewCBCDecrypter(block, iv[:blockSize])
-//     origData := make([]byte, len(ciphertext))
-//     blockMode.CryptBlocks(origData, ciphertext)
-//     origData = PKCS7UnPadding(origData)
-//     return string(origData), nil
-// }
+let key = CryptoJS.enc.Utf8.parse(kPassphrase)
+let iv = CryptoJS.enc.Utf8.parse(ivStr)
 
-// 桥接器
-// encryption encryption.aesEncrypt(text, key)
-// encryption:=v8go.NewObjectTemplate(iso)
-// global.Set("encryption", encryption)
-// if err := encryption.Set("aesEncrypt",
-//     v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-//     if text, ok := hasStrIn(info, 0, "encryption.aesEncrypt[text]"); !ok {
-//         throwException("encryption.aesEncrypt", text)
-//     } else {
-//         if key, ok := hasStrIn(info, 1, "encryption.aesEncrypt[key]"); !ok {
-//             throwException("encryption.aesEncrypt", key)
-//         } else {
-//             encryptOut,iv,err := aesEncrypt(text,key)
-//             if err!=nil{
-//                 throwException("encryption.aesEncrypt",err.Error())
-//                 return nil
-//             }else{
-//                 result:=v8go.NewObjectTemplate(iso)
-//                 jsEncryptOut, _ := v8go.NewValue(iso, encryptOut)
-//                 jsIV, _ := v8go.NewValue(iso, iv)
-//                 result.Set("cipherText",jsEncryptOut)
-//                 result.Set("iv",jsIV)
-//                 obj,_:=result.NewInstance(info.Context())
-//                 return obj.Value
-//             }
-//         }
-//     }
-//     return nil
-// }),
-// ); err != nil {
-//     panic(err)
-// }
-// if err := encryption.Set("aesDecrypt",
-//     v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-//     if text, ok := hasStrIn(info, 0, "encryption.aesDecrypt[text]"); !ok {
-//         throwException("encryption.aesDecrypt", text)
-//     } else {
-//         if key, ok := hasStrIn(info, 1, "encryption.aesDecrypt[key]"); !ok {
-//             throwException("encryption.aesDecrypt", key)
-//         } else {
-//             if iv, ok := hasStrIn(info, 2, "encryption.aesDecrypt[iv]"); !ok {
-//                 throwException("encryption.aesDecrypt", key)
-//             } else{
-//                 decryptOut,err := aesDecrypt(text,key,iv)
-//                 if err!=nil{
-//                     throwException("encryption.aesDecrypt",err.Error())
-//                     return nil
-//                 }else{
-//                     value, _ := v8go.NewValue(iso, decryptOut)
-//                     return value
-//                 }
-//             }
-//         }
-//     }
-//     return nil
-// }),
-// ); err != nil {
-//     panic(err)
-// }
+let c = CryptoJS.AES.encrypt(pass, key, {
+    iv: iv,
+}).ciphertext.toString(CryptoJS.enc.Base64)
+
+engine.message(c)
+
+// 解密
+let cipherParams = CryptoJS.lib.CipherParams.create({
+    ciphertext: CryptoJS.enc.Base64.parse(c),
+})
+let result = CryptoJS.AES.decrypt(cipherParams, key, {
+    iv: iv,
+})
+engine.message(result.toString(CryptoJS.enc.Utf8))
