@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/wayland_v8/host/built_in"
 	"strings"
 
 	"github.com/gorilla/websocket"
@@ -658,64 +659,65 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb script.HostBri
 		panic(err)
 	}
 
+	// now we use built-in js, see built_in folder
 	// encryption encryption.aesEncrypt(text, key)
-	encryption:=v8go.NewObjectTemplate(iso)
-	global.Set("encryption", encryption)
-	if err := encryption.Set("aesEncrypt",
-		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if text, ok := hasStrIn(info, 0, "encryption.aesEncrypt[text]"); !ok {
-				throwException("encryption.aesEncrypt", text)
-			} else {
-				if key, ok := hasStrIn(info, 1, "encryption.aesEncrypt[key]"); !ok {
-					throwException("encryption.aesEncrypt", key)
-				} else {
-					encryptOut,iv,err := aesEncrypt(text,key)
-					if err!=nil{
-						throwException("encryption.aesEncrypt",err.Error())
-						return nil
-					}else{
-						result:=v8go.NewObjectTemplate(iso)
-						jsEncryptOut, _ := v8go.NewValue(iso, encryptOut)
-						jsIV, _ := v8go.NewValue(iso, iv)
-						result.Set("cipherText",jsEncryptOut)
-						result.Set("iv",jsIV)
-						obj,_:=result.NewInstance(info.Context())
-						return obj.Value
-					}
-				}
-			}
-			return nil
-		}),
-	); err != nil {
-		panic(err)
-	}
-	if err := encryption.Set("aesDecrypt",
-		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if text, ok := hasStrIn(info, 0, "encryption.aesDecrypt[text]"); !ok {
-				throwException("encryption.aesDecrypt", text)
-			} else {
-				if key, ok := hasStrIn(info, 1, "encryption.aesDecrypt[key]"); !ok {
-					throwException("encryption.aesDecrypt", key)
-				} else {
-					if iv, ok := hasStrIn(info, 2, "encryption.aesDecrypt[iv]"); !ok {
-						throwException("encryption.aesDecrypt", key)
-					} else{
-						decryptOut,err := aesDecrypt(text,key,iv)
-						if err!=nil{
-							throwException("encryption.aesDecrypt",err.Error())
-							return nil
-						}else{
-							value, _ := v8go.NewValue(iso, decryptOut)
-							return value
-						}
-					}
-				}
-			}
-			return nil
-		}),
-	); err != nil {
-		panic(err)
-	}
+	//encryption:=v8go.NewObjectTemplate(iso)
+	//global.Set("encryption", encryption)
+	//if err := encryption.Set("aesEncrypt",
+	//	v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+	//		if text, ok := hasStrIn(info, 0, "encryption.aesEncrypt[text]"); !ok {
+	//			throwException("encryption.aesEncrypt", text)
+	//		} else {
+	//			if key, ok := hasStrIn(info, 1, "encryption.aesEncrypt[key]"); !ok {
+	//				throwException("encryption.aesEncrypt", key)
+	//			} else {
+	//				encryptOut,iv,err := aesEncrypt(text,key)
+	//				if err!=nil{
+	//					throwException("encryption.aesEncrypt",err.Error())
+	//					return nil
+	//				}else{
+	//					result:=v8go.NewObjectTemplate(iso)
+	//					jsEncryptOut, _ := v8go.NewValue(iso, encryptOut)
+	//					jsIV, _ := v8go.NewValue(iso, iv)
+	//					result.Set("cipherText",jsEncryptOut)
+	//					result.Set("iv",jsIV)
+	//					obj,_:=result.NewInstance(info.Context())
+	//					return obj.Value
+	//				}
+	//			}
+	//		}
+	//		return nil
+	//	}),
+	//); err != nil {
+	//	panic(err)
+	//}
+	//if err := encryption.Set("aesDecrypt",
+	//	v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+	//		if text, ok := hasStrIn(info, 0, "encryption.aesDecrypt[text]"); !ok {
+	//			throwException("encryption.aesDecrypt", text)
+	//		} else {
+	//			if key, ok := hasStrIn(info, 1, "encryption.aesDecrypt[key]"); !ok {
+	//				throwException("encryption.aesDecrypt", key)
+	//			} else {
+	//				if iv, ok := hasStrIn(info, 2, "encryption.aesDecrypt[iv]"); !ok {
+	//					throwException("encryption.aesDecrypt", key)
+	//				} else{
+	//					decryptOut,err := aesDecrypt(text,key,iv)
+	//					if err!=nil{
+	//						throwException("encryption.aesDecrypt",err.Error())
+	//						return nil
+	//					}else{
+	//						value, _ := v8go.NewValue(iso, decryptOut)
+	//						return value
+	//					}
+	//				}
+	//			}
+	//		}
+	//		return nil
+	//	}),
+	//); err != nil {
+	//	panic(err)
+	//}
 
 	return func() {
 		t.Terminate()
@@ -725,6 +727,10 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb script.HostBri
 func CtxFunctionInject(ctx *v8go.Context) {
 	// URL and URLSearchParams
 	if err := url.InjectTo(ctx); err != nil {
+		panic(err)
+	}
+	_, err := ctx.RunScript(built_in.GetbuiltIn(),"built_in")
+	if err != nil {
 		panic(err)
 	}
 }
