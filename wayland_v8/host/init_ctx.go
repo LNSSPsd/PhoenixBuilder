@@ -270,6 +270,22 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb script.HostBri
 		panic(err)
 	}
 
+	if err:=game.Set("botPos",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			ot:=v8go.NewObjectTemplate(iso)
+			x,y,z:=hb.GetBotPos()
+			jsX,_:=v8go.NewValue(iso,int32(x))
+			jsY,_:=v8go.NewValue(iso,int32(y))
+			jsZ,_:=v8go.NewValue(iso,int32(z))
+			ot.Set("x",jsX)
+			ot.Set("y",jsY)
+			ot.Set("z",jsZ)
+			jsPos,_:= ot.NewInstance(info.Context())
+			return jsPos.Value
+		}));err!=nil{
+		panic(err)
+	}
+
 	// function engine.questionSync(hint string) string
 	if err := engine.Set("questionSync",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
