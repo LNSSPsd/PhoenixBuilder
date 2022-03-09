@@ -20,7 +20,7 @@ const afterGettedCmdResult = function (result) {
     engine.requestFilePermission("这里是为什么要访问", afterGettedUserInput)
 }
 
-constafterConnected = function () {
+const afterConnected = function () {
     engine.message("成功连接到MC了！")
 
     // 当获得指令结果后，afterGettedCmdResult会被回调
