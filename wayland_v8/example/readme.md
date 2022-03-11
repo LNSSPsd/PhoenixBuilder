@@ -6,7 +6,7 @@
 - 登录登出日志
 - 聊天信息记录
 - 群服互通
-- 网黑
+- 云黑
 
 然而，对 FastBuilder 的修改和扩展要求用户至少需要一台电脑，一定程度的 golang 知识和 makefile 知识。不仅如此若希望为手机开发扩展，或是为其它平台开发扩展，您还需要 Linux 的电脑、知识以及交叉编译链的知识。您不得不分发编译出来的文件，并试图教会使用者如何部署。
 
@@ -220,6 +220,13 @@ FB_WebSocketServeV2(string address,string pattern,function onNewConnection)
 // function sendFn(int msgType,string msg) 可以使用该函数发送消息
 // function closeFn() 可以使用该函数关闭端口
 ```
+
+## 一些内置的 JavaScript库
+一些库已经内置在 FastBuilder.js, 主要涉及网络，加密和计时器，请参考 example07_网络和计时器及base64.js 、 example11_密码学.js   
+其中，网络包括 fetch (fetch 可以很方便的实现 GET 和 POST 操作)，及 URL, base64(atob, btoa)
+计时器包括 setTimeout, clearTimeout, setInterval and clearInterval （是的，这4个函数不属于 JS 的标准，是以内置库的方式出现的）
+加密库我们直接内置了 Crypto.JS 的主要库，包括 aes,md5,rc4,sha256,tripledes,hmac-md5,hmac-256
+
 
 ## 例子？
 参考 example01~13
