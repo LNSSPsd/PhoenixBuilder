@@ -17,6 +17,3 @@ function onConnect(sendFn,closeFn){
 // 可以通过 ws://localhost:8888/ws_test 连接
 // 即，与例6相同
 FB_WebSocketServeV2(":8888","/ws_test",onConnect)
-
-// script wayland_v8/example/example13_ws_server.js
-// script wayland_v8/example/example06_websocket.js

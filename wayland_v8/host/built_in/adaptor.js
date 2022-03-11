@@ -11,6 +11,9 @@ class engine{
     static message(msg){
         return FB_Println(msg)
     }
+    static questionSync(hint){
+        return FB_RequireUserInput(hint)
+    }
     static question(hint,onResult){
         return FB_RequireUserInputAsync(hint,onResult)
     }
@@ -55,8 +58,8 @@ class storage{
     static readFile(path){
         return FB_ReadFile(path)
     }
-    static writeFile(path,string){
-        return FB_SaveFile(path,string)
+    static writeFile(path,data){
+        return FB_SaveFile(path,data)
     }
 }
 
@@ -68,26 +71,3 @@ class websocket{
         return FB_WebSocketServeV2(address,pattern,onNewConnection)
     }
 }
-
-// FB_SetName
-// FB_WaitConnect
-// FB_WaitConnectAsync
-// FB_RequireUserInput
-// FB_RequireUserInputAsync
-// FB_Println
-// FB_Query
-// FB_GeneralCmd
-// FB_SendMCCmd
-// FB_SendMCCmdAndGetResultAsync
-// FB_SendMCCmdAndGetResult
-// FB_RegPackCallBack
-// FB_RegChat
-// FB_GetBotPos
-// FB_GetAbsPath
-// FB_RequireFilePermission
-// FB_ReadFile
-// FB_SaveFile
-// FB_CrashScript
-// FB_AutoRestart
-// FB_WebSocketConnectV2
-// FB_WebSocketServeV2

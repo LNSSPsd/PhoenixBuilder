@@ -11,6 +11,9 @@ class engine{
     static message(msg){
         return FB_Println(msg)
     }
+    static questionSync(hint){
+        return FB_RequireUserInput(hint)
+    }
     static question(hint,onResult){
         return FB_RequireUserInputAsync(hint,onResult)
     }
@@ -55,8 +58,8 @@ class storage{
     static readFile(path){
         return FB_ReadFile(path)
     }
-    static writeFile(path,string){
-        return FB_SaveFile(path,string)
+    static writeFile(path,data){
+        return FB_SaveFile(path,data)
     }
 }
 

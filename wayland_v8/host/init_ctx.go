@@ -19,7 +19,7 @@ import (
 	"rogchap.com/v8go"
 )
 
-const JSVERSION = "v8.gamma.3"
+const JSVERSION = "v8.gamma.4"
 
 func AllowPath(path string) bool {
 	if strings.Contains(path, "fbtoken") {
@@ -68,7 +68,7 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb script.HostB
 	}
 
 	throwException := func(funcName string, str string) *v8go.Value {
-		errS:="Script triggered an exception at [" + funcName + "] due to " + str
+		errS := "Script triggered an exception at [" + funcName + "] due to " + str
 		value, _ := v8go.NewValue(iso, errS)
 		fmt.Println(errS)
 		iso.ThrowException(value)
@@ -143,7 +143,7 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb script.HostB
 			}
 			go func() {
 				hb.WaitConnect(t)
-				f.Call(info.Context().Global())
+				f.Call(info.This())
 			}()
 			return nil
 		}),
@@ -240,22 +240,21 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb script.HostB
 					hb.MCCmd(str, t, false)
 					return nil
 				} else {
-					ctx := info.Context()
 					go func() {
 						pk := hb.MCCmd(str, t, true)
 						strPk, err := json.Marshal(pk)
 						if err != nil {
 							printException("FB_SendMCCmdAndGetResult", "Cannot convert host packet to Json Str: "+str)
-							cbFn.Call(info.Context().Global(), v8go.Null(iso))
+							cbFn.Call(info.This(), v8go.Null(iso))
 							return
 						}
-						val, err := v8go.JSONParse(ctx, string(strPk))
+						val, err := v8go.JSONParse(info.Context(), string(strPk))
 						if err != nil {
 							printException("FB_SendMCCmdAndGetResult", "Cannot Parse Json Packet in Host: "+str)
-							cbFn.Call(info.Context().Global(), v8go.Null(iso))
+							cbFn.Call(info.This(), v8go.Null(iso))
 							return
 						} else {
-							cbFn.Call(info.Context().Global(), val)
+							cbFn.Call(info.This(), val)
 						}
 					}()
 				}
@@ -311,7 +310,7 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb script.HostB
 					go func() {
 						userInput := hb.GetInput(str, t, scriptName)
 						value, _ := v8go.NewValue(iso, userInput)
-						cbFn.Call(info.Context().Global(), value)
+						cbFn.Call(info.This(), value)
 					}()
 				}
 
@@ -332,20 +331,19 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb script.HostB
 				if errStr, cbFn := hasFuncIn(info, 1, "game.listenPacket[onPacketCb]"); cbFn == nil {
 					throwException("FB_RegPackCallBack", errStr)
 				} else {
-					ctx := info.Context()
 					deRegFn, err := hb.RegPacketCallBack(str, func(pk packet.Packet) {
 						strPk, err := json.Marshal(pk)
 						if err != nil {
 							printException("FB_RegPackCallBack", "Cannot convert host packet to Json Str: "+err.Error())
-							cbFn.Call(ctx.Global(), v8go.Null(iso))
+							cbFn.Call(info.This(), v8go.Null(iso))
 						} else {
-							val, err := v8go.JSONParse(ctx, string(strPk))
+							val, err := v8go.JSONParse(info.Context(), string(strPk))
 							if err != nil {
 								printException("FB_RegPackCallBack", "Cannot Parse Json Packet in Host: "+str)
-								cbFn.Call(ctx.Global(), v8go.Null(iso))
+								cbFn.Call(info.This(), v8go.Null(iso))
 								return
 							} else {
-								cbFn.Call(ctx.Global(), val)
+								cbFn.Call(info.This(), val)
 							}
 						}
 					}, t)
@@ -356,7 +354,7 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb script.HostB
 						deRegFn()
 						return nil
 					})
-					return jsCbFn.GetFunction(ctx).Value
+					return jsCbFn.GetFunction(info.Context()).Value
 				}
 			}
 			return nil
@@ -377,16 +375,16 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb script.HostB
 					SourceName, err := v8go.NewValue(iso, p.SourceName)
 					if err != nil {
 						printException("FB_RegChat", err.Error())
-						cbFn.Call(info.Context().Global(), v8go.Null(iso), v8go.Null(iso))
+						cbFn.Call(info.This(), v8go.Null(iso), v8go.Null(iso))
 						return
 					}
 					Message, err := v8go.NewValue(iso, p.Message)
 					if err != nil {
 						printException("FB_RegChat", err.Error())
-						cbFn.Call(info.Context().Global(), v8go.Null(iso), v8go.Null(iso))
+						cbFn.Call(info.This(), v8go.Null(iso), v8go.Null(iso))
 						return
 					}
-					cbFn.Call(info.Context().Global(), SourceName, Message)
+					cbFn.Call(info.This(), SourceName, Message)
 				}, t)
 				if err != nil {
 					return throwException("FB_RegChat", err.Error())
@@ -616,7 +614,6 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb script.HostB
 				if errStr, cbFn := hasFuncIn(info, 1, "FB_WebSocketConnectV2[onNewMessage]"); cbFn == nil {
 					throwException("FB_WebSocketConnectV2", errStr)
 				} else {
-					ctx := info.Context()
 					conn, _, err := websocket.DefaultDialer.Dial(address, nil)
 					if err != nil {
 						return throwException("FB_WebSocketConnectV2", err.Error())
@@ -640,21 +637,21 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb script.HostB
 						return nil
 					})
 					go func() {
-						for{
+						for {
 							msgType, data, err := conn.ReadMessage()
 							if t.Terminated() {
 								return
 							}
 							if err != nil {
-								cbFn.Call(ctx.Global(), v8go.Null(iso), v8go.Null(iso))
+								cbFn.Call(info.This(), v8go.Null(iso), v8go.Null(iso))
 								return
 							}
 							jsMsgType, err := v8go.NewValue(iso, int32(msgType))
 							jsMsgData, err := v8go.NewValue(iso, string(data))
-							cbFn.Call(ctx.Global(), jsMsgType, jsMsgData)
+							cbFn.Call(info.This(), jsMsgType, jsMsgData)
 						}
 					}()
-					return jsWriteFn.GetFunction(ctx).Value
+					return jsWriteFn.GetFunction(info.Context()).Value
 				}
 			}
 			return nil
@@ -663,29 +660,29 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb script.HostB
 		panic(err)
 	}
 
-	FB_WebSocketServeV2:= func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-		var address,pattern,errStr string
+	FB_WebSocketServeV2 := func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		var address, pattern, errStr string
 		var jsOnConnect *v8go.Function
 		var ok bool
 		if address, ok = hasStrIn(info, 0, "FB_WebSocketConnectV2[address]"); !ok {
 			throwException("FB_WebSocketConnectV2", address)
 			return nil
 		}
-		if pattern,ok = hasStrIn(info, 1, "FB_WebSocketConnectV2[pattern]"); !ok {
+		if pattern, ok = hasStrIn(info, 1, "FB_WebSocketConnectV2[pattern]"); !ok {
 			throwException("FB_WebSocketConnectV2", pattern)
 			return nil
 		}
-		if errStr ,jsOnConnect=hasFuncIn(info,2,"FB_WebSocketConnectV2[onConnect]");jsOnConnect==nil{
+		if errStr, jsOnConnect = hasFuncIn(info, 2, "FB_WebSocketConnectV2[onConnect]"); jsOnConnect == nil {
 			throwException("FB_WebSocketConnectV2", errStr)
 			return nil
 		}
 		http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
 			wsConn, err := (&websocket.Upgrader{
-				ReadBufferSize:  1024*10,
-				WriteBufferSize: 1024*10,
+				ReadBufferSize:  1024 * 10,
+				WriteBufferSize: 1024 * 10,
 			}).Upgrade(w, r, nil)
 			if err != nil {
-				throwException("FB_WebSocketServeV2",err.Error())
+				throwException("FB_WebSocketServeV2", err.Error())
 				return
 			}
 
@@ -712,28 +709,28 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb script.HostB
 				return nil
 			}).GetFunction(info.Context())
 
-			onMsgFn, err := jsOnConnect.Call(info.Context().Global(), jsSendFn, jsCloseFn)
+			onMsgFn, err := jsOnConnect.Call(info.This(), jsSendFn, jsCloseFn)
 			if err != nil {
 				throwException("FB_WebSocketServeV2.onConnect.onMsgFn", err.Error())
 				t.Terminate()
 				return
 			}
-			jsOnMsgFn,err:=onMsgFn.AsFunction()
-			if err!=nil{
+			jsOnMsgFn, err := onMsgFn.AsFunction()
+			if err != nil {
 				throwException("FB_WebSocketServeV2.onConnect.onMsgFn", err.Error())
 				t.Terminate()
 				return
 			}
 			go func() {
-				for  {
-					msgType, data, err :=wsConn.ReadMessage()
+				for {
+					msgType, data, err := wsConn.ReadMessage()
 					//fmt.Println("line 739")
-					if err!=nil{
-						jsOnMsgFn.Call(info.Context().Global(), v8go.Null(iso), v8go.Null(iso))
-					}else{
+					if err != nil {
+						jsOnMsgFn.Call(info.This(), v8go.Null(iso), v8go.Null(iso))
+					} else {
 						jsMsgType, _ := v8go.NewValue(iso, int32(msgType))
 						jsMsgData, _ := v8go.NewValue(iso, string(data))
-						jsOnMsgFn.Call(info.Context().Global(), jsMsgType, jsMsgData)
+						jsOnMsgFn.Call(info.This(), jsMsgType, jsMsgData)
 					}
 					//if err!=nil{
 					//	println(err)
@@ -804,7 +801,7 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb script.HostB
 	// FB_WebSocketServeV2(address string,onNewMessage func(msgType int,data string)) func SendMsg(msgType int, data string)
 	// 一般情况下，MessageType 为1(Text Messsage),即字符串类型，或者 0 byteArray (也被以字符串的方式传递)
 	// onNewMessage 在连接关闭时会读取到两个null值
-	if err := global.Set("FB_WebSocketServeV2",v8go.NewFunctionTemplate(iso,FB_WebSocketServeV2)); err != nil {
+	if err := global.Set("FB_WebSocketServeV2", v8go.NewFunctionTemplate(iso, FB_WebSocketServeV2)); err != nil {
 		panic(err)
 	}
 
