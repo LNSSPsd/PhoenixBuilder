@@ -1,11 +1,11 @@
-package host
+package script_engine
 
 import (
 	"encoding/json"
 	"fmt"
 	"os"
 	"phoenixbuilder/minecraft/protocol/packet"
-	"phoenixbuilder/wayland_v8/host/built_in"
+	"phoenixbuilder/fastbuilder/script_engine/built_in"
 	"strings"
 
 	"github.com/gorilla/websocket"
@@ -13,11 +13,11 @@ import (
 	"go.kuoruan.net/v8go-polyfills/fetch"
 	"go.kuoruan.net/v8go-polyfills/timers"
 	"go.kuoruan.net/v8go-polyfills/url"
-	"phoenixbuilder/fastbuilder/script"
+	"phoenixbuilder/fastbuilder/script_engine/bridge"
 	"rogchap.com/v8go"
 )
 
-const JSVERSION="v8.gamma.3"
+const JSVERSION="script_engine@v8.gamma.3"
 
 func AllowPath(path string) bool {
 	if strings.Contains(path, "fbtoken") {
@@ -29,7 +29,7 @@ func AllowPath(path string) bool {
 	return true
 }
 
-func LoadPermission(hb script.HostBridge,identifyStr string) map[string]bool{
+func LoadPermission(hb bridge.HostBridge,identifyStr string) map[string]bool{
 	permission:= map[string]bool{}
 	fullPermission:=map[string]map[string]bool{}
 	file, err := hb.LoadFile("fb_script_permission.json")
@@ -46,7 +46,7 @@ func LoadPermission(hb script.HostBridge,identifyStr string) map[string]bool{
 	return permission
 }
 
-func SavePermission(hb script.HostBridge,identifyStr string,permission map[string]bool){
+func SavePermission(hb bridge.HostBridge,identifyStr string,permission map[string]bool){
 	fullPermission:=map[string]map[string]bool{}
 	file, err := hb.LoadFile("fb_script_permission.json")
 	dataToSave := []byte{}
@@ -58,7 +58,7 @@ func SavePermission(hb script.HostBridge,identifyStr string,permission map[strin
 	hb.SaveFile("fb_script_permission.json", string(dataToSave))
 }
 
-func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb script.HostBridge,_scriptName string,identifyStr string,scriptPath string) func() {
+func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb bridge.HostBridge,_scriptName string,identifyStr string,scriptPath string) func() {
 	scriptName:=_scriptName
 	permission:=LoadPermission(hb,identifyStr)
 	updatePermission:= func() {
@@ -96,7 +96,7 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb script.HostBri
 		}
 		return "", function
 	}
-	t := script.NewTerminator()
+	t := bridge.NewTerminator()
 	t.TerminateHook = append(t.TerminateHook, func() {
 		iso.TerminateExecution()
 	})

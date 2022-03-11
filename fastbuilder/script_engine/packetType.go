@@ -1,7 +1,7 @@
-package host
+package script_engine
 
 import "phoenixbuilder/minecraft/protocol/packet"
-import "phoenixbuilder/fastbuilder/script"
+import "phoenixbuilder/fastbuilder/script_engine/bridge"
 
 var PacketNameMap map[string]uint32
 
@@ -170,5 +170,5 @@ func init() {
 		"IDNeteaseJson":                       packet.IDNeteaseJson,
 		"IDPyRpc":                             packet.IDPyRpc,
 	}
-	script.PacketNameMap=PacketNameMap
+	bridge.PacketNameMap=PacketNameMap
 }

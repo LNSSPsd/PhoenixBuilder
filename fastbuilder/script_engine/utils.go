@@ -1,4 +1,4 @@
-package host
+package script_engine
 
 import (
 	"crypto/sha256"
