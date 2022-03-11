@@ -340,7 +340,7 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb script.HostBri
 						strPk, err := json.Marshal(pk)
 						if err != nil {
 							printException("game.subscribePacket", "Cannot convert host packet to Json Str: "+err.Error())
-							cbFn.Call(info.This(), v8go.Null(iso))
+							cbFn.Call(ctx.Global(), v8go.Null(iso))
 						} else {
 							val, err := v8go.JSONParse(ctx, string(strPk))
 							if err != nil {
@@ -598,7 +598,7 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb script.HostBri
 		panic(err)
 	}
 
-	// function FB_WaitConnect() None
+	// function engine.autoRestart() None
 	// 这里做了指数退避，几次重连失败就会放缓到1小时重连一次，见 main.go 170行
 	if err:=engine.Set("autoRestart",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {

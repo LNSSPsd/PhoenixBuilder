@@ -21,6 +21,7 @@ function onPlayerListUpdate(pk) {
         playerName = playerInfo.Username
         // 值得注意的是，玩家刚上线时并不能看到消息，所以我们延迟 8 秒（8000ms）再显示
         setTimeout(function () {
+            engine.message(playerName);
             engine.sendCommand("tellraw @a {\"rawtext\":[{\"text\":\"欢迎回来！ @" + playerName + "\"}]}")
             engine.sendCommand("tellraw " + playerName + " {\"rawtext\":[{\"text\":\"试试在聊天栏输入 '菜单' ! \"}]}")
         }, 8000)
@@ -32,6 +33,7 @@ game.subscribePacket("IDPlayerList", onPlayerListUpdate)
 
 // 实际上聊天功能基本就是一个问答机器人，接收聊天信息，并做出反应
 game.listenChat(function (name, msg) {
+    engine.message(`[${name}] ${msg}`);
     if (name === "") {
         // 不是人发出的聊天消息没有名字，比如命令块
         return
