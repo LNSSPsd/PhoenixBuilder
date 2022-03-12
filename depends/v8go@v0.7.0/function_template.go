@@ -20,6 +20,7 @@ type FunctionCallbackInfo struct {
 	ctx  *Context
 	args []*Value
 	this *Object
+	IsConstructCall bool
 }
 
 // Context is the current context that the callback is being executed in.
@@ -77,7 +78,7 @@ func (tmpl *FunctionTemplate) GetFunction(ctx *Context) *Function {
 // Note that ideally `thisAndArgs` would be split into two separate arguments, but they were combined
 // to workaround an ERROR_COMMITMENT_LIMIT error on windows that was detected in CI.
 //export goFunctionCallback
-func goFunctionCallback(ctxref int, cbref int, thisAndArgs *C.ValuePtr, argsCount int) C.ValuePtr {
+func goFunctionCallback(ctxref int, cbref int, thisAndArgs *C.ValuePtr, argsCount int, isConstructCall int) C.ValuePtr {
 	ctx := getContext(ctxref)
 
 	this := *thisAndArgs
@@ -85,6 +86,11 @@ func goFunctionCallback(ctxref int, cbref int, thisAndArgs *C.ValuePtr, argsCoun
 		ctx:  ctx,
 		this: &Object{&Value{ptr: this, ctx: ctx}},
 		args: make([]*Value, argsCount),
+	}
+	if isConstructCall!=0 {
+		info.IsConstructCall=true
+	}else{
+		info.IsConstructCall=false
 	}
 
 	argv := (*[1 << 30]C.ValuePtr)(unsafe.Pointer(thisAndArgs))[1 : argsCount+1 : argsCount+1]

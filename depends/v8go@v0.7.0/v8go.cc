@@ -512,7 +512,7 @@ static void FunctionTemplateCallback(const FunctionCallbackInfo<Value>& info) {
   }
 
   ValuePtr val =
-      goFunctionCallback(ctx_ref, callback_ref, thisAndArgs, args_count);
+      goFunctionCallback(ctx_ref, callback_ref, thisAndArgs, args_count, info.IsConstructCall()?1:0);
   if (val != nullptr) {
     info.GetReturnValue().Set(val->ptr.Get(iso));
   } else {
