@@ -1,7 +1,7 @@
 Makefile
 
 *.o
-*.a
+#*.a
 *.so
 *.sl
 *.dll
