@@ -383,6 +383,7 @@ rl_set_sighandler (int sig, SigHandler *handler, sighandler_cxt *ohandler)
 #  else
   act.sa_flags = 0;
 #  endif /* SIGWINCH */
+  act.sa_flags |= SA_ONSTACK;
   sigemptyset (&act.sa_mask);
   sigemptyset (&ohandler->sa_mask);
   sigaction (sig, &act, &old_handler);
