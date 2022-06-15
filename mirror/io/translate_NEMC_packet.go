@@ -9,12 +9,19 @@ import (
 )
 
 func NEMCPacketToChunkData(p *packet.LevelChunk) (cd *mirror.ChunkData) {
-	c, nbt, err := chunk.NEMCNetworkDecode(p.RawPayload[:], int(p.SubChunkCount))
+	c, nbts, err := chunk.NEMCNetworkDecode(p.RawPayload[:], int(p.SubChunkCount))
 	if err != nil {
 		return nil
 	}
+	posedNbt := make(map[define.CubePos]map[string]interface{})
+	for _, nbt := range nbts {
+		if pos, success := define.GetCubePosFromNBT(nbt); success {
+			posedNbt[pos] = nbt
+		}
+	}
+	// define.GetCubePosFromNBT()
 	cd = &mirror.ChunkData{
-		Chunk: c, BlockNbts: nbt,
+		Chunk: c, BlockNbts: posedNbt,
 		ChunkPos:  define.ChunkPos{p.ChunkX, p.ChunkZ},
 		TimeStamp: time.Now().Unix(),
 	}
