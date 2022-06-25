@@ -153,5 +153,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"存档修复": func() defines.Component {
 			return &DifferRecover{BasicComponent: &BasicComponent{}}
 		},
+		"地皮组件": func() defines.Component {
+			return &Territory{BasicComponent: &BasicComponent{}}
+		},
 	}
 }
