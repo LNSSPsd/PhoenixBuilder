@@ -156,5 +156,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"地皮组件": func() defines.Component {
 			return &Territory{BasicComponent: &BasicComponent{}}
 		},
+		"下线玩家操作": func() defines.Component {
+			return &Downplayer{BasicComponent: &BasicComponent{}}
+		},
 	}
 }
