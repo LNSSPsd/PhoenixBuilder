@@ -98,10 +98,13 @@ func (b *Guild) Activate() {
 	//fmt.Print(b.GetPlayerPos(), "\n")
 	b.Frame.GetGameControl().SendCmd("scoreboard objectives add " + b.DictScore["权限计分板"] + "dummy omega权限计分板")
 	b.Frame.GetGameControl().SendCmd("scoreboard objectives add " + b.DictScore["购买公会计分板"] + " dummy 公会购买货币")
-	for {
-		time.Sleep(time.Duration(b.DelayTime) * time.Second)
-		b.ProtectGuildCentry()
-	}
+	//不耽误omega其他系统（）
+	go func() {
+		for {
+			time.Sleep(time.Duration(b.DelayTime) * time.Second)
+			b.ProtectGuildCentry()
+		}
+	}()
 
 }
 func (b *Guild) Stop() error {
