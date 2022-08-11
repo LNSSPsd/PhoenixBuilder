@@ -13,13 +13,20 @@ import (
 
 type SnowMenu struct {
 	*defines.BasicComponent
-	Snowscore              string              `json:"雪球菜单计分板"`
-	SnowsMenuTitle         map[string]string   `json:"雪球菜单菜单显示以及对应积分"`
-	SnowsMenuActive        map[string][]string `json:"雪球菜单对应积分执行指令"`
-	SnowMenuScoreCirculate map[string]string   `json:"当分数等于前者时分数时自动跳转后者"`
-	SnowMenuTitleTarget    string              `json:"雪球菜单显示对应选择器"`
-	SnowMenuActiveTarget   string              `json:"雪球菜单触发时的选择器"`
-	TimeDelay              int                 `json:"系统检测周期(毫秒)"`
+	Score            string            `json:"雪球菜单所用计分板"`
+	Menu             map[string]string `json:"菜单显示项目"`
+	GuildMenu        map[string]string `json:"公会菜单显示项目"`
+	TpaMenu          string            `json:"玩家互传菜单模板"`
+	TpMenu           map[string]string `json:"快捷传送菜单"`
+	PersonData       string            `json:"个人信息显示模板"`
+	PersonScore      map[string]string `json:"需要显示的计分板"`
+	DelayTime        int               `json:"检查雪球菜单计分板分数延迟(秒)"`
+	PlayerTarget     string            `json:"确定选项选择器"`
+	WarningUnderMenu string            `json:"菜单下方提示话语"`
+	MenuNamesMap     map[string]string `json:"各菜单名字"`
+}
+type User struct {
+	Name []string `json:"victim"`
 }
 
 func (b *SnowMenu) Init(cfg *defines.ComponentConfig) {
@@ -28,203 +35,199 @@ func (b *SnowMenu) Init(cfg *defines.ComponentConfig) {
 	if err != nil {
 		panic(err)
 	}
-	//b. = make(map[string]*GuildDatas)
-
+	b.Menu = make(map[string]string)
+	b.GuildMenu = make(map[string]string)
+	//b.TpMenu = make(map[string]string)
+	b.PersonScore = make(map[string]string)
 }
 func (b *SnowMenu) Inject(frame defines.MainFrame) {
+	//
 	b.Frame = frame
+	//注入frame等东西
+	b.Frame.GetGameListener().SetOnTypedPacketCallBack(packet.IDAddItemActor, func(p packet.Packet) {
+		fmt.Print("凋落物的包:", p, "\n")
+	})
 
 	b.BasicComponent.Inject(frame)
-	//fmt.Println("-------", b.SnowsMenuTitle)
+	//fmt.Print("test------------------\n")
+	//b.Listener.SetGameChatInterceptor(b.ProcessingCenter)
+	//获取信息
+
 }
 func (b *SnowMenu) Activate() {
-	fmt.Println("[提示] 当前周期为:", b.TimeDelay)
-	b.Frame.GetGameControl().SendCmd("scoreboard objectives add " + b.Snowscore + " dummy")
+	b.Frame.GetGameControl().SendCmd("scoreboard objectives add " + b.Score + " dummy 雪球菜单专用计分板")
 
-	go func() {
-		for {
-			//fmt.Println("timedelay :", b.TimeDelay)
-			time.Sleep(time.Millisecond * time.Duration(b.TimeDelay)) //time.Duration(b.timeDelay))
-			//雪球功能实现
-			// fmt.Println("---------------------------\ntest")
+	//b.SnowMenuStar()
+	for {
+		time.Sleep(time.Second * time.Duration(b.DelayTime))
+		b.SnowMenuStar()
 
-			go func() {
-				list := <-b.GetScore("@a")
-				b.MenuTitle(list)
-			}()
-			go func() {
-				rxlist := <-b.GetScore("@a[rx=-88]")
-				b.snowActive(rxlist)
-			}()
-
-			//list := <-
-
-			//rxlist := <-b.GetScore()
-
-		}
-	}()
-
-}
-
-// 雪球实现部分
-func (b *SnowMenu) snowActive(rxlist map[string]map[string]int) {
-	fmt.Println("snowactive")
-	for k, v := range rxlist {
-		if cmd, ok := b.SnowsMenuActive[strconv.Itoa(v[b.Snowscore])]; ok {
-			for i, j := range cmd {
-				j = b.FormateMsg(j, "雪球菜单计分板", b.Snowscore)
-				b.Frame.GetGameControl().SendCmdAndInvokeOnResponse(b.FormateMsg(j, "执行对象名字", k), func(output *packet.CommandOutput) {
-					if output.SuccessCount > 0 {
-					} else {
-						fmt.Printf("[错误] 雪球优化菜单组件功能实现分数:%v第%v出现错误 报错信息如下%v\n", strconv.Itoa(v[b.Snowscore]), strconv.Itoa(i), output.DataSet)
-					}
-				})
-
-			}
-		}
 	}
 }
+func (b *SnowMenu) FormateMsg(str string, re string, afterstr string) (newstr string) {
 
-// 雪球显示部分
-func (b *SnowMenu) MenuTitle(list map[string]map[string]int) {
-	//fmt.Print("menutitle")
-	//fmt.Println("list", list)
-	for k, v := range list {
-		//如果分数达到对应则显示对应分数
-		//fmt.Println("k:", k, "\nv:", v)
-		//fmt.Println("snowsscores", v[b.Snowscore])
-		if t, ok := b.SnowsMenuTitle[strconv.Itoa(v[b.Snowscore])]; ok {
-			//fmt.Println("ok")
-			b.Frame.GetGameControl().SendCmdAndInvokeOnResponse(fmt.Sprintf("title @a[name=\"%v\"] actionbar %v", k, t), func(output *packet.CommandOutput) {
-				fmt.Println(output.OutputMessages)
-			})
-		}
-	}
+	res := regexp.MustCompile("\\[" + re + "\\]")
+	return res.ReplaceAllString(str, afterstr)
+
 }
 
-/*
-// 雪球加分
+func (b *SnowMenu) GetPlayerName(name string) (list []string) {
+	var Users User
+	//var UsersListChan chan []string
+	UsersListChan := make(chan []string)
+	b.Frame.GetGameControl().SendCmdAndInvokeOnResponse("testfor "+name, func(output *packet.CommandOutput) {
+		//fmt.Print(output.DataSet)
 
-	func (b *SnowMenu) addScore(target string) {
-		for {
-			time.Sleep(time.Millisecond * 500)
-			//实现雪球加分
-			b.Frame.GetGameControl().SendCmd("scoreboard players rest @a[rxm=88] " + b.Snowscore + " ")
+		json.Unmarshal([]byte(output.DataSet), &Users)
+		UsersListChan <- Users.Name
 
-			b.Frame.GetGameControl().SendCmdAndInvokeOnResponse("execute @e[type=snowball] ~~~ give @p[r=5] snowball", func(output *packet.CommandOutput) {
-				if output.SuccessCount > 0 {
-					b.Circulate()
-					b.Frame.GetGameControl().SendCmd("execute @e[type=snowball] ~~~ scoreboard players add @p " + b.Snowscore + " 1")
-					b.Frame.GetGameControl().SendCmd("kill @e[type=snowball]")
-
-				}
-			})
-			//让分数循环
-
-		}
+	})
+	k, ok := <-UsersListChan
+	if ok {
+		//fmt.Print("接受成功()\n")
+		return k
 	}
-*/
-func (b *SnowMenu) sayto(name string, str string) {
-	b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), str)
+	fmt.Print("雪球菜单接受失败\n")
+	return nil
 }
 
-/*
-// 分数循环
-func (b *SnowMenu) Circulate() {
+func (b *SnowMenu) GetScore(score string) (PlayerScoreList map[string]int) {
 
-	go func() {
-		//fmt.Println("循环分数")
-		list := <-b.GetScore("@a[scores={" + b.Snowscore + "=1..}]")
-		//fmt.Println("list", list)
-		//fmt.Println("-----------")
-		for k, v := range list {
-			//如果是循环分数等于
-
-			if n, ok := b.SnowMenuScoreCirculate[strconv.Itoa(v[b.Snowscore])]; ok {
-				b.Frame.GetGameControl().SendCmdAndInvokeOnResponse("scoreboard players set @a[name=\""+k+"\"] "+b.Snowscore+" "+n, func(output *packet.CommandOutput) {
-					fmt.Println("test:", output.OutputMessages)
-					if output.SuccessCount > 0 {
-						fmt.Printf("[提示]成功循环 %v 分数到 %v", k, n)
-					}
-				})
-
-			}
-		}
-
-	}()
-
-}*/
-
-// 获取所有人的积分 返回通道
-func (b *SnowMenu) GetScore(target string) (PlayerScoreList chan map[string]map[string]int) {
-
-	cmd := "scoreboard players list " + target
-	GetScoreChan := make(chan map[string]map[string]int, 2)
+	cmd := "scoreboard players list @a"
+	GetScoreChan := make(chan map[string]int)
 	b.Frame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, func(output *packet.CommandOutput) {
 		if output.SuccessCount >= 0 {
-			List := make(map[string]map[string]int)
+			List := make(map[string]int)
 			gamePlayer := ""
 			for _, i := range output.OutputMessages {
-				//fmt.Println(i)
 				if len(i.Parameters) == 2 {
-					//fmt.Println("判定为人")
 					gamePlayer = strings.Trim(i.Parameters[1], "%")
-					List[gamePlayer] = make(map[string]int)
-				} else if len(i.Parameters) == 3 {
-					//fmt.Println("判定为分数")
-					key, _ := strconv.Atoi(i.Parameters[0])
-					List[gamePlayer][i.Parameters[1]] = key
+				} else if len(i.Parameters) == 3 && i.Parameters[2] == score {
+					key, err := strconv.Atoi(i.Parameters[0])
+					if err != nil {
+						fmt.Println(err)
+					} else {
+						if _, ok := List[gamePlayer]; ok != true {
+							List[gamePlayer] = key
+						}
+					}
 				} else {
 					continue
 				}
 			}
 			if gamePlayer != "" && len(List) >= 1 {
 				GetScoreChan <- List
+			} else {
+				GetScoreChan <- nil
 			}
-		}
-	})
-	return GetScoreChan
-
-}
-
-// 获取指定限制器的玩家名字 返回通道值 key 为玩家名字 v为号数()
-func (b *SnowMenu) GetPlayerName(name string) (listChan chan map[string]string) {
-
-	var Users User
-	//var UsersListChan chan []string
-	UsersListChan := make(chan map[string]string, 2)
-	//OkChan := make(chan bool, 2)
-	//fmt.Print("test")
-	//isok := false
-	b.Frame.GetGameControl().SendCmdAndInvokeOnResponse("testfor "+name, func(output *packet.CommandOutput) {
-		//fmt.Print(",,,,,,,,,,,,,,,,,,")
-		//fmt.Print(output.DataSet)
-		if output.SuccessCount > 0 {
-			json.Unmarshal([]byte(output.DataSet), &Users)
-
-			//var mapName map[string]string
-			//fmt.Print("Users:", Users)
-			mapName := make(map[string]string, 40)
-			for k, v := range Users.Name {
-				mapName[v] = strconv.Itoa(k)
-			}
-
-			//isok = true
-			//fmt.Print("isok:", isok)
-			UsersListChan <- mapName
-			//OkChan <- true
 		}
 
 	})
+	list, ok := <-GetScoreChan
+	if ok && list != nil {
+		return list
+	}
+	return nil
 
-	//fmt.Print("isok:", isok)
-	return UsersListChan
+}
+func (b *SnowMenu) CheckArr(arr []string, str string) (IsIn bool) {
+	if len(arr) == 0 {
+		fmt.Print("数组为空")
+		return false
+	} else {
+		var set map[string]struct{}
+		set = make(map[string]struct{})
+		for _, value := range arr {
+			set[value] = struct{}{}
+		}
+		// 检查元素是否在map
+		if _, ok := set[str]; ok {
+			return true
+		} else {
+			return false
+		}
+
+	}
+
 }
 
-// 格式化信息
-func (b *SnowMenu) FormateMsg(str string, re string, afterstr string) (newstr string) {
+//检测到对应的分数再显示对应的函数 会分配给不同菜单的函数 两个参数 抬头的人 与 全部人的snow分数（）
+func (b *SnowMenu) SnowMenuStar() {
+	//fmt.Print(b.GetPlayerName())
+	UserMap := b.GetScore(b.Score)
+	if UserMap == nil {
+		fmt.Print("啥也没捕捉到\n")
+	} else {
+		fmt.Print(UserMap)
+		//cmd := "testfor @a[rx=-87]"
 
-	res := regexp.MustCompile("\\[" + re + "\\]")
-	return res.ReplaceAllString(str, afterstr)
+		var PlayerRaiseHeadList []string
+		PlayerRaiseHeadList = b.GetPlayerName(b.PlayerTarget)
+		if len(PlayerRaiseHeadList) > 0 && PlayerRaiseHeadList != nil {
+			//
+		} else {
+			PlayerRaiseHeadList = append(PlayerRaiseHeadList, "")
+		}
 
+		for _k, _v := range UserMap {
+			k := _k
+			v := _v
+			allMember := b.GetPlayerName("@a")
+			if v <= 5 && v >= 1 {
+				b.TitleFormate(k, b.MenuNamesMap["主菜单"], b.Menu, strconv.Itoa(v))
+			} else if v >= 101 && v <= 107 {
+				b.TitleFormate(k, b.MenuNamesMap["公会菜单"], b.GuildMenu, strconv.Itoa(v))
+			} else if v >= 201 && v <= 204 {
+				b.TitleFormate(k, b.MenuNamesMap["快捷传送菜单"], b.GuildMenu, strconv.Itoa(v))
+			} else if v >= 301 && v <= (300+len(allMember)) {
+				b.TitleFormate(k, b.MenuNamesMap["玩家互传菜单"], b.GuildMenu, strconv.Itoa(v))
+			} else if v == 6 {
+				b.Frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players set %v %v %v", k, b.Score, "1"))
+			} else if v == 108 {
+				b.Frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players set %v %v %v", k, b.Score, "101"))
+			} else if v == 205 {
+				b.Frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players set %v %v %v", k, b.Score, "201"))
+			} else if v == 300+len(allMember)+1 {
+				b.Frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players set %v %v %v", k, b.Score, "301"))
+			} else if v == 5 && b.CheckArr(PlayerRaiseHeadList, k) {
+				//查询信息
+				titleOfPerson := b.MenuNamesMap["个人信息"]
+
+				for i, j := range b.PersonScore {
+					msg := b.FormateMsg(b.PersonData, "player", k)
+					msg = b.FormateMsg(msg, "计分板名字", j)
+					sco := b.GetScore(i)
+					if sco != nil {
+						msg = b.FormateMsg(msg, "计分板分数", strconv.Itoa(sco[k]))
+					}
+					titleOfPerson = titleOfPerson + "\n" + msg
+				}
+				//msg := b.FormateMsg(b.PersonData,"player",k)
+				b.Frame.GetGameControl().SendCmd(fmt.Sprintf("title @a[name=\"%v\"] actionbar %v", k, titleOfPerson))
+				b.Frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players set %v %v %v", k, b.Score, "0"))
+			}
+		}
+
+	}
+
+}
+
+//name  显示对象名字 menuName为显示菜单名字 titlelist为该菜单的显示项目 num是高光哪一个菜单项
+func (b *SnowMenu) TitleFormate(name string, MenuName string, titleList map[string]string, num string) {
+	list := MenuName
+	if len(titleList) > 0 {
+		for k, v := range titleList {
+			if k == num {
+				list = fmt.Sprintf("%v\n§b[%v] §e§l%v", list, k, v)
+			} else {
+				list = fmt.Sprintf("%v\n§b[%v] §a§l%v", list, k, v)
+			}
+			list = list + "\n" + b.WarningUnderMenu
+
+		}
+	}
+	b.Frame.GetGameControl().SendCmdAndInvokeOnResponse(fmt.Sprintf("title @a[name=\"%v\"] actionbar %v", name, list), func(output *packet.CommandOutput) {
+		fmt.Printf("test:%v\n", fmt.Sprintf("title @a[name=\"%v\"] actionbar \"%v\"", name, list))
+		fmt.Print(output.OutputMessages, "\n")
+	})
 }

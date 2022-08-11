@@ -149,5 +149,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"第三方_by温柔_优化版本雪球菜单组件": func() defines.Component {
 			return &SnowMenu{BasicComponent: &defines.BasicComponent{}}
 		},
+		"第三方_by温柔_优化版本雪球菜单组件": func() defines.Component {
+			return &SnowMenu{BasicComponent: &defines.BasicComponent{}}
+		},
 	}
 }
