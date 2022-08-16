@@ -6,6 +6,8 @@ import (
 	"phoenixbuilder/omega/defines"
 	"strconv"
 	"time"
+
+	"github.com/pterm/pterm"
 )
 
 func (b *Guild) Init(cfg *defines.ComponentConfig) {
@@ -42,18 +44,33 @@ func (b *Guild) Activate() {
 	//fmt.Print(b.GetPlayerPos(), "\n")
 	b.Frame.GetGameControl().SendCmd("scoreboard objectives add " + b.DictScore["权限计分板"] + "dummy omega权限计分板")
 	b.Frame.GetGameControl().SendCmd("scoreboard objectives add " + b.DictScore["购买公会计分板"] + " dummy 公会购买货币")
+	b.Frame.GetGameControl().SendCmd("scoreboard objectives add " + b.DictScore["公会同步积分计分板"] + " dummy 公会计分板")
+	b.Frame.GetGameControl().SendCmd("scoreboard objectives add " + b.DictScore["兑换贡献计分板"] + " dummy 公会计分板")
+	b.Frame.GetGameControl().SendCmd("scoreboard objectives add " + b.DictScore["贡献计分板"] + " dummy 公会计分板")
+	if b.IsNeedTerr == false {
+		pterm.Info.Println(fmt.Println("注意你现在的模式为默认不挟带地皮 如果你需要地皮的话请在配置文件中把 {是否携带地皮} 后面的false改为true \n本组件的地皮与地皮组件有冲突请不要同时开启"))
+	}
 	go func() {
 		fmt.Println("开始更新isterr")
+
 		for _, v := range b.GuildData {
 			if b.IsHash(v, "IsTerr") == false {
 				v.IsTerr = true
 
 			}
 		}
+		//初始化公会的分数
+		for _, v := range b.GuildData {
+			if v.GuildRankings == 0 {
+				v.GuildRankings = len(b.GuildData) + 1
+			}
+		}
 		fmt.Println("[更新完毕]")
 		for {
 			time.Sleep(time.Duration(b.DelayTime) * time.Second)
+			go b.RefreshTheScore()
 			b.ProtectGuildCentry()
+
 		}
 	}()
 
@@ -71,6 +88,9 @@ func (b *Guild) Signal(signal int) error {
 	return nil
 }
 
+/*
+"公会列表上公会名字中加个公会等级"
+*/
 // -----------------------分界线-----------------------------------
 func (b *Guild) Center(chat *defines.GameChat) bool {
 	//fmt.Print(b.MenuGuild, "\n")
@@ -84,7 +104,6 @@ func (b *Guild) Center(chat *defines.GameChat) bool {
 			case "0":
 				b.BuyGuild(NewChat.Name)
 			case "1":
-
 				b.TpBack(NewChat.Name)
 			case "2":
 				b.StarGuild(NewChat.Name)
@@ -98,6 +117,8 @@ func (b *Guild) Center(chat *defines.GameChat) bool {
 				b.MasterMenu(NewChat.Name)
 			case "6":
 				b.GetPerson(NewChat.Name)
+			case "7":
+				b.GetGuildDataMenu(NewChat.Name)
 			case b.TriggersOfOp:
 				fmt.Print("执行")
 				b.setOpMenu(NewChat.Name)
@@ -171,6 +192,7 @@ func (b *Guild) ProtectGuildCentry() {
 
 					//fmt.Println("141 指令:", j)
 					b.Frame.GetGameControl().SendCmd(j)
+					//b.CmdSender(j)
 				}
 				//第二指令保护
 
@@ -193,6 +215,7 @@ func (b *Guild) ProtectGuildCentry() {
 							j = b.FormateMsg(j, "权限计分板", b.DictScore["权限计分板"])
 							j = b.FormateMsg(j, "最低权限", strconv.Itoa(b.ThePermissionsOfMember["可以进入二级保护区域"])) //)
 							//fmt.Println("j--521--", j)
+							//b.CmdSender(j)
 							b.Frame.GetGameControl().SendCmd(j)
 						}
 

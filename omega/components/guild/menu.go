@@ -123,12 +123,14 @@ func (b *Guild) setTpPos(name string) {
 	func() {
 		guildname, _, powernum := b.CheckInGuild(name)
 		if powernum == 4 {
-			_pos := <-b.Frame.GetGameControl().GetPlayerKit(name).GetPos("@a[name=[player]]")
-			pos := []int{}
-			if _pos != nil {
-				pos = []int{_pos.X(), _pos.Y(), _pos.Z()}
+			poss := <-b.Frame.GetGameControl().GetPlayerKit(name).GetPos("@a[name=[player]]")
+			pos := []int{
+				poss.X(),
+				poss.Y(),
+				poss.Z(),
 			}
 			if b.GuildData[guildname].IsTerr {
+
 				if b.CheckInGuildPlace(guildname, pos) {
 					b.GuildData[guildname].CenterPos = pos
 					b.sayto(name, b.KeyTitle["传送坐标设置成功提示词"])
@@ -136,15 +138,47 @@ func (b *Guild) setTpPos(name string) {
 					b.sayto(name, b.KeyTitle["有地皮时未站在地皮范围内设置传送点提示词"])
 				}
 			} else {
+
 				b.GuildData[guildname].CenterPos = pos
 				b.sayto(name, b.KeyTitle["传送坐标设置成功提示词"])
 			}
 
 		} else {
-			b.sayto(name, b.KeyTitle["权限不足时提示"])
+			b.sayto(name, "[必须权限4才能开启此功能]")
 		}
 
 	}()
+}
+
+// 公会列表加申请菜单
+func (b *Guild) GetGuildDataMenu(name string) {
+	msg := b.KeyTitle["获取公会列表开头"]
+	list := b.getGuildMap()
+	for k, v := range list {
+		msg = msg + "\n" + b.FormateMsg(b.KeyTitle["获取公会列表提示信息格式"], "公会名字", v)
+		msg = b.FormateMsg(msg, "公会等级", strconv.Itoa(b.GuildData[v].Power))
+		msg = b.FormateMsg(msg, "i", k)
+
+	}
+	b.sayto(name, msg)
+	b.Frame.GetGameControl().SetOnParamMsg(name, func(chat *defines.GameChat) (catch bool) {
+		if len(chat.Msg) > 0 {
+			if i, ok := list[chat.Msg[0]]; ok {
+				_, ok, pownum := b.CheckInGuild(name)
+				//如果存在在公会内就查看是否为会长等级 如果不存在则不理会
+				func() bool {
+					if ok && pownum == 4 {
+						return false
+					}
+					b.GuildData[i].ApplicationList = append(b.GuildData[i].ApplicationList, name)
+					b.sayto(name, b.KeyTitle["提交申请成功提示词"])
+					return true
+				}()
+
+			}
+		}
+		return true
+	})
 }
 
 // 提升公会权限菜单
@@ -168,7 +202,7 @@ func (b *Guild) UpgradeGuild(name string) {
 		}
 
 	} else {
-		b.sayto(name, b.KeyTitle["权限不足时提示"])
+		b.sayto(name, "必须权限为4才能进行此操作")
 	}
 
 }
@@ -283,6 +317,8 @@ func (b *Guild) MasterMenu(name string) {
 							b.DeleteGuildMember(name, *b.GuildData[n])
 						case "8":
 							b.UpgradeGuild(name)
+						case "9":
+							b.AcceptMenu(name)
 						}
 
 					} else {
@@ -296,6 +332,39 @@ func (b *Guild) MasterMenu(name string) {
 		})
 	}
 
+}
+
+// 接受表单
+func (b *Guild) AcceptMenu(name string) {
+	guildname, _, _ := b.CheckInGuild(name)
+	if len(b.GuildData[guildname].ApplicationList) > 0 {
+		list := make(map[string]string)
+		msg := "输入对应数字同意对方"
+		for k, v := range b.GuildData[guildname].ApplicationList {
+			list[strconv.Itoa(k)] = v
+			msg = fmt.Sprintf("%v\n[%v] %v", msg, strconv.Itoa(k), v)
+		}
+		b.sayto(name, msg)
+		b.Frame.GetGameControl().SetOnParamMsg(name, func(chat *defines.GameChat) (catch bool) {
+			if len(chat.Msg) > 0 {
+				if memberName, ok := list[chat.Msg[0]]; ok {
+					b.sayto(name, "[添加成功]")
+					b.GuildData[guildname].Member[memberName] = &GuildDtails{
+						Permistion: "1",
+					}
+					delete(list, memberName)
+					b.GuildData[guildname].ApplicationList = []string{}
+					for _, v := range list {
+						b.GuildData[guildname].ApplicationList = append(b.GuildData[guildname].ApplicationList, v)
+					}
+				}
+			}
+
+			return true
+		})
+	} else {
+		b.sayto(name, "暂时没有人申请")
+	}
 }
 
 // op 权限菜单子菜单 ----改变公会的数据
