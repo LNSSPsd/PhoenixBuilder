@@ -156,5 +156,14 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"统一导出系统": func() defines.Component {
 			return &universe_export.UniverseExport{BasicComponent: &defines.BasicComponent{}}
 		},
+		"第三方_byYsCore_自定义违禁词封禁系统会员组件": func() defines.Component {
+			return &BanName{BasicComponent: &defines.BasicComponent{}}
+		},
+		"第三方_byYsCore_自定义模糊回答会员组件": func() defines.Component {
+			return &Talk{BasicComponent: &defines.BasicComponent{}}
+		},
+		"第三方_byYsCore_会员验证组件": func() defines.Component {
+			return &GetFbname{BasicComponent: &defines.BasicComponent{}}
+		},
 	}
 }

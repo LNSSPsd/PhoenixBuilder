@@ -8,8 +8,6 @@ type Guild struct {
 	*defines.BasicComponent
 	FistCmds               []string              `json:"一级保护指令"`
 	ScendCmds              []string              `json:"二级保护指令"`
-	MemberName             map[string]string     `json:"成员等级称呼"`
-	Guild                  map[string]string     `json:"公会等级称呼"`
 	ThePermissionsOfGuild  map[string]int        `json:"最低公会等级可开启的功能"`
 	ThePermissionsOfMember map[string]int        `json:"最低权限可使用功能"`
 	Triggers               []string              `json:"触发词"`
@@ -41,15 +39,17 @@ type Commodity struct {
 	CheckCmds string   `json:"购买时检测指令"`
 }
 type GuildDatas struct {
-	Master       string
-	Member       map[string]*GuildDtails //记得初始化（）
-	SpPlace      map[string][]int        //[起点x 起点y 起点z dx dy dz]
-	Range        []int
-	announcement []string
-	Pos          []int
-	CenterPos    []int
-	IsTerr       bool
-	Power        int
+	Master          string
+	Member          map[string]*GuildDtails //记得初始化（）
+	SpPlace         map[string][]int        //[起点x 起点y 起点z dx dy dz]
+	Range           []int
+	announcement    []string
+	Pos             []int
+	CenterPos       []int
+	IsTerr          bool
+	Power           int
+	ApplicationList []string
+	GuildRankings   int //在计分板内分数（）
 }
 type User struct {
 	Name []string `json:"victim"`
