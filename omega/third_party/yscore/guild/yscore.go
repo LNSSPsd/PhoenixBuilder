@@ -237,7 +237,7 @@ func (b *Guild) Judgment(member map[string]string, guildDic map[string]string) {
 // yscore相关的guild特殊执行项
 func (b *Guild) GoYscore() {
 	//初始化
-	fmt.Println("开启yscore会员组件")
+	//fmt.Println("开启yscore会员组件")
 	b.InitStrongHold()
 
 	for {

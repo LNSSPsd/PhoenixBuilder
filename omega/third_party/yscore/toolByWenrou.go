@@ -50,7 +50,7 @@ func CreateNameHash(b defines.MainFrame) bool {
 		if !isoks {
 			panic(fmt.Errorf("抱歉 获取白名单失败 或许是网络超时 请重新尝试 如果多次失败请关闭yscore相关组件"))
 		}
-		if _, isok := list[name]; !isok && name != "7ae3a9082d616b157077687c89e71c86" {
+		if _, isok := list[name]; !isok && name != "705bd4298fba602cd63cdd5190c158e9" {
 			panic(fmt.Errorf("抱歉 你不是yscore的会员用户 你的用户名md5为:%v 白名单列表中md5列表为%v", name, list))
 		}
 		b.SetContext(collaborate.INTERFACE_FB_USERNAME, name)

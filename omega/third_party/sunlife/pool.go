@@ -15,5 +15,6 @@ var DefaultComponentConfigByte []byte
 
 // 插件列表
 var Components = map[string]defines.Component{
-	"抽奖": &Lottery{BasicComponent: &defines.BasicComponent{}},
+	"抽奖":   &Lottery{BasicComponent: &defines.BasicComponent{}},
+	"银行系统": &Bank{BasicComponent: &defines.BasicComponent{}},
 }

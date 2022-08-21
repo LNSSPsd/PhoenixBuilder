@@ -50,6 +50,7 @@ func (b *Guild) StarGuild(name string) {
 				msg = b.FormateMsg(msg, "i", i)
 				msg = msg + "\n"
 			}
+
 			b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), msg)
 			b.Frame.GetGameControl().SetOnParamMsg(name, func(chat *defines.GameChat) (catch bool) {
 				for _i, _j := range b.StarGuilds {
@@ -85,6 +86,8 @@ func (b *Guild) StarGuild(name string) {
 
 				return true
 			})
+		} else {
+			b.sayto(name, b.KeyTitle["权限不足时提示"])
 		}
 	} else {
 		b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), b.KeyTitle["权限不足时提示"])
@@ -169,6 +172,12 @@ func (b *Guild) GetGuildDataMenu(name string) {
 				func() bool {
 					if ok && pownum == 4 {
 						return false
+					}
+					for _, v := range b.GuildData[i].ApplicationList {
+						if v == name {
+							b.sayto(name, "你已经申请过了\n请耐心等待")
+							return true
+						}
 					}
 					b.GuildData[i].ApplicationList = append(b.GuildData[i].ApplicationList, name)
 					b.sayto(name, b.KeyTitle["提交申请成功提示词"])

@@ -36,6 +36,11 @@ type LotteryData struct {
 }
 
 func (b *Lottery) Init(cfg *defines.ComponentConfig) {
+	if cfg.Version == "0.0.1" {
+		cfg.Configs["抽一次的价格"] = 200
+		cfg.Version = "0.0.2"
+		cfg.Upgrade()
+	}
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, b)
 	if err != nil {

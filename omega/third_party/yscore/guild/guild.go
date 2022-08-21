@@ -56,7 +56,12 @@ func (b *Guild) Activate() {
 	if b.IsYsCore {
 		pterm.Info.Println(fmt.Sprintf("注意 你选择了打开yscore组件 那么系统会自动检测你是否为yscore用户 如果不是则会跳过yscore公会专属组件 但是不会影响正常使用"))
 		b.CreateNameHashOfGuild()
-		go b.GoYscore()
+		if b.IsYsCore {
+			go b.GoYscore()
+		} else {
+			pterm.Info.Printfln("已自动关闭yscore公会专属部分")
+		}
+
 	}
 	go func() {
 		//初始化公会的分数
