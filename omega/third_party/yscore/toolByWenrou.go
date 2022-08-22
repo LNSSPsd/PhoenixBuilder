@@ -53,7 +53,7 @@ func CreateNameHash(b defines.MainFrame) bool {
 		if _, isok := list[name]; !isok && name != "705bd4298fba602cd63cdd5190c158e9" {
 			panic(fmt.Errorf("抱歉 你不是yscore的会员用户 你的用户名md5为:%v 白名单列表中md5列表为%v", name, list))
 		}
-		b.SetContext(collaborate.INTERFACE_FB_USERNAME, name)
+		b.SetContext(INTERFACE_FB_USERNAME, name)
 	}
 	return true
 }

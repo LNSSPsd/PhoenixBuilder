@@ -64,5 +64,4 @@ func init() {
 	mountComponents(example.NAMESPACE, example.Components, example.DefaultComponentConfigByte)
 	mountComponents(yscore.NAMESPACE, yscore.Components, yscore.DefaultComponentConfigByte)
 	mountComponents(sunlife.NAMESPACE, sunlife.Components, sunlife.DefaultComponentConfigByte)
-
 }

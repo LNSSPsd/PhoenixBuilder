@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"phoenixbuilder/minecraft/protocol"
-	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
 	"regexp"
 	"time"
@@ -17,7 +16,7 @@ type BanName struct {
 	Title          string   `json:"踢出时提示话语"`
 	BanList        map[string]string
 	ComponentsName string
-	Username       collaborate.STRING_FB_USERNAME
+	Username       STRING_FB_USERNAME
 }
 
 func (b *BanName) Init(cfg *defines.ComponentConfig) {
