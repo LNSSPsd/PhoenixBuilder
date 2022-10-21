@@ -167,6 +167,38 @@ const (
 	Task_Summary_3
 	UnsupportedACMEVersion
 	Warning_UserHomeDir
+
+	/* 帮助菜单帮助部分的扩展 */
+	Help_Tip_join_1
+	Help_Tip_join_2
+
+	Menu_Tip_MC_Command    // 我的世界 指令在 FB 的执行
+	Menu_Tip_FB_World_Chat // FB 世界聊天
+	Menu_Tip_Exit          // FB 退出程序
+	Menu_Tip_Help          // FB 帮助菜单的帮助命令的额外扩展
+	Menu_Tip_Lang          // FB 语言重新选择
+	Menu_Tip_logout        // FB 退出登录
+	Menu_Tip_Progress      // FB 是否显示进度条
+	Menu_Tip_Round         // FB 画圆命令
+	Menu_Tip_Get           // FB 获取当前机器人当前坐标并设置为FB导入建筑时的起点
+	Menu_Tip_Set           // FB 设置导入建筑的起始点坐标
+	Menu_Tip_Task          // FB 任务命令
+	Menu_Tip_Setend        // FB 设置导入建筑的终点坐标(不是必须设置)
+	Menu_Tip_delay         // FB 设置发包方案(指令速度限制)
+	/* 帮助菜单的语法规则*/
+	Menu_Tip_Cmd_MC_Command    // 我的世界 指令在 FB 的执行
+	Menu_Tip_Cmd_FB_World_Chat // FB 世界聊天
+	Menu_Tip_Cmd_Exit          // FB 退出程序
+	Menu_Tip_Cmd_Help          // FB 帮助菜单的帮助命令的额外扩展
+	Menu_Tip_Cmd_Lang          // FB 语言重新选择
+	Menu_Tip_Cmd_logout        // FB 退出登录
+	Menu_Tip_Cmd_Progress      // FB 是否显示进度条
+	Menu_Tip_Cmd_Round         // FB 画圆命令
+	Menu_Tip_Cmd_Get           // FB 获取当前机器人当前坐标并设置为FB导入建筑时的起点
+	Menu_Tip_Cmd_Set           // FB 设置导入建筑的起始点坐标
+	Menu_Tip_Cmd_Task          // FB 任务命令
+	Menu_Tip_Cmd_Setend        // FB 设置导入建筑的终点坐标(不是必须设置)
+	Menu_Tip_Cmd_delay         // FB 设置发包方案(指令速度限制)
 )
 
 var LangDict map[string]map[uint16]string = map[string]map[uint16]string{

@@ -145,4 +145,36 @@ var I18nDict_zh_CN map[uint16]string = map[uint16]string{
 	Task_Summary_3:              "[任务 %d] 平均速度: %v 方块/秒",
 	UnsupportedACMEVersion:      "不支持该版本ACME结构（仅支持acme 1.2文件版本）",
 	Warning_UserHomeDir:         "警告 - 无法获取当前用户主目录，将设定homedir=\".\";\n",
+
+	/* 菜单帮助部分的扩展 */
+
+	Help_Tip_join_1:        "成功进入服务器,您可以在终端输入 ",
+	Help_Tip_join_2:        " 获取帮助",
+	Menu_Tip_MC_Command:    "执行我的世界原生指令,例如:.say 你好,世界",                   // 我的世界 指令在 FB 的执行
+	Menu_Tip_FB_World_Chat: "FB 世界聊天",                                    // FB 世界聊天
+	Menu_Tip_Exit:          "退出FB程序",                                     // FB 退出程序
+	Menu_Tip_Help:          "FB 帮助菜单",                                    // FB 帮助菜单的帮助命令的额外扩展
+	Menu_Tip_Lang:          "切换语言",                                       // FB 语言重新选择
+	Menu_Tip_logout:        "从 FastBuilder 用户中心退出登录",                     // FB 退出登录
+	Menu_Tip_Progress:      "设置是否显示进度条（显示建筑的进度百分比，方块总数，瞬时速度等信息。默认为true）", // FB 是否显示进度条
+	Menu_Tip_Round:         "在指定坐标出为圆点画圆（很多参数,详情请使用 help round查询）",       // FB 画圆命令
+	Menu_Tip_Get:           "获取当前机器人当前坐标并设置为FB导入建筑时的起点",                  // FB 获取当前机器人当前坐标并设置为FB导入建筑时的起点
+	Menu_Tip_Set:           "设置导入建筑的起始点坐标",                               // FB 设置导入建筑的起始点坐标
+	Menu_Tip_Task:          "有关 FB 正在进行的操作列表",                            // FB 任务命令
+	Menu_Tip_Setend:        "设置导入建筑的终点坐标(不是必须设置)",                        // FB 设置导入建筑的终点坐标(不是必须设置)
+	Menu_Tip_delay:         "设置发包方案(指令速度限制)",                             // FB 设置发包方案(指令速度限制)
+
+	Menu_Tip_Cmd_MC_Command:    ".",        // 我的世界 指令在 FB 的执行
+	Menu_Tip_Cmd_FB_World_Chat: ">",        // FB 世界聊天
+	Menu_Tip_Cmd_Exit:          "exit",     // FB 退出程序
+	Menu_Tip_Cmd_Help:          "help",     // FB 帮助菜单的帮助命令的额外扩展
+	Menu_Tip_Cmd_Lang:          "lang",     // FB 语言重新选择
+	Menu_Tip_Cmd_logout:        "exit",     // FB 退出登录
+	Menu_Tip_Cmd_Progress:      "progress", // FB 是否显示进度条
+	Menu_Tip_Cmd_Round:         "Round ",   // FB 画圆命令
+	Menu_Tip_Cmd_Get:           "get",      // FB 获取当前机器人当前坐标并设置为FB导入建筑时的起点
+	Menu_Tip_Cmd_Set:           "set",      // FB 设置导入建筑的起始点坐标
+	Menu_Tip_Cmd_Task:          "task",     // FB 任务命令
+	Menu_Tip_Cmd_Setend:        "setend",   // FB 设置导入建筑的终点坐标(不是必须设置)
+	Menu_Tip_Cmd_delay:         "delay",    // FB 设置发包方案(指令速度限制)
 }
