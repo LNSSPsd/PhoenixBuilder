@@ -195,6 +195,12 @@ task setdelaythreshold <taskID> <threshold:int> # 设定某个任务的阈值（
 
 ##### 功能命令
 
+- 获取 FastBuilder 的帮助:
+  ```shell
+  help 1 # 获取 FB 的帮助菜单
+  help <命令:str> # 获取 FB内置的命令帮助,例如: help set  
+  ```
+
 - 设置空间原点/终点(终点并不一定是必要的)：
 
   ```shell
@@ -228,13 +234,6 @@ task setdelaythreshold <taskID> <threshold:int> # 设定某个任务的阈值（
   lang
   ```
 
-* 打开FastBuilder控制菜单
-
-  ```
-  menu
-  ```
-
-  
 
 ##### 几何命令
 
@@ -327,15 +326,6 @@ FastBuilder具备在空间中构造简单几何体的功能（如圆,圈,球,线
   ```
 
 * 用`bdump`命令对其进行导入操作。
-
-##### 世界聊天
-
-世界聊天可以让您与其他在线的FastBuilder用户聊天，您可以在用户中心开启/关闭它。用法如下:
-
-```shell
-> 消息
-> 匿名消息
-```
 
 ##### 命令执行
 
