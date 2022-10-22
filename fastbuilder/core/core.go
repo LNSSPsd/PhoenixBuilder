@@ -320,29 +320,6 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 				fbcl.WorldChat(umsg)
 			}
 		}
-		Expend_cmd := strings.Split(cmd, " ")
-		if Expend_cmd[0] == "help" {
-			// 帮助菜单的构建
-			if len(Expend_cmd) == 1 {
-				// 默认查询
-
-				fmt.Println(pterm.Green(I18n.T(I18n.Menu_Tip_Cmd_MC_Command)) + " " + pterm.Cyan(I18n.T(I18n.Menu_Tip_MC_Command)))
-				fmt.Println(pterm.Green(I18n.T(I18n.Menu_Tip_Cmd_FB_World_Chat)) + " " + pterm.Cyan(I18n.T(I18n.Menu_Tip_FB_World_Chat)))
-				fmt.Println(pterm.Green(I18n.T(I18n.Menu_Tip_Cmd_Exit)) + " " + pterm.Cyan(I18n.T(I18n.Menu_Tip_Exit)))
-				fmt.Println(pterm.Green(I18n.T(I18n.Menu_Tip_Cmd_Help)) + " " + pterm.Cyan(I18n.T(I18n.Menu_Tip_Help)))
-				fmt.Println(pterm.Green(I18n.T(I18n.Menu_Tip_Cmd_Lang)) + " " + pterm.Cyan(I18n.T(I18n.Menu_Tip_Lang)))
-				fmt.Println(pterm.Green(I18n.T(I18n.Menu_Tip_Cmd_logout)) + " " + pterm.Cyan(I18n.T(I18n.Menu_Tip_logout)))
-				fmt.Println(pterm.Green(I18n.T(I18n.Menu_Tip_Cmd_Progress)) + " " + pterm.Cyan(I18n.T(I18n.Menu_Tip_Progress)))
-				fmt.Println(pterm.Green(I18n.T(I18n.Menu_Tip_Cmd_Round)) + " " + pterm.Cyan(I18n.T(I18n.Menu_Tip_Round)))
-				fmt.Println(pterm.Green(I18n.T(I18n.Menu_Tip_Cmd_Get)) + " " + pterm.Cyan(I18n.T(I18n.Menu_Tip_Get)))
-				fmt.Println(pterm.Green(I18n.T(I18n.Menu_Tip_Cmd_Set)) + " " + pterm.Cyan(I18n.T(I18n.Menu_Tip_Set)))
-				fmt.Println(pterm.Green(I18n.T(I18n.Menu_Tip_Cmd_Task)) + " " + pterm.Cyan(I18n.T(I18n.Menu_Tip_Task)))
-				fmt.Println(pterm.Green(I18n.T(I18n.Menu_Tip_Cmd_Setend)) + " " + pterm.Cyan(I18n.T(I18n.Menu_Tip_Setend)))
-				fmt.Println(pterm.Green(I18n.T(I18n.Menu_Tip_Cmd_delay)) + " " + pterm.Cyan(I18n.T(I18n.Menu_Tip_delay)))
-
-			}
-		}
-
 		functionHolder.Process(cmd)
 	}
 }
