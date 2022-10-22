@@ -177,4 +177,14 @@ var I18nDict_zh_CN map[uint16]string = map[uint16]string{
 	Menu_Tip_Cmd_Task:          "task",     // FB 任务命令
 	Menu_Tip_Cmd_Setend:        "setend",   // FB 设置导入建筑的终点坐标(不是必须设置)
 	Menu_Tip_Cmd_delay:         "delay",    // FB 设置发包方案(指令速度限制)
+
+	/*Help 部分的详细描述*/
+	Help_No_Find: "未找到对应的 %s 帮助命令\n",
+
+	Help_Help:     "help <页码:int> 打开帮助菜单的对应页码(当前版本仅支持第一页)\nhelp <命令:str> 详细描述对应命令的语法以及帮助,说明\n",
+	Help_Exit:     "exit 退出应用程序(不需要任何参数) \n例:exit\n正常退出\n",
+	Help_delay:    "delay 设置全局指令执行延迟和执行方案：\ndelay mode <delayMode:continuous|discrete|none>  设定默认的发包方案\ndelay threshold <threshold:int>  设定默认阈值（最大方块集合），仅在 discrete 方案下有效\ndelay set <Delay>  设定默认的发包延迟。在continuous模式下单位为微秒； 在discrete模式下单位为秒\n",
+	Help_Lang:     "lang 切换语言\n例:请在控制台中选择新语言\n[1] English\n[2] English (UK)\n[3] 简体中文\n[4] 繁體中文（香港）\n[5] 繁體中文（台灣）\n(ID): 3\n语言偏好已更新\n(注意:此示范是在简体中文的情况下执行的命令)\n",
+	Help_logout:   "logout 退出登录,在执行完成此命令后将会退出FB并且下次登录需要重新输入用户名和密码\n例:logout\n已从FastBuilder用户中心退出登录。\n正常退出\n",
+	Help_Progress: "progress <value:bool> 设置是否显示进度条（显示建筑的进度百分比，方块总数，瞬时速度等信息。默认为true）\n例:progress True\n解析器：无效枚举值，可用值有：true, false.\nprogress true\n任务状态显示模式已经设置为: true.\nprogress false\n任务状态显示模式已经设置为: false.\n",
 }

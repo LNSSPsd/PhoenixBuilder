@@ -199,6 +199,15 @@ const (
 	Menu_Tip_Cmd_Task          // FB 任务命令
 	Menu_Tip_Cmd_Setend        // FB 设置导入建筑的终点坐标(不是必须设置)
 	Menu_Tip_Cmd_delay         // FB 设置发包方案(指令速度限制)
+
+	/* Help 命令的详细描述*/
+	Help_Help
+	Help_Exit
+	Help_delay
+	Help_Lang
+	Help_logout
+	Help_Progress
+	Help_No_Find
 )
 
 var LangDict map[string]map[uint16]string = map[string]map[uint16]string{
