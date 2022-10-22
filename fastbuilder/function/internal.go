@@ -32,25 +32,42 @@ func InitInternalFunctions(fh *FunctionHolder) {
 		},
 	})
 	fh.RegisterFunction(&Function{
-		Name:          "help",
-		OwnedKeywords: []string{"help"},
-		FunctionType:  FunctionTypeSimple,
-		SFMinSliceLen: 1,
-		FunctionContent: func(env *environment.PBEnvironment, _ []interface{}) {
-			fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_MC_Command), I18n.T(I18n.Menu_Tip_MC_Command))
-			fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_FB_World_Chat), I18n.T(I18n.Menu_Tip_FB_World_Chat))
-			fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_Exit), I18n.T(I18n.Menu_Tip_Exit))
-			fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_Help), I18n.T(I18n.Menu_Tip_Help))
-			fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_Lang), I18n.T(I18n.Menu_Tip_Lang))
-			fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_logout), I18n.T(I18n.Menu_Tip_logout))
-			fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_Progress), I18n.T(I18n.Menu_Tip_Progress))
-			fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_Round), I18n.T(I18n.Menu_Tip_Round))
-			fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_Get), I18n.T(I18n.Menu_Tip_Get))
-			fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_Set), I18n.T(I18n.Menu_Tip_Set))
-			fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_Task), I18n.T(I18n.Menu_Tip_Task))
-			fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_Setend), I18n.T(I18n.Menu_Tip_Setend))
-			fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_delay), I18n.T(I18n.Menu_Tip_delay))
-
+		Name:            "help",
+		OwnedKeywords:   []string{"help"},
+		FunctionType:    FunctionTypeSimple,
+		SFArgumentTypes: []byte{SimpleFunctionArgumentMessage},
+		SFMinSliceLen:   0,
+		FunctionContent: func(env *environment.PBEnvironment, args []interface{}) {
+			fmt.Println(args) // 临时性调试用,方便查看参数列表
+			if len(args) == 0 || (len(args) == 1 && args[0] == "") || (len(args) == 1 && args[0] == "1") {
+				fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_MC_Command), I18n.T(I18n.Menu_Tip_MC_Command))
+				fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_FB_World_Chat), I18n.T(I18n.Menu_Tip_FB_World_Chat))
+				fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_delay), I18n.T(I18n.Menu_Tip_delay))
+				fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_Exit), I18n.T(I18n.Menu_Tip_Exit))
+				fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_Help), I18n.T(I18n.Menu_Tip_Help))
+				fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_Lang), I18n.T(I18n.Menu_Tip_Lang))
+				fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_logout), I18n.T(I18n.Menu_Tip_logout))
+				fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_Progress), I18n.T(I18n.Menu_Tip_Progress))
+				fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_Round), I18n.T(I18n.Menu_Tip_Round))
+				fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_Get), I18n.T(I18n.Menu_Tip_Get))
+				fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_Set), I18n.T(I18n.Menu_Tip_Set))
+				fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_Task), I18n.T(I18n.Menu_Tip_Task))
+				fmt.Printf(pterm.Green("%s")+" "+pterm.Cyan("%s\n"), I18n.T(I18n.Menu_Tip_Cmd_Setend), I18n.T(I18n.Menu_Tip_Setend))
+			} else if args[0] == "help" {
+				fmt.Printf(I18n.T(I18n.Help_Help))
+			} else if args[0] == "exit" {
+				fmt.Printf(I18n.T(I18n.Help_Exit))
+			} else if args[0] == "delay" {
+				fmt.Printf(I18n.T(I18n.Help_delay))
+			} else if args[0] == "lang" {
+				fmt.Printf(I18n.T(I18n.Help_Lang))
+			} else if args[0] == "logout" {
+				fmt.Printf(I18n.T(I18n.Help_logout))
+			} else if args[0] == "progress" {
+				fmt.Printf(I18n.T(I18n.Help_Progress))
+			} else {
+				fmt.Printf(I18n.T(I18n.Help_No_Find), args[0])
+			}
 		},
 	})
 	fh.RegisterFunction(&Function{
