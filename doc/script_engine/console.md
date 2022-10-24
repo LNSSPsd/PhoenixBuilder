@@ -1,6 +1,6 @@
 # Console
 ## `console.log([data][, ...args])`
-*  // script1.jslet v=require("script2.js");console.log(v);// 123javascript
+* `data` `<any>`
 * `...args` `<any>`
 
 Prints formatted message to `stdout` **with newline**
