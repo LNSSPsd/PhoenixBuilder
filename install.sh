@@ -388,24 +388,6 @@ else
   else
     report_error ${DL_RET}
   fi
-  printf "Downloading dependencies...\n"
-  if [ $(${UNAME_GET_OSNAME}) == "Android" ]; then
-    # We need a livecheck script here!
-    READLINE_LINK="https://mirrors.bfsu.edu.cn/termux/apt/termux-main/pool/main/r/readline/readline_8.2.0_${FILE_ARCH}.deb"
-    ZLIB_LINK="https://mirrors.bfsu.edu.cn/termux/apt/termux-main/pool/main/z/zlib/zlib_1.2.12-1_${FILE_ARCH}.deb"
-    printf "Downloading dependencies...\n"
-    ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/readline.deb ${READLINE_LINK}
-    ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/zlib.deb ${ZLIB_LINK}
-    DL_RET=$?
-    if [ ${DL_RET} == 0 ]; then
-      printf "Installing dependencies...\n"
-      dpkg -i "${PREFIX}"/./fastbuilder-temp/readline.deb "${PREFIX}"/./fastbuilder-temp/zlib.deb
-      if [ $? != 0 ]; then
-        printf "\033[31mSome errors occurred when calling Debian Packager.\nYou may want to run \"dpkg --configure -a\" to fix some problems.\033[0m\n"
-        quit_installer 1
-      fi
-    fi
-  fi
   printf "Downloading FastBuilder package...\n"
   # Repeat FB_LINK
   FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}"
