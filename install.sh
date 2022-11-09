@@ -357,10 +357,27 @@ report_error() {
   quit_installer 1
 }
 
+# Download a file contains the latest version num for FastBuilder distros
+printf "Getting latest version of FastBuilder..."
+${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/version ${FB_DOMAIN}${FB_LOCATION_ROOT}/version
+DL_RET=$?
+if [ ${DL_RET} == 0 ]; then
+  FB_VER=$(cat "${PREFIX}"/./fastbuilder-temp/version | sed -n -e 'H;${x;s/\n//g;p;}')
+  printf "${FB_VER}\n"
+else
+  report_error ${DL_RET}
+fi
+
 if [[ ${BINARY_INSTALL} == "1" ]]; then
+  printf "Downloading FastBuilder binary..."
   # Repeat FB_LINK
   FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}${FILE_ARCH}${FILE_TYPE}${FILE_ARCH}"
-  printf "Downloading FastBuilder binary..."
+  if [[ ${1} == "gh" ]]; then
+    printf "\033[32mOriginal download link: ${FB_LINK}\033[0m\n"
+    FB_LINK="${GH_LINK}v${FB_VER}/${FB_PREFIX}${FILE_ARCH}${FILE_TYPE}${FILE_ARCH}"
+    printf "\033[32mGithub download link: ${FB_LINK}\033[0m\n"
+  fi
+  printf "\033[33mIf the download is too slow, you can press \"Ctrl+C\" to end the current script and later try to use \"./install.sh gh\" to switch to the Github Releases source to download the PhoenixBuilder package.\033[0m\n"
   ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}/./fastbuilder-temp/fastbuilder" "${FB_LINK}"
   DL_RET=$?
   if [ ${DL_RET} == 0 ]; then
@@ -385,21 +402,11 @@ if [[ ${BINARY_INSTALL} == "1" ]]; then
     LAUNCH_CMD="${PREFIX}/fastbuilder"
   fi
 else
-  # Download a file contains the latest version num for FastBuilder distros
-  printf "Getting latest version of FastBuilder..."
-  ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/version ${FB_DOMAIN}${FB_LOCATION_ROOT}/version
-  DL_RET=$?
-  if [ ${DL_RET} == 0 ]; then
-    FB_VER=$(cat "${PREFIX}"/./fastbuilder-temp/version | sed -n -e 'H;${x;s/\n//g;p;}')
-    printf "${FB_VER}\n"
-  else
-    report_error ${DL_RET}
-  fi
   printf "Downloading FastBuilder package...\n"
   # Repeat FB_LINK
   FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}"
   if [[ ${1} == "gh" ]]; then
-    printf "\033[32mOfficial download link: ${FB_LINK}\033[0m\n"
+    printf "\033[32mOriginal download link: ${FB_LINK}\033[0m\n"
     FB_LINK="${GH_LINK}v${FB_VER}/${FB_PREFIX}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}"
     printf "\033[32mGithub download link: ${FB_LINK}\033[0m\n"
   fi
