@@ -369,7 +369,7 @@ else
 fi
 
 if [[ ${BINARY_INSTALL} == "1" ]]; then
-  printf "Downloading FastBuilder binary..."
+  printf "Downloading FastBuilder binary...\n"
   # Repeat FB_LINK
   FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}${FILE_ARCH}${FILE_TYPE}${FILE_ARCH}"
   if [[ ${1} == "gh" ]]; then
