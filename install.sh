@@ -194,6 +194,13 @@ FB_PREFIX="phoenixbuilder"
 FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}"
 FB_VER=""
 
+# Github Releases download source presets
+GH_DOMAIN="https://github.com/"
+GH_USER="LNSSPsd"
+GH_REPO="PhoenixBuilder"
+GH_RELEASE_URL="/releases/download/"
+GH_LINK="${GH_DOMAIN}${GH_USER}/${GH_REPO}${GH_RELEASE_URL}"
+
 # Further system detection
 FILE_TYPE=""
 FILE_ARCH=""
@@ -391,6 +398,12 @@ else
   printf "Downloading FastBuilder package...\n"
   # Repeat FB_LINK
   FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}"
+  if [[ ${1} == "gh" ]]; then
+    printf "\033[32mOfficial download link: ${FB_LINK}\033[0m\n"
+    FB_LINK="${GH_LINK}v${FB_VER}/${FB_PREFIX}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}"
+    printf "\033[32mGithub download link: ${FB_LINK}\033[0m\n"
+  fi
+  printf "\033[33mIf the download is too slow, you can press \"Ctrl+C\" to end the current script and later try to use \"./install.sh gh\" to switch to the Github Releases source to download the PhoenixBuilder package.\033[0m\n"
   ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/fastbuilder.deb ${FB_LINK}
   DL_RET=$?
   if [ ${DL_RET} == 0 ]; then
