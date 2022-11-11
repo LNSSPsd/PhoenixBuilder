@@ -372,12 +372,12 @@ if [[ ${BINARY_INSTALL} == "1" ]]; then
   printf "Downloading FastBuilder binary...\n"
   # Repeat FB_LINK
   FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}${FILE_ARCH}${FILE_TYPE}${FILE_ARCH}"
-  if [[ ${1} == "gh" ]]; then
+  if [[ ${PB_USE_GH_REPO} == "1" ]]; then
     printf "\033[32mOriginal download link: ${FB_LINK}\033[0m\n"
     FB_LINK="${GH_LINK}v${FB_VER}/${FB_PREFIX}${FILE_ARCH}${FILE_TYPE}${FILE_ARCH}"
     printf "\033[32mGithub download link: ${FB_LINK}\033[0m\n"
   fi
-  printf "\033[33mIf the download is too slow, you can press \"Ctrl+C\" to end the current script and later try to use \"./install.sh gh\" to switch to the Github Releases source to download the PhoenixBuilder package.\033[0m\n"
+  printf "\033[33mIf the download is too slow, you can press \"Ctrl+C\" to end the current script and later try to use \"export PB_USE_GH_REPO=1\" and then re-run the installation command to switch to the Github Releases source to download the PhoenixBuilder package.\033[0m\n"
   ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}/./fastbuilder-temp/fastbuilder" "${FB_LINK}"
   DL_RET=$?
   if [ ${DL_RET} == 0 ]; then
@@ -405,12 +405,12 @@ else
   printf "Downloading FastBuilder package...\n"
   # Repeat FB_LINK
   FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}"
-  if [[ ${1} == "gh" ]]; then
+  if [[ ${PB_USE_GH_REPO} == "1" ]]; then
     printf "\033[32mOriginal download link: ${FB_LINK}\033[0m\n"
     FB_LINK="${GH_LINK}v${FB_VER}/${FB_PREFIX}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}"
     printf "\033[32mGithub download link: ${FB_LINK}\033[0m\n"
   fi
-  printf "\033[33mIf the download is too slow, you can press \"Ctrl+C\" to end the current script and later try to use \"./install.sh gh\" to switch to the Github Releases source to download the PhoenixBuilder package.\033[0m\n"
+  printf "\033[33mIf the download is too slow, you can press \"Ctrl+C\" to end the current script and later try to use \"export PB_USE_GH_REPO=1\" and then re-run the installation command to switch to the Github Releases source to download the PhoenixBuilder package.\033[0m\n"
   ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/fastbuilder.deb ${FB_LINK}
   DL_RET=$?
   if [ ${DL_RET} == 0 ]; then
