@@ -195,7 +195,7 @@ FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}"
 FB_VER=""
 
 # Github Releases download source presets
-GH_DOMAIN="https://github.com/"
+GH_DOMAIN="https://hub.fgit.ml/"  # Github accelerated mirror site for users in mainland China
 GH_USER="LNSSPsd"
 GH_REPO="PhoenixBuilder"
 GH_RELEASE_URL="/releases/download/"
