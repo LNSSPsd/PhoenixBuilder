@@ -377,7 +377,7 @@ if [[ ${BINARY_INSTALL} == "1" ]]; then
     FB_LINK="${GH_LINK}v${FB_VER}/${FB_PREFIX}${FILE_ARCH}${FILE_TYPE}${FILE_ARCH}"
     printf "\033[32mGithub download link: ${FB_LINK}\033[0m\n"
   fi
-  printf "\033[33mIf the download is too slow, you can press \"Ctrl+C\" to end the current script and later try to use \"export PB_USE_GH_REPO=1\" and then re-run the installation command to switch to the Github Releases source to download the PhoenixBuilder package.\033[0m\n"
+  printf "\033[33mIf the official storage does not work for you, you can try to assign environment variable \"PB_USE_GH_REPO=1\" for the script to download stuff from Github.\033[0m\n"
   ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}/./fastbuilder-temp/fastbuilder" "${FB_LINK}"
   DL_RET=$?
   if [ ${DL_RET} == 0 ]; then
