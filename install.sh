@@ -273,7 +273,7 @@ elif [ ${MACHINE} == "macos" ]; then
 elif [[ ${SYSTEM_NAME} == "NetBSD" ]] || [[ ${SYSTEM_NAME} == "FreeBSD" ]] || [[ ${SYSTEM_NAME} == "OpenBSD" ]]; then
   echo           "If you met 404 error in further downloading, report it at"
   printf "\033[32m  https://github.com/LNSSPsd/PhoenixBuilder/issues\033[0m\n"
-  FB_PREFIX="phoenixbuilder-$(echo ${SYSTEM_NAME} | sed -e 's/\(.*\)/\L\1/')-executable-"
+  FB_PREFIX="phoenixbuilder-$(echo ${SYSTEM_NAME})-executable-"
   FILE_TYPE=""
   FILE_ARCH="${ARCH}"
   BINARY_INSTALL="1"
