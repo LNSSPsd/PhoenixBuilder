@@ -176,7 +176,7 @@ db 'E'
 author 'DEMO\0' ; 设置作者为 'DEMO'
 UseRuntimeIDPool (unsigned char)117 ; 117: 75
 PlaceRuntimeBlockWithChestDataAndUint32RuntimeID (unsigned int)5420, (unsigned char)2 , 'apple\x00', (unsigned char)3, (unsigned short)0, (unsigned char)0, 'diamond\x00', (unsigned char)64, (unsigned short)0, (unsigned char)2
-end
+Terminate
 db 'E'
 ```
 
