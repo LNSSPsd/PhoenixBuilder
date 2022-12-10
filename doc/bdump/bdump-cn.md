@@ -8,7 +8,7 @@
 > [Happy2018new](https://github.com/Happy2018new) & 修订日志<br/>
 > 修订 `容器` 相关<br/>
 > 新增第 `39` 号操作的解析<br/>
-> 同步 [66f2aa5](https://github.com/LNSSPsd/PhoenixBuilder/commit/66f2aa5b129e51a2154b64e5ff8bffc15290cf02) 中有关 `Bdump` 协议的更改
+> 同步 [66f2aa5](https://github.com/LNSSPsd/PhoenixBuilder/commit/66f2aa5b129e51a2154b64e5ff8bffc15290cf02) 中有关 `Bdump` 文件格式的更改
 
 
 BDump v3 是个用于存储*Minecraft*建筑结构的文件格式。其内容由指示建造过程的命令组成。
