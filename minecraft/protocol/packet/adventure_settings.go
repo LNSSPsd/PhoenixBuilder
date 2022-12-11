@@ -34,9 +34,9 @@ const (
 	ActionPermissionAttackPlayers
 	ActionPermissionAttackMobs
 	ActionPermissionOperator
+	ActionPermissionUnknow
 	ActionPermissionTeleport
 	ActionPermissionBuild
-	ActionPermissionDefault
 )
 
 const (
