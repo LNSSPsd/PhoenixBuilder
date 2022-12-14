@@ -217,7 +217,7 @@ func CheckPlayerMatchSelector(ctrl defines.GameControl, name, selector string) (
 	s := FormatByReplacingOccurrences(selector, map[string]interface{}{
 		"[player]": "\"" + name + "\"",
 	})
-	c := make(chan bool)
+	c := make(chan bool, 1)
 	ctrl.SendCmdAndInvokeOnResponse(fmt.Sprintf("testfor %v", s), func(output *packet.CommandOutput) {
 		// pterm.Info.Println(output)
 		if output.SuccessCount != 0 {
