@@ -179,10 +179,12 @@ func LaunchCmdsArray(ctrl defines.GameControl, cmds []defines.Cmd, remapping map
 				} else {
 					waitChan <- true
 				}
-				if a.Record == "成功次数" {
-					logger.Write(fmt.Sprintf("[%v]=>success:[%v]", cmd, output.SuccessCount))
-				} else {
-					logger.Write(fmt.Sprintf("[%v]=>output:[%v]", cmd, output.OutputMessages))
+				if !(a.Record == "" || a.Record == "无" || a.Record == "空") {
+					if a.Record == "成功次数" {
+						logger.Write(fmt.Sprintf("[%v]=>success:[%v]", cmd, output.SuccessCount))
+					} else {
+						logger.Write(fmt.Sprintf("[%v]=>output:[%v]", cmd, output.OutputMessages))
+					}
 				}
 			}
 			if a.As == "WS" {
