@@ -6,17 +6,21 @@ import (
 )
 
 type IOBlockForBuilder struct {
-	Pos      define.CubePos
-	RTID     uint32
-	NBT      map[string]interface{}
-	Hit      bool
-	Expand16 bool
+	Pos         define.CubePos
+	BlockName   string // for operation 13 which named `PlaceBlockWithBlockStates`
+	BlockStates string // for operation 13 which named `PlaceBlockWithBlockStates`
+	RTID        uint32
+	NBT         map[string]interface{}
+	Hit         bool
+	Expand16    bool
 }
 
 type IOBlockForDecoder struct {
-	Pos  define.CubePos
-	RTID uint32
-	NBT  map[string]interface{}
+	Pos         define.CubePos
+	BlockName   string // for operation 13 which named `PlaceBlockWithBlockStates`
+	BlockStates string // for operation 13 which named `PlaceBlockWithBlockStates`
+	RTID        uint32
+	NBT         map[string]interface{}
 }
 
 type CommandBlockNBT struct {
