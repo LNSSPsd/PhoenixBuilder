@@ -137,8 +137,9 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				}
 				blockData := binary.BigEndian.Uint16(blockDataBytes)
 				blockChan <- &IOBlockForDecoder{
-					Pos:  brushPosition,
-					RTID: legacyRunTimeIDRemapper.GetRTID(blockId, blockData),
+					Pos:       brushPosition,
+					BlockName: legacyRunTimeIDRemapper.palatteIDToBlockNameMapping[blockId],
+					BlockData: blockData,
 				}
 			} else if cmd == 8 {
 				brushPosition[2]++

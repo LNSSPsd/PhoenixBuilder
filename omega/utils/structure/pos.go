@@ -57,10 +57,12 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlockForDecoder
 		chunks := make(map[define.ChunkPos]*mirror.ChunkData)
 		lastChunkPos := define.ChunkPos{0, 0}
 		lastChunk := &mirror.ChunkData{
-			Chunk:                     chunk.New(chunk.AirRID, define.Range{-64, 319}),
-			BlockNbts:                 make(map[define.CubePos]map[string]interface{}),
-			BlockName_and_BlockStates: make(map[define.CubePos]map[string]string), // for operation 13 which named `PlaceBlockWithBlockStates`
-			ChunkPos:                  lastChunkPos,
+			Chunk:       chunk.New(chunk.AirRID, define.Range{-64, 319}),
+			BlockNbts:   make(map[define.CubePos]map[string]interface{}),
+			BlockName:   make(map[define.CubePos]string), // for bdx
+			BlockStates: make(map[define.CubePos]string), // for bdx
+			BlockData:   make(map[define.CubePos]uint16), // for bdx
+			ChunkPos:    lastChunkPos,
 		}
 		chunks[lastChunkPos] = lastChunk
 
@@ -78,10 +80,12 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlockForDecoder
 				if !hasK {
 					// chunk=&mirror.ChunkData{}
 					c = &mirror.ChunkData{
-						Chunk:                     chunk.New(chunk.AirRID, define.Range{-64, 319}),
-						BlockNbts:                 make(map[define.CubePos]map[string]interface{}),
-						BlockName_and_BlockStates: make(map[define.CubePos]map[string]string), // for operation 13 which named `PlaceBlockWithBlockStates`
-						ChunkPos:                  chunkPos,
+						Chunk:       chunk.New(chunk.AirRID, define.Range{-64, 319}),
+						BlockNbts:   make(map[define.CubePos]map[string]interface{}),
+						BlockName:   make(map[define.CubePos]string), // for bdx
+						BlockStates: make(map[define.CubePos]string), // for bdx
+						BlockData:   make(map[define.CubePos]uint16), // for bdx
+						ChunkPos:    chunkPos,
 					}
 					chunks[chunkPos] = c
 				}
@@ -92,9 +96,14 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlockForDecoder
 			if b.NBT != nil {
 				lastChunk.BlockNbts[b.Pos] = b.NBT
 			}
+			if b.BlockName != "" && b.BlockStates == "" {
+				lastChunk.BlockName[b.Pos] = b.BlockName
+				lastChunk.BlockData[b.Pos] = b.BlockData
+			} // for bdx
 			if b.BlockName != "" && b.BlockStates != "" {
-				lastChunk.BlockName_and_BlockStates[b.Pos] = map[string]string{"BlockName": b.BlockName, "BlockStates": b.BlockStates}
-			} // for operation 13 which named `PlaceBlockWithBlockStates`
+				lastChunk.BlockName[b.Pos] = b.BlockName
+				lastChunk.BlockStates[b.Pos] = b.BlockStates
+			} // for bdx
 		}
 
 		// do rearrange
@@ -110,10 +119,12 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlockForDecoder
 				chunks = make(map[define.ChunkPos]*mirror.ChunkData)
 				lastChunkPos = define.ChunkPos{0, 0}
 				lastChunk = &mirror.ChunkData{
-					Chunk:                     chunk.New(chunk.AirRID, define.Range{-64, 319}),
-					BlockNbts:                 make(map[define.CubePos]map[string]interface{}),
-					BlockName_and_BlockStates: make(map[define.CubePos]map[string]string), // for operation 13 which named `PlaceBlockWithBlockStates`
-					ChunkPos:                  lastChunkPos,
+					Chunk:       chunk.New(chunk.AirRID, define.Range{-64, 319}),
+					BlockNbts:   make(map[define.CubePos]map[string]interface{}),
+					BlockName:   make(map[define.CubePos]string), // for bdx
+					BlockStates: make(map[define.CubePos]string), // for bdx
+					BlockData:   make(map[define.CubePos]uint16), // for bdx
+					ChunkPos:    lastChunkPos,
 				}
 			}
 		}
@@ -169,7 +180,9 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlockForDecoder
 				chunk := chunks[chunkPos]
 				// fmt.Println(chunkPos)
 				nbts := chunk.BlockNbts
-				bns := chunk.BlockName_and_BlockStates // for operation 13 which named `PlaceBlockWithBlockStates`
+				blockName := chunk.BlockName     // for bdx
+				blockStates := chunk.BlockStates // for bdx
+				blockData := chunk.BlockData     // for bdx
 				for subChunkI := int16(0); subChunkI < 24; subChunkI++ {
 					subChunk := chunk.Chunk.Sub()[subChunkI]
 					if subChunk.Empty() {
@@ -187,14 +200,21 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlockForDecoder
 						if counter < startFrom {
 							counter += 16 * 16 * 16
 						} else {
-							_, ok := bns[p]["BlockName"]
-							if ok {
+							if blockName[p] != "" && blockStates[p] != "" {
 								outChan <- &IOBlockForBuilder{
 									Pos:         p,
 									RTID:        blk,
 									Expand16:    true,
-									BlockName:   bns[p]["BlockName"],   // for operation 13 which named `PlaceBlockWithBlockStates`
-									BlockStates: bns[p]["BlockStates"], // for operation 13 which named `PlaceBlockWithBlockStates`
+									BlockName:   blockName[p],   // for operation 13 which named `PlaceBlockWithBlockStates`
+									BlockStates: blockStates[p], // for operation 13 which named `PlaceBlockWithBlockStates`
+								}
+							} else if blockName[p] != "" && blockStates[p] == "" {
+								outChan <- &IOBlockForBuilder{
+									Pos:       p,
+									RTID:      blk,
+									Expand16:  true,
+									BlockName: blockName[p], // for operation 7 which named `PlaceBlock`
+									BlockData: blockData[p], // for operation 7 which named `PlaceBlock`
 								}
 							} else {
 								outChan <- &IOBlockForBuilder{
@@ -223,14 +243,21 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlockForDecoder
 									continue
 								}
 								if nbt, hasK := nbts[p]; hasK {
-									_, ok := bns[p]["BlockName"]
-									if ok {
+									if blockName[p] != "" && blockStates[p] != "" {
 										outChan <- &IOBlockForBuilder{
 											Pos:         p,
 											RTID:        blk,
 											NBT:         nbt,
-											BlockName:   bns[p]["BlockName"],   // for operation 13 which named `PlaceBlockWithBlockStates`
-											BlockStates: bns[p]["BlockStates"], // for operation 13 which named `PlaceBlockWithBlockStates`
+											BlockName:   blockName[p],   // for operation 13 which named `PlaceBlockWithBlockStates`
+											BlockStates: blockStates[p], // for operation 13 which named `PlaceBlockWithBlockStates`
+										}
+									} else if blockName[p] != "" && blockStates[p] == "" {
+										outChan <- &IOBlockForBuilder{
+											Pos:       p,
+											RTID:      blk,
+											NBT:       nbt,
+											BlockName: blockName[p], // for operation 7 which named `PlaceBlock`
+											BlockData: blockData[p], // for operation 7 which named `PlaceBlock`
 										}
 									} else {
 										outChan <- &IOBlockForBuilder{
@@ -240,13 +267,19 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlockForDecoder
 										}
 									}
 								} else {
-									_, ok := bns[p]["BlockName"]
-									if ok {
+									if blockName[p] != "" && blockStates[p] != "" {
 										outChan <- &IOBlockForBuilder{
 											Pos:         p,
 											RTID:        blk,
-											BlockName:   bns[p]["BlockName"],   // for operation 13 which named `PlaceBlockWithBlockStates`
-											BlockStates: bns[p]["BlockStates"], // for operation 13 which named `PlaceBlockWithBlockStates`
+											BlockName:   blockName[p],   // for operation 13 which named `PlaceBlockWithBlockStates`
+											BlockStates: blockStates[p], // for operation 13 which named `PlaceBlockWithBlockStates`
+										}
+									} else if blockName[p] != "" && blockStates[p] == "" {
+										outChan <- &IOBlockForBuilder{
+											Pos:       p,
+											RTID:      blk,
+											BlockName: blockName[p], // for operation 7 which named `PlaceBlock`
+											BlockData: blockData[p], // for operation 7 which named `PlaceBlock`
 										}
 									} else {
 										outChan <- &IOBlockForBuilder{

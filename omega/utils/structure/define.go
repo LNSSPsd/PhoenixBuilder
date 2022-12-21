@@ -9,6 +9,7 @@ type IOBlockForBuilder struct {
 	Pos         define.CubePos
 	BlockName   string // for operation 13 which named `PlaceBlockWithBlockStates`
 	BlockStates string // for operation 13 which named `PlaceBlockWithBlockStates`
+	BlockData   uint16 // for operation 7 which named `PlaceBlock`
 	RTID        uint32
 	NBT         map[string]interface{}
 	Hit         bool
@@ -19,6 +20,7 @@ type IOBlockForDecoder struct {
 	Pos         define.CubePos
 	BlockName   string // for operation 13 which named `PlaceBlockWithBlockStates`
 	BlockStates string // for operation 13 which named `PlaceBlockWithBlockStates`
+	BlockData   uint16 // for operation 7 which named `PlaceBlock`
 	RTID        uint32
 	NBT         map[string]interface{}
 }
