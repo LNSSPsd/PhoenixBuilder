@@ -1,3 +1,4 @@
+//go:build do_not_add_this_tag__not_implemented
 // +build do_not_add_this_tag__not_implemented
 
 package commands_generator
@@ -7,15 +8,13 @@ import (
 	"phoenixbuilder/fastbuilder/types"
 )
 
-
-func SummonRequest(module *types.Module, config *types.MainConfig) string {
+func SummonRequest(module *types.Module, config *types.MainConfig, BotName string) string {
 	Entity := module.Entity
 	Point := module.Point
 	Method := config.Method
 	if Entity != nil {
-		return fmt.Sprintf("summon %s %v %v %v", *Entity, Point.X, Point.Y, Point.Z)
+		return fmt.Sprintf("execute @a[name=%v] ~ ~ ~ summon %s %v %v %v", BotName, *Entity, Point.X, Point.Y, Point.Z)
 	} else {
-		return fmt.Sprintf("summon %s %v %v %v", *Entity, Point.X, Point.Y, Point.Z)
+		return fmt.Sprintf("execute @a[name=%v] ~ ~ ~ summon %s %v %v %v", BotName, *Entity, Point.X, Point.Y, Point.Z)
 	}
 }
-

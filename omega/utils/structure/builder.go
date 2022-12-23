@@ -2,6 +2,7 @@ package structure
 
 import (
 	"fmt"
+	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror"
 	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
@@ -81,6 +82,15 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 	fallBackActions := make(map[define.CubePos]func())
 	fallBackActionsMu := sync.Mutex{}
 	moveTicker := time.NewTicker(time.Millisecond * 50)
+
+	chann := make(chan *packet.CommandOutput)
+	o.Ctrl.SendCmdAndInvokeOnResponse("testfor @s", func(output *packet.CommandOutput) {
+		chann <- output
+	})
+	resp := <-chann
+	BotName := resp.OutputMessages[0].Parameters[0]
+	// 获取机器人的名字，用于 setblock 时利用 execute 命令更变命令执行维度
+
 	for block := range blocksIn {
 		if o.Stop {
 			return
@@ -88,12 +98,12 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 		xmove := block.Pos.X() - lastPos.X()
 		zmove := block.Pos.Z() - lastPos.Z()
 		if counter == 0 {
-			o.NormalCmdSender(fmt.Sprintf("tp @s %v %v %v", block.Pos[0], 320, block.Pos[2]))
+			o.NormalCmdSender(fmt.Sprintf("execute @a[name=%v] ~ ~ ~ tp @s %v %v %v", BotName, block.Pos[0], 320, block.Pos[2]))
 			lastPos = block.Pos
 			time.Sleep(3 * time.Second)
 		}
 		if (xmove*xmove) > 16*16 || (zmove*zmove) > 16*16 {
-			o.NormalCmdSender(fmt.Sprintf("tp @s %v %v %v", block.Pos[0], 320, block.Pos[2]))
+			o.NormalCmdSender(fmt.Sprintf("execute @a[name=%v] ~ ~ ~ tp @s %v %v %v", BotName, block.Pos[0], 320, block.Pos[2]))
 			lastPos = block.Pos
 			<-moveTicker.C
 
@@ -146,7 +156,7 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 		}
 		o.ProgressUpdater(counter)
 		if block.Expand16 {
-			cmd := fmt.Sprintf("fill %v %v %v %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], block.Pos[0]+15, block.Pos[1]+15, block.Pos[2]+15, strings.Replace(blk.Name, "minecraft:", "", 1), blk.Val)
+			cmd := fmt.Sprintf("execute @a[name=%v] ~ ~ ~ fill %v %v %v %v %v %v %v %v", BotName, block.Pos[0], block.Pos[1], block.Pos[2], block.Pos[0]+15, block.Pos[1]+15, block.Pos[2]+15, strings.Replace(blk.Name, "minecraft:", "", 1), blk.Val)
 			// fmt.Println("fast fill")
 			o.NormalCmdSender(cmd)
 			counter += 4096
@@ -194,15 +204,15 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 			} else {
 				// fmt.Println(block.BlockName, block.BlockStates, block.BlockData, "test")
 				if block.BlockName != "" && block.BlockStates != "" {
-					cmd := fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(block.BlockName, "minecraft:", "", 1), block.BlockStates)
+					cmd := fmt.Sprintf("execute @a[name=%v] ~ ~ ~ setblock %v %v %v %v %v", BotName, block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(block.BlockName, "minecraft:", "", 1), block.BlockStates)
 					o.BlockCmdSender(cmd)
 					// fmt.Println(cmd)
 				} else if block.BlockName != "" && block.BlockStates == "" {
-					cmd := fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(block.BlockName, "minecraft:", "", 1), block.BlockData)
+					cmd := fmt.Sprintf("execute @a[name=%v] ~ ~ ~ setblock %v %v %v %v %v", BotName, block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(block.BlockName, "minecraft:", "", 1), block.BlockData)
 					o.BlockCmdSender(cmd)
 					// fmt.Println(cmd)
 				} else {
-					cmd := fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(blk.Name, "minecraft:", "", 1), blk.Val)
+					cmd := fmt.Sprintf("execute @a[name=%v] ~ ~ ~ setblock %v %v %v %v %v", BotName, block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(blk.Name, "minecraft:", "", 1), blk.Val)
 					o.BlockCmdSender(cmd)
 					// fmt.Println(cmd)
 				}

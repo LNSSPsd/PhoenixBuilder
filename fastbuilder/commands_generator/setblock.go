@@ -5,19 +5,18 @@ import (
 	"phoenixbuilder/fastbuilder/types"
 )
 
-func SetBlockRequest(module *types.Module, config *types.MainConfig) string {
+func SetBlockRequest(module *types.Module, config *types.MainConfig, BotName string) string {
 	Block := module.Block
 	Point := module.Point
 	Method := config.Method
 	if Block != nil {
-		if len(Block.BlockStates)!=0 {
-			return fmt.Sprintf("setblock %d %d %d %s %s %s", Point.X, Point.Y, Point.Z, *Block.Name, Block.BlockStates, Method)
-		}else{
-			return fmt.Sprintf("setblock %d %d %d %s %d %s", Point.X, Point.Y, Point.Z, *Block.Name, Block.Data, Method)
+		if len(Block.BlockStates) != 0 {
+			return fmt.Sprintf("execute @a[name=%v] ~ ~ ~ setblock %d %d %d %s %s %s", BotName, Point.X, Point.Y, Point.Z, *Block.Name, Block.BlockStates, Method)
+		} else {
+			return fmt.Sprintf("execute @a[name=%v] ~ ~ ~ setblock %d %d %d %s %d %s", BotName, Point.X, Point.Y, Point.Z, *Block.Name, Block.Data, Method)
 		}
 	} else {
-		return fmt.Sprintf("setblock %d %d %d %s %d %s", Point.X, Point.Y, Point.Z, config.Block.Name, config.Block.Data, Method)
+		return fmt.Sprintf("execute @a[name=%v] ~ ~ ~ setblock %d %d %d %s %d %s", BotName, Point.X, Point.Y, Point.Z, config.Block.Name, config.Block.Data, Method)
 	}
-	
-}
 
+}

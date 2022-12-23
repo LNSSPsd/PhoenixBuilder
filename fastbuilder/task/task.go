@@ -2,7 +2,6 @@ package task
 
 import (
 	"fmt"
-	"runtime/debug"
 	"phoenixbuilder/bridge/bridge_fmt"
 	"phoenixbuilder/fastbuilder/builder"
 	"phoenixbuilder/fastbuilder/commands_generator"
@@ -15,6 +14,7 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -107,7 +107,7 @@ func (task *Task) Resume() {
 	if task.Type == types.TaskTypeAsync {
 		task.AsyncInfo.Total -= task.AsyncInfo.Built
 		task.AsyncInfo.Built = 0
-		task.AsyncInfo.BeginTime=time.Now()
+		task.AsyncInfo.BeginTime = time.Now()
 	}
 	task.State = TaskStateRunning
 	task.ContinueLock.Unlock()
@@ -209,16 +209,16 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				bridge_fmt.Printf(I18n.T(I18n.Task_ResumeBuildFrom)+"\n", skipBlocks)
 			}
 			for _, blk := range blocks {
-				if (skipBlocks!=0&&task.AsyncInfo.Built == skipBlocks-1) {
-					skipBlocks=0
-					task.AsyncInfo.Total-=task.AsyncInfo.Built
-					task.AsyncInfo.Built=0
+				if skipBlocks != 0 && task.AsyncInfo.Built == skipBlocks-1 {
+					skipBlocks = 0
+					task.AsyncInfo.Total -= task.AsyncInfo.Built
+					task.AsyncInfo.Built = 0
 					continue
 				}
 				if task.AsyncInfo.Built >= skipBlocks {
 					blockschannel <- blk
-				}else if skipBlocks!=0 {
-					skipBlocks=0
+				} else if skipBlocks != 0 {
+					skipBlocks = 0
 				}
 				task.AsyncInfo.Built++
 			}
@@ -256,6 +256,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			cmdsender.SendWSCommand("gamemode c", und)
 			cmdsender.SendWSCommand("gamerule sendcommandfeedback true", und)
 		}
+		BotName := cmdsender.GetBotName()
 		for {
 			task.ContinueLock.Lock()
 			task.ContinueLock.Unlock()
@@ -277,13 +278,13 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			}
 			if blkscounter%20 == 0 {
 				u_d, _ := uuid.NewUUID()
-				cmdsender.SendWSCommand(fmt.Sprintf("tp %d %d %d", curblock.Point.X, curblock.Point.Y, curblock.Point.Z), u_d)
+				cmdsender.SendWSCommand(fmt.Sprintf("execute @a[name=%v] ~ ~ ~ tp %d %d %d", BotName, curblock.Point.X, curblock.Point.Y, curblock.Point.Z), u_d)
 				// SettingsCommand is unable to teleport the player.
 			}
 			blkscounter++
 			if !cfg.ExcludeCommands && curblock.CommandBlockData != nil {
 				if curblock.Block != nil {
-					request:=commands_generator.SetBlockRequest(curblock, cfg)
+					request := commands_generator.SetBlockRequest(curblock, cfg, BotName)
 					if !isFastMode {
 						//<-time.After(time.Second)
 						wc := make(chan bool)
@@ -292,7 +293,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 						select {
 						case <-wc:
 							break
-						case <-time.After(time.Second*2):
+						case <-time.After(time.Second * 2):
 							(*cmdsender.GetBlockUpdateSubscribeMap()).Delete(protocol.BlockPos{int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z)})
 						}
 						close(wc)
@@ -308,7 +309,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 					UUID := uuid.New()
 					w := make(chan *packet.CommandOutput)
 					(*cmdsender.GetUUIDMap()).Store(UUID.String(), w)
-					cmdsender.SendWSCommand(fmt.Sprintf("tp %d %d %d", curblock.Point.X, curblock.Point.Y+1, curblock.Point.Z), UUID)
+					cmdsender.SendWSCommand(fmt.Sprintf("execute @a[name=%v] ~ ~ ~ tp %d %d %d", BotName, curblock.Point.X, curblock.Point.Y+1, curblock.Point.Z), UUID)
 					select {
 					case <-time.After(time.Second):
 						(*cmdsender.GetUUIDMap()).Delete(UUID.String())
@@ -319,14 +320,14 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				}
 				cmdsender.UpdateCommandBlock(int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z), cbdata)
 			} else if curblock.ChestSlot != nil {
-				cmdsender.SendSizukanaCommand(commands_generator.ReplaceItemRequest(curblock, cfg))
+				cmdsender.SendSizukanaCommand(commands_generator.ReplaceItemRequest(curblock, cfg, BotName))
 			} else {
-				err := cmdsender.SendSizukanaCommand(commands_generator.SetBlockRequest(curblock, cfg))
+				err := cmdsender.SendSizukanaCommand(commands_generator.SetBlockRequest(curblock, cfg, BotName))
 				if err != nil {
 					panic(err)
 				}
 			} /*else if curblock.Entity != nil {
-				//request := commands_generator.SummonRequest(curblock, cfg)
+				//request := commands_generator.SummonRequest(curblock, cfg, BotName)
 				//err := cmdsender.SendSizukanaCommand(request)
 				//if err != nil {
 				//	panic(err)
@@ -342,7 +343,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				}
 			}
 		}
-	} ()
+	}()
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
