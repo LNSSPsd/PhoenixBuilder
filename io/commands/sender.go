@@ -84,11 +84,12 @@ func (sender *CommandSender) SendChat(content string) error {
 	})
 }
 
+// 获取机器人的名字，用于 setblock 时利用 execute 命令更变命令执行维度
 func (sender *CommandSender) GetBotName() string {
 	ud, _ := uuid.NewUUID()
 	chann := make(chan *packet.CommandOutput)
 	sender.UUIDMap.Store(ud.String(), chann)
-	sender.SendCommand("testfor @s", ud)
+	sender.SendWSCommand("testfor @s", ud)
 	resp := <-chann
 	return resp.OutputMessages[0].Parameters[0]
 }

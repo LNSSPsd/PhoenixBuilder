@@ -13,8 +13,8 @@ func SummonRequest(module *types.Module, config *types.MainConfig, BotName strin
 	Point := module.Point
 	Method := config.Method
 	if Entity != nil {
-		return fmt.Sprintf("execute @a[name=%v] ~ ~ ~ summon %s %v %v %v", BotName, *Entity, Point.X, Point.Y, Point.Z)
+		return fmt.Sprintf("execute @a[name=\"%v\"] ~ ~ ~ summon %s %v %v %v", BotName, *Entity, Point.X, Point.Y, Point.Z)
 	} else {
-		return fmt.Sprintf("execute @a[name=%v] ~ ~ ~ summon %s %v %v %v", BotName, *Entity, Point.X, Point.Y, Point.Z)
+		return fmt.Sprintf("execute @a[name=\"%v\"] ~ ~ ~ summon %s %v %v %v", BotName, *Entity, Point.X, Point.Y, Point.Z)
 	}
 }

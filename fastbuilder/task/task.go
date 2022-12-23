@@ -256,7 +256,10 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			cmdsender.SendWSCommand("gamemode c", und)
 			cmdsender.SendWSCommand("gamerule sendcommandfeedback true", und)
 		}
+
 		BotName := cmdsender.GetBotName()
+		// 获取机器人的名字，用于 setblock 时利用 execute 命令更变命令执行维度
+
 		for {
 			task.ContinueLock.Lock()
 			task.ContinueLock.Unlock()
@@ -278,7 +281,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			}
 			if blkscounter%20 == 0 {
 				u_d, _ := uuid.NewUUID()
-				cmdsender.SendWSCommand(fmt.Sprintf("execute @a[name=%v] ~ ~ ~ tp %d %d %d", BotName, curblock.Point.X, curblock.Point.Y, curblock.Point.Z), u_d)
+				cmdsender.SendWSCommand(fmt.Sprintf("execute @a[name=\"%v\"] ~ ~ ~ tp %d %d %d", BotName, curblock.Point.X, curblock.Point.Y, curblock.Point.Z), u_d)
 				// SettingsCommand is unable to teleport the player.
 			}
 			blkscounter++
@@ -309,7 +312,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 					UUID := uuid.New()
 					w := make(chan *packet.CommandOutput)
 					(*cmdsender.GetUUIDMap()).Store(UUID.String(), w)
-					cmdsender.SendWSCommand(fmt.Sprintf("execute @a[name=%v] ~ ~ ~ tp %d %d %d", BotName, curblock.Point.X, curblock.Point.Y+1, curblock.Point.Z), UUID)
+					cmdsender.SendWSCommand(fmt.Sprintf("execute @a[name=\"%v\"] ~ ~ ~ tp %d %d %d", BotName, curblock.Point.X, curblock.Point.Y+1, curblock.Point.Z), UUID)
 					select {
 					case <-time.After(time.Second):
 						(*cmdsender.GetUUIDMap()).Delete(UUID.String())
