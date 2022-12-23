@@ -9,6 +9,9 @@ func SetBlockRequest(module *types.Module, config *types.MainConfig, BotName str
 	Block := module.Block
 	Point := module.Point
 	Method := config.Method
+	if Method == "replace" {
+		Method = ""
+	}
 	if Block != nil {
 		if len(Block.BlockStates) != 0 {
 			return fmt.Sprintf("execute @a[name=\"%v\"] ~ ~ ~ setblock %d %d %d %s %s %s", BotName, Point.X, Point.Y, Point.Z, *Block.Name, Block.BlockStates, Method)
