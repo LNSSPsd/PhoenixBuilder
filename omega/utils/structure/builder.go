@@ -178,7 +178,7 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 							if !done {
 								pterm.Error.Printfln("命令方块放置失败: 坐标: %v 名称: %v %v 信息: %v", block.Pos, blk.Name, blk.Val, block.NBT)
 							}
-						}, time.Second*3)
+						}, time.Second*3, BotName)
 					}
 					fallBackActionsMu.Unlock()
 					o.Ctrl.PlaceCommandBlock(block.Pos, blk.Name, int(blk.Val), false, true, cfg, func(done bool) {
@@ -189,7 +189,7 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 							delete(fallBackActions, block.Pos)
 							fallBackActionsMu.Unlock()
 						}
-					}, time.Second*3)
+					}, time.Second*3, BotName)
 					for time.Since(placeStart) < time.Millisecond*50 {
 						if !quickDone {
 							time.Sleep(time.Millisecond)

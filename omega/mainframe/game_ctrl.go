@@ -540,7 +540,7 @@ func (g *GameCtrl) onBlockActor(p *packet.BlockActorData) {
 
 func (g *GameCtrl) PlaceCommandBlock(pos define.CubePos, commandBlockName string, commandBlockData int,
 	withMove, withAirPrePlace bool, updatePacket *packet.CommandBlockUpdate,
-	onDone func(done bool), timeOut time.Duration) {
+	onDone func(done bool), timeOut time.Duration, BotName string) {
 	done := make(chan bool)
 	go func() {
 		select {
@@ -551,20 +551,20 @@ func (g *GameCtrl) PlaceCommandBlock(pos define.CubePos, commandBlockName string
 	}()
 	go func() {
 		if withMove {
-			g.SendCmd(fmt.Sprintf("tp @s %v %v %v", pos.X(), pos.Y(), pos.Z()))
+			g.SendCmd(fmt.Sprintf("execute @a[name=\"%v\"] ~ ~ ~ tp @s %v %v %v", BotName, pos.X(), pos.Y(), pos.Z()))
 			time.Sleep(100 * time.Millisecond)
 		}
 		if withAirPrePlace {
-			cmd := fmt.Sprintf("setblock %v %v %v %v %v", pos[0], pos[1], pos[2], "air", 0)
+			cmd := fmt.Sprintf("execute @a[name=\"%v\"] ~ ~ ~ setblock %v %v %v %v %v", BotName, pos[0], pos[1], pos[2], "air", 0)
 			g.SendWOCmd(cmd)
 			time.Sleep(100 * time.Millisecond)
 		}
-		cmd := fmt.Sprintf("setblock %v %v %v %v %v", pos[0], pos[1], pos[2], strings.Replace(commandBlockName, "minecraft:", "", 1), commandBlockData)
+		cmd := fmt.Sprintf("execute @a[name=\"%v\"] ~ ~ ~ setblock %v %v %v %v %v", BotName, pos[0], pos[1], pos[2], strings.Replace(commandBlockName, "minecraft:", "", 1), commandBlockData)
 		g.SendWOCmd(cmd)
 		g.onBlockActorCbs[pos] = func(cp define.CubePos, bad *packet.BlockActorData) {
 			go func() {
 				g.placeCommandBlockLock.Lock()
-				g.SendCmd(fmt.Sprintf("tp @s %v %v %v", pos.X(), pos.Y(), pos.Z()))
+				g.SendCmd(fmt.Sprintf("execute @a[name=\"%v\"] ~ ~ ~ tp @s %v %v %v", BotName, pos.X(), pos.Y(), pos.Z()))
 				time.Sleep(50 * time.Millisecond)
 				g.SendMCPacket(updatePacket)
 				g.placeCommandBlockLock.Unlock()
