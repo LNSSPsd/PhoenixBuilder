@@ -3,7 +3,10 @@ module phoenixbuilder
 go 1.18
 
 require (
+	github.com/cheggaaa/pb v1.0.29
 	github.com/df-mc/atomic v1.10.0
+	github.com/df-mc/goleveldb v1.1.9
+	github.com/hashicorp/go-version v1.6.0
 	golang.org/x/exp v0.0.0-20220713135740-79cabaa25d75
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	rogchap.com/v8go v0.7.0
@@ -11,11 +14,8 @@ require (
 
 require (
 	github.com/atomicgo/cursor v0.0.1 // indirect
-	github.com/cheggaaa/pb v1.0.29 // indirect
-	github.com/df-mc/goleveldb v1.1.9 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gookit/color v1.4.2 // indirect
-	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/klauspost/cpuid v1.3.1 // indirect
 	github.com/klauspost/reedsolomon v1.9.9 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
