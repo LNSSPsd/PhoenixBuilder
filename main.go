@@ -8,8 +8,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"phoenixbuilder/fastbuilder/core"
 	"phoenixbuilder/fastbuilder/args"
+	"phoenixbuilder/fastbuilder/core"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	script_bridge "phoenixbuilder/fastbuilder/script_engine/bridge"
 	"phoenixbuilder/fastbuilder/utils"
@@ -25,6 +25,7 @@ import (
 )
 
 func main() {
+
 	args.ParseArgs()
 	if len(args.PackScripts()) != 0 {
 		os.Exit(script_bridge.MakePackage(args.PackScripts(), args.PackScriptsOut()))
@@ -127,24 +128,24 @@ func runInteractiveClient(token string) {
 		fmt.Println(err)
 		return
 	}
-	env:=core.InitRealEnvironment(token, code, serverPasswd)
-	ptoken_succ:=core.ProcessTokenDefault(env)
+	env := core.InitRealEnvironment(token, code, serverPasswd)
+	ptoken_succ := core.ProcessTokenDefault(env)
 	//init_and_run_client(token, code, serverPasswd)
 	if !ptoken_succ {
 		panic("Failed to load token")
 	}
 	core.InitClient(env)
-	go core.EnterReadlineThread(env,nil)
+	go core.EnterReadlineThread(env, nil)
 	defer core.DestroyClient(env)
-	core.EnterWorkerThread(env,nil)
+	core.EnterWorkerThread(env, nil)
 }
 
 func init_and_run_debug_client() {
 	env := core.InitDebugEnvironment()
 	core.InitClient(env)
-	go core.EnterReadlineThread(env,nil)
+	go core.EnterReadlineThread(env, nil)
 	defer core.DestroyClient(env)
-	core.EnterWorkerThread(env,nil)
+	core.EnterWorkerThread(env, nil)
 }
 
 func getInput() (string, error) {
