@@ -66,7 +66,7 @@ func (o *AntiAFK) Activate() {
 							replacement := map[string]interface{}{
 								"[player]": "\"" + playerName + "\"",
 							}
-							utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cmds, replacement, o.Frame.GetBackendDisplay())
+							go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cmds, replacement, o.Frame.GetBackendDisplay())
 						} else {
 							newMap[u.UUID] = u.YRot
 						}
