@@ -106,34 +106,16 @@ func GetContainerData(container interface{}) (types.ChestData, error) {
 			if ok {
 				Block, normal := containerData["Block"].(map[string]interface{})
 				if normal {
-					_, ok = Block["Block"]
+					_, ok = Block["val"]
 					if ok {
-						got, normal := Block["Block"].(map[string]interface{})
+						got, normal := Block["val"].(int16)
 						if normal {
-							_, ok = got["states"]
-							if ok {
-								states, normal := got["states"].(map[string]interface{})
-								if normal {
-									_, ok = states["val"]
-									if ok {
-										got, normal := states["val"].(int16)
-										if normal {
-											itemData = uint16(got)
-										} else {
-											return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Block\"][\"states\"][\"val\"]", key)
-										}
-									} else {
-										return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Block\"][\"states\"][\"val\"]", key)
-									}
-								} else {
-									return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Block\"][\"states\"]", key)
-								}
-							} else {
-								return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Block\"][\"states\"]", key)
-							}
+							itemData = uint16(got)
 						} else {
-							return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Block\"]", key)
+							return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Block\"][\"val\"]", key)
 						}
+					} else {
+						return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Block\"][\"val\"]", key)
 					}
 				} else {
 					return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Block\"]", key)
@@ -141,7 +123,7 @@ func GetContainerData(container interface{}) (types.ChestData, error) {
 			}
 			// 物品数据值(附加值)
 			// 需要说明的是，数据值的获取优先级是这样的
-			// Damage < tag["Damage"] < Block["states"]["val"]
+			// Damage < tag["Damage"] < Block["val"]
 			// 我目前还没有找到一种妥善的办法可以解决数据值的问题，所以我希望能有人帮帮我！
 			_, ok = containerData["Name"]
 			if ok {
