@@ -485,7 +485,7 @@ func ExportBaseOnChunk(
 					}
 				}
 				// 取得方块实体数据
-				if foreground_blockName != "" && (background_blockName == "water" || background_blockName == "flowing_water") {
+				if foreground_blockName != "" && foreground_blockName != "undefined" && (background_blockName == "water" || background_blockName == "flowing_water") {
 					ans = append(ans, &types.Module{
 						Block: &types.Block{
 							Name:        &background_blockName,
@@ -499,7 +499,7 @@ func ExportBaseOnChunk(
 					})
 				}
 				// 含水类方块
-				if foreground_blockName != "" && foreground_blockName != "air" {
+				if foreground_blockName != "" && foreground_blockName != "air" && foreground_blockName != "undefined" {
 					if hasNBT && commandBlockDataMark {
 						ans = append(ans, &types.Module{
 							Block: &types.Block{
