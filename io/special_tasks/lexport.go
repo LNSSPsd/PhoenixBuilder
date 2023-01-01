@@ -46,6 +46,13 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		endPos.Z = save
 	}
 	// 取得起点坐标和终点坐标
+	if beginPos.Y < -64 {
+		beginPos.Y = -64
+	}
+	if endPos.Y > 320 {
+		endPos.Y = 320
+	}
+	// 虽然应该不会有人尝试超高度，不过我觉得还是要处理一下这个细节（
 	go func() {
 		defer func() {
 			err := recover()
