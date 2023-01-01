@@ -3,6 +3,7 @@ package TranslateNBTInerface
 import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/types"
+	"strings"
 )
 
 // 检查一个方块是否是有效的容器；这里的有效指的是可以被 replaceitem 命令生效的容器
@@ -146,7 +147,7 @@ func GetContainerData(container interface{}) (types.ChestData, error) {
 			if ok {
 				got, normal := containerData["Name"].(string)
 				if normal {
-					name = got
+					name = strings.Replace(got, "minecraft:", "", 1)
 				} else {
 					return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Name\"]", key)
 				}
