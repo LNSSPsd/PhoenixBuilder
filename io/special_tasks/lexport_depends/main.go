@@ -466,7 +466,7 @@ func ExportBaseOnChunk(
 									// 命令方块
 									hasNBT = true
 									string_nbt, err = TranslateNBTInerface.Compound(block_entity_data, false)
-									string_nbt = fmt.Sprintf("{\"block_entity_data\": %v}", string_nbt)
+									// string_nbt = fmt.Sprintf("{\"block_entity_data\": %v}", string_nbt)
 									if err != nil {
 										return []*types.Module{}, fmt.Errorf("%v", err)
 									}
