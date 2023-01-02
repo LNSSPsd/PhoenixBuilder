@@ -124,7 +124,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		env.CommandSender.Output(pterm.Info.Sprint("Data received, processing......"))
 		env.CommandSender.Output(pterm.Info.Sprint("Extracting blocks......"))
 		// 打印进度
-		ans, err := lexport_depends.ExportBaseOnChunk(allAreas, allAreasFindUse, lexport_depends.Area{
+		ans, err := lexport_depends.ExportBaseOnChunkSize(allAreas, allAreasFindUse, lexport_depends.Area{
 			BeginX: beginPos.X,
 			BeginY: beginPos.Y,
 			BeginZ: beginPos.Z,
