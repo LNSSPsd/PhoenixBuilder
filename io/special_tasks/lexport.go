@@ -101,7 +101,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		allAreas := make([]lexport_depends.Mcstructure, 0)
 		for key, value := range allAreasSplitAns {
 			currentProgress := useForProgress[key]
-			env.CommandSender.Output(pterm.Info.Sprintf("Now Fetching data from area(relative to the starting point) [%v, %v]", currentProgress.Posx, currentProgress.Posz))
+			env.CommandSender.Output(pterm.Info.Sprintf("Fetching data from area [%v, %v]", currentProgress.Posx, currentProgress.Posz))
 			// 打印进度
 			u_d2, _ := uuid.NewUUID()
 			wchan := make(chan *packet.CommandOutput)
