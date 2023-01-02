@@ -418,7 +418,9 @@ func ExportBaseOnChunkSize(
 						return []*types.Module{}, fmt.Errorf("ExportBaseOnChunk: Crashed by invalid \"block_position_data\"")
 					}
 					// 只要这个方块被记录了 NBT 数据，那么一定会有 block_position_data
-					_, ok = block_position_data["block_entity_data"] // 虽然这个方块被记录了 NBT 数据，但不一定是一个方块实体
+					_, ok = block_position_data["block_entity_data"]
+					// 虽然这个方块被记录了 NBT 数据，但不一定是一个方块实体
+					// 所以即便这个被记录了 NBT 的方块没有 block_entity_data ，也不应该返回错误
 					if ok {
 						block_entity_data, normal := block_position_data["block_entity_data"].(map[string]interface{})
 						if !normal {
@@ -431,37 +433,28 @@ func ExportBaseOnChunkSize(
 						}
 						// 检查一下这个 NBT 方块是不是容器，如果不是会返回一个叫做 "GetContainerDataRun: Not a container" 的错误
 						if err == nil {
-							if foreground_blockName == "chest" {
-								useOfChest := "trapped_chest"
-								ans = append(ans, &types.Module{
-									Block: &types.Block{
-										Name: &useOfChest,
-										Data: 0,
-									},
-									Point: types.Position{
-										X: i[KEY].BeginX - currentExport.BeginX,
-										Y: i[KEY].BeginY + j - currentExport.BeginY,
-										Z: i[KEY].BeginZ - currentExport.BeginZ,
-									},
-								})
-							}
-							// 这么处理是为了解决箱子间的连接问题，让所有的箱子都不再连接；不知道有没有人愿意解决这个问题呢？
-							if foreground_blockName == "trapped_chest" {
-								useOfChest := "chest"
-								ans = append(ans, &types.Module{
-									Block: &types.Block{
-										Name: &useOfChest,
-										Data: 0,
-									},
-									Point: types.Position{
-										X: i[KEY].BeginX - currentExport.BeginX,
-										Y: i[KEY].BeginY + j - currentExport.BeginY,
-										Z: i[KEY].BeginZ - currentExport.BeginZ,
-									},
-								})
-							}
-							// 这么处理是为了解决箱子间的连接问题，让所有的箱子都不再连接；不知道有没有人愿意解决这个问题呢？
 							containerDataMark = true
+							// 标记当前被处理的方块是一个容器
+							if foreground_blockName == "chest" || foreground_blockName == "trapped_chest" {
+								var useOfChest string = "chest"
+								if foreground_blockName == "chest" {
+									useOfChest = "trapped_chest"
+								}
+								// 如果这是个箱子，那么先放个陷阱箱
+								// 反过来，如果这是个陷阱箱，那么先放个箱子
+								ans = append(ans, &types.Module{
+									Block: &types.Block{
+										Name: &useOfChest,
+										Data: 0,
+									},
+									Point: types.Position{
+										X: i[KEY].BeginX - currentExport.BeginX,
+										Y: i[KEY].BeginY + j - currentExport.BeginY,
+										Z: i[KEY].BeginZ - currentExport.BeginZ,
+									},
+								})
+							}
+							// 对于箱子和陷阱箱的附加处理是为了解决箱子间的连接问题，让所有的箱子都不再连接；不知道有没有人愿意解决这个问题呢？
 						}
 						// 容器
 						if foreground_blockName == "command_block" || foreground_blockName == "repeating_command_block" || foreground_blockName == "chain_command_block" {
@@ -495,6 +488,8 @@ func ExportBaseOnChunkSize(
 					})
 				}
 				// 含水类方块
+				// 我不清楚有没有其他“含”方块，有的话记得提醒我哦！
+				// 这里处理的看似很拙劣，但实际上很有用！
 				if foreground_blockName != "" && foreground_blockName != "air" && foreground_blockName != "undefined" {
 					single := &types.Module{
 						Block: &types.Block{
