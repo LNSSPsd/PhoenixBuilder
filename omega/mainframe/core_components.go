@@ -515,8 +515,11 @@ func (o *Partol) Init(cfg *defines.ComponentConfig) {
 func (o *Partol) Inject(frame defines.MainFrame) {
 	o.mainFrame = frame
 	if o.TeleportWhenPlayerJoin {
-		o.mainFrame.GetGameListener().AppendLoginInfoCallback(func(entry protocol.PlayerListEntry) {
-			o.mainFrame.GetGameControl().SendWOCmd(fmt.Sprintf("execute \"%s\" ~ 320 ~ tp \"%s\" ~ ~ ~", entry.Username, o.mainFrame.GetUQHolder().GetBotName()))
+		o.mainFrame.GetGameListener().SetOnTypedPacketCallBack(packet.IDText, func(p packet.Packet) {
+			pk := p.(*packet.Text)
+			if pk.TextType == 2 && pk.Message == "§e%multiplayer.player.joined" {
+				o.mainFrame.GetGameControl().SendWOCmd(fmt.Sprintf("execute \"%s\" ~ 320 ~ tp \"%s\" ~ ~ ~", pk.Parameters[0], o.mainFrame.GetUQHolder().GetBotName()))
+			}
 		})
 	}
 	if o.AlwaysInOverworld {
