@@ -94,7 +94,6 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		// 反之，如果被测定区域和目标区域全部加载，则返回 "commands.compare.tooManyBlocks"
 		// 你可能会说，为什么不用 testforblock 命令给单个方块作检测，这是因为
 		// 目标待导出区域最大是 64*64 ，而只对单方块检测并不能保证整个待导出区域都已经加载了
-		// 如果以后有人再说导出来的东西丢了什么的，那就紫砂吧，这下总不可能是这种问题了八！
 		allAreasSplitAns, allAreasFindUse, useForProgress := lexport_depends.SplitArea(beginPos.X, beginPos.Y, beginPos.Z, endPos.X, endPos.Y, endPos.Z, 64, 64, true)
 		// 拆分目标导出区域为若干个小区域
 		// 每个小区域最大 64*64
