@@ -149,53 +149,53 @@ func GetMCStructureData(area Area, structure map[string]interface{}) (Mcstructur
 	// 初始化
 	_, ok = structure["structure"]
 	if !ok {
-		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"]; Input = %#v", structure)
+		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"]; structure = %#v", structure)
 	}
 	value_structure, normal = structure["structure"].(map[string]interface{})
 	if !normal {
-		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"]; Input = %#v", structure)
+		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"]; structure = %#v", structure)
 	}
-	// input["structure"]
+	// structure["structure"]
 	_, ok = value_structure["palette"]
 	if !ok {
-		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"]; structure = %#v", value_structure)
+		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"palette\"]; structure = %#v", value_structure)
 	}
 	value_palette, normal := value_structure["palette"].(map[string]interface{})
 	if !normal {
-		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"]; structure = %#v", value_structure)
+		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"palette\"]; structure = %#v", value_structure)
 	}
-	// input["structure"]["palette"]
+	// structure["structure"]["palette"]
 	_, ok = value_palette["default"]
 	if !ok {
-		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"]; palette = %#v", value_palette)
+		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"palette\"][\"default\"]; palette = %#v", value_palette)
 	}
 	value_default, normal = value_palette["default"].(map[string]interface{})
 	if !normal {
-		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"]; palette = %#v", value_palette)
+		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"palette\"][\"default\"]; palette = %#v", value_palette)
 	}
-	// input["structure"]["palette"]["default"]
+	// structure["structure"]["palette"]["default"]
 	_, ok = value_default["block_palette"]
 	if !ok {
-		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"][\"block_palette\"]; default = %#v", value_default)
+		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"palette\"][\"default\"][\"block_palette\"]; default = %#v", value_default)
 	}
 	value_block_palette, normal := value_default["block_palette"].([]interface{})
 	if !normal {
-		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"][\"block_palette\"]; default = %#v", value_default)
+		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"palette\"][\"default\"][\"block_palette\"]; default = %#v", value_default)
 	}
-	// input["structure"]["palette"]["default"]["block_palette"]
+	// structure["structure"]["palette"]["default"]["block_palette"]
 	for key, value := range value_block_palette {
 		got, normal := value.(map[string]interface{})
 		if !normal {
-			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"name\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
+			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"name\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
 		}
 		// 这里确认下数据类型，就是这个 got 必须得是个复合标签
 		_, ok = got["name"]
 		if !ok {
-			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"name\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
+			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"name\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
 		}
 		value_name, normal := got["name"].(string)
 		if !normal {
-			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"name\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
+			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"name\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
 		}
 		blockPalette = append(blockPalette, value_name)
 		// 得到方块的名称
@@ -203,25 +203,25 @@ func GetMCStructureData(area Area, structure map[string]interface{}) (Mcstructur
 		// 命名空间会在后边删掉
 		_, ok = got["states"]
 		if !ok {
-			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"states\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
+			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"states\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
 		}
 		value_states, normal := got["states"].(map[string]interface{})
 		if !normal {
-			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"states\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
+			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"states\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
 		}
 		blockStates, err := TranslateNBTInerface.Compound(value_states, true)
 		if err != nil {
-			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"states\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
+			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"states\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
 		}
 		blockPalette_blockStates = append(blockPalette_blockStates, blockStates)
 		// 得到方块的方块状态
 		_, ok = got["val"]
 		if !ok {
-			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"val\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
+			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"val\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
 		}
 		val, normal := got["val"].(int16)
 		if !normal {
-			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"val\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
+			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"val\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
 		}
 		blockPalette_blockData = append(blockPalette_blockData, val)
 		// 得到方块的方块数据值(附加值)
@@ -231,16 +231,16 @@ func GetMCStructureData(area Area, structure map[string]interface{}) (Mcstructur
 	if ok {
 		value_block_position_data, normal := value_default["block_position_data"].(map[string]interface{})
 		if !normal {
-			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"default\"][\"block_position_data\"]; default = %#v", value_default)
+			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"default\"][\"block_position_data\"]; default = %#v", value_default)
 		}
 		for key, value := range value_block_position_data {
 			block_position_data, ok := value.(map[string]interface{})
 			if !ok {
-				return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"default\"][\"block_position_data\"][%v]; block_position_data[%v] = %#v", key, key, block_position_data[key])
+				return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"default\"][\"block_position_data\"][%v]; block_position_data[%v] = %#v", key, key, block_position_data[key])
 			}
 			location_of_block_position_data, err := strconv.ParseInt(key, 10, 64)
 			if err != nil {
-				return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"default\"][\"block_position_data\"][%v]; block_position_data[%v] = %#v", key, key, block_position_data[key])
+				return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"default\"][\"block_position_data\"][%v]; block_position_data[%v] = %#v", key, key, block_position_data[key])
 			}
 			if blockNBT[int(location_of_block_position_data)] == nil {
 				blockNBT[int(location_of_block_position_data)] = make(map[string]interface{})
@@ -252,38 +252,38 @@ func GetMCStructureData(area Area, structure map[string]interface{}) (Mcstructur
 	// 然后找到所有的方块实体数据，放于 map(blockNBT) 中
 	_, ok = value_structure["block_indices"]
 	if !ok {
-		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"block_indices\"]; structure = %#v", structure)
+		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"block_indices\"]; structure = %#v", structure)
 	}
 	value_block_indices, normal := value_structure["block_indices"].([]interface{})
 	if !normal {
-		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"block_indices\"]; structure = %#v", structure)
+		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"block_indices\"]; structure = %#v", structure)
 	}
-	// input["structure"]["block_indices"]
+	// structure["structure"]["block_indices"]
 	if len(value_block_indices) != 2 {
-		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"block_indices\"]; structure = %#v", structure)
+		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"block_indices\"]; structure = %#v", structure)
 	}
-	// 这里要求 input["structure"]["block_indices"] 的长度必须为 2
+	// 这里要求 structure["structure"]["block_indices"] 的长度必须为 2
 	// 毕竟是由 前景层 和 背景层 的索引所制成的两张表
 	value_block_indices_0, normal := value_block_indices[0].([]interface{})
 	if !normal {
-		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"block_indices\"][0]; block_indices = %#v", value_block_indices)
+		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"block_indices\"][0]; block_indices = %#v", value_block_indices)
 	}
 	for blockLocation_key, blockLocation := range value_block_indices_0 {
 		got, normal := blockLocation.(int32)
 		if !normal {
-			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"block_indices\"][0][%v]; block_indices[0] = %#v", blockLocation_key, value_block_indices[0])
+			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"block_indices\"][0][%v]; block_indices[0] = %#v", blockLocation_key, value_block_indices[0])
 		}
 		foreground = append(foreground, int16(got))
 	}
 	// 这里先拿前景层方块的索引表
 	value_block_indices_1, normal := value_block_indices[1].([]interface{})
 	if !normal {
-		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"block_indices\"][1]; block_indices = %#v", value_block_indices)
+		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"block_indices\"][1]; block_indices = %#v", value_block_indices)
 	}
 	for blockLocation_key, blockLocation := range value_block_indices_1 {
 		got, normal := blockLocation.(int32)
 		if !normal {
-			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"block_indices\"][1][%v]; block_indices[1] = %#v", blockLocation_key, value_block_indices[1])
+			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"block_indices\"][1][%v]; block_indices[1] = %#v", blockLocation_key, value_block_indices[1])
 		}
 		background = append(background, int16(got))
 	}
