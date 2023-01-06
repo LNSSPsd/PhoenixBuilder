@@ -104,14 +104,9 @@ func (bdump *BDumpLegacy) writeHeader(w *bytes.Buffer) error {
 		return err
 	}
 	_, err = w.Write([]byte{0})
-	if err != nil {
-		return err
-	}
+	return err
 	// 写入作者之名
 	// 注：现在不再写入作者信息
-	_, err = w.Write([]byte{0x1f, 0x75})
-	return err
-	// 放置容器需要用到 117 号的 RunTimeId 调色板表
 }
 
 func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
@@ -254,15 +249,15 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 			break
 		}
 		if mdl.ChestData != nil {
-			err := writer.WriteCommand(&command.PlaceBlockWithChestData {
+			err := writer.WriteCommand(&command.PlaceBlockWithChestData{
 				BlockConstantStringID: uint16(blocksPalette[*mdl.Block.Name]),
-				BlockData: uint16(mdl.Block.Data),
-				ChestSlots: *mdl.ChestData,
+				BlockData:             uint16(mdl.Block.Data),
+				ChestSlots:            *mdl.ChestData,
 			})
 			if err != nil {
 				return err
 			}
-		}else if mdl.CommandBlockData != nil {
+		} else if mdl.CommandBlockData != nil {
 			err := writer.WriteCommand(&command.PlaceCommandBlockWithCommandBlockData{
 				BlockData:        uint16(mdl.Block.Data),
 				CommandBlockData: mdl.CommandBlockData,
@@ -288,11 +283,10 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 					return err
 				}
 				// 以方块状态为依据放置方块
-				// 我更推荐使用这一个方式来放置方块，因为方块数据值(附加值)已不再在新版本 MC 中使用
+				// 我更推荐使用这一个方式来放置方块，因为方块数据值(附加值)已不被新加入的方块使用
 				// ——Happy2018new
 			}
 		}
-		/*
 		if mdl.NBTData != nil {
 			err := writer.WriteCommand(&command.AssignNBTData{
 				Data: mdl.NBTData,
@@ -301,8 +295,7 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 				return err
 			}
 		}
-		*/
-		
+
 	}
 	return nil
 }
