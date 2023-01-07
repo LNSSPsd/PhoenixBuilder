@@ -4,13 +4,15 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"phoenixbuilder/minecraft/protocol"
-	"golang.org/x/text/language"
 	"net"
+	"phoenixbuilder/minecraft/protocol"
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode/utf8"
+
+	"github.com/google/uuid"
+	"golang.org/x/text/language"
 )
 
 // IdentityData contains identity data of the player logged in. It is found in one of the JWT claims signed
@@ -62,8 +64,8 @@ func (data IdentityData) Validate() error {
 	if id, err := uuid.Parse(data.Identity); err != nil || id == uuid.Nil {
 		return fmt.Errorf("UUID must be parseable as a valid UUID, but got %v", data.Identity)
 	}
-	if len(data.DisplayName) == 0 || len(data.DisplayName) > 15 {
-		return fmt.Errorf("DisplayName must not be empty or longer than 15 characters, but got %v characters", len(data.DisplayName))
+	if len(data.DisplayName) == 0 || utf8.RuneCountInString(data.DisplayName) > 15 {
+		return fmt.Errorf("DisplayName must not be empty or longer than 15 characters, but got %v characters", utf8.RuneCountInString(data.DisplayName))
 	}
 	if data.DisplayName[0] == ' ' || data.DisplayName[len(data.DisplayName)-1] == ' ' {
 		return fmt.Errorf("DisplayName may not have a space as first/last character, but got %v", data.DisplayName)
