@@ -88,10 +88,8 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		// 如果尝试请求一个没有被完全加载的区域，那么返回的结构将是只包括空气的结构，但不会报错
 		// 如果被请求的区域部分没有加载，那么可能地，没有加载的部分就是空气了
 		// 所以为了永远地规避区域加载问题，我这里使用了 testforblocks 方法用于到时候给每个待导出区域检查是否已完全加载
-		// 特别地，为了减少租赁服的负载，这个 testforblocks 命令永远会失败
 		// 这里应该说一下，如果尝试将 testforblocks 命令用于一个没有被加载的区域，返回的
 		// OutputMessages[0].Message 字段是 "commands.generic.outOfWorld"
-		// 反之，如果被测定区域和目标区域全部加载，则返回 "commands.compare.tooManyBlocks"
 		// 你可能会说，为什么不用 testforblock 命令给单个方块作检测，这是因为
 		// 目标待导出区域最大是 64*64 ，而只对单方块检测并不能保证整个待导出区域都已经加载了
 		allAreasSplitAns, allAreasFindUse, useForProgress := lexport_depends.SplitArea(beginPos.X, beginPos.Y, beginPos.Z, endPos.X, endPos.Y, endPos.Z, 64, 64, true)
@@ -117,7 +115,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 				resp := <-chann
 				close(chann)
 				//fmt.Printf("%#v\n",resp)
-				if resp.OutputMessages[0].Message == "commands.compare.tooManyBlocks" {
+				if resp.OutputMessages[0].Message != "commands.generic.outOfWorld" {
 					break
 				}
 			}
@@ -137,7 +135,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 					Mirror:                    0,
 					Integrity:                 100,
 					Seed:                      0,
-					AllowNonTickingChunks: true,
+					AllowNonTickingChunks:     false,
 				},
 				RequestType: packet.StructureTemplateRequestExportFromSave,
 			})
