@@ -56,8 +56,12 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 		} else {
 			o.ServerName = "匿名服务器"
 		}
+		pterm.Info.Println("服服互通: 还没有设置在公屏聊天栏显示的服务器名, 将会显示为", o.ServerName, ", 你可以在 配置文件-服服互通 中以更改")
 	}
 	pterm.Info.Println("连接模式: ", o.Mode)
+	if o.ServerAddr == "124.222.13.238:24013" {
+		o.ServerAddr = "222.187.232.63:24013"
+	}
 	if o.Mode == "SuperScript@DotCS" {
 		conn, err := net.Dial("tcp", o.ServerAddr)
 		if err != nil {
@@ -67,7 +71,7 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 			decoder := json.NewDecoder(conn)
 			// encoder := json.NewEncoder(conn)
 			printErr := func(err error) {
-				pterm.Error.Println("到服服互通服务器连接出现错误 ", err, " 连接终止")
+				pterm.Error.Println("连接 服服互通 服务器出现错误 ", err, " 连接终止")
 			}
 			go func() {
 				for {
@@ -86,17 +90,15 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 						case "msg":
 							o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v %v", msg.ServerName, msg.Data))
 						case "connected":
-							o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v服 加入了互通", msg.ServerName))
+							o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v 加入了互通", msg.ServerName))
 						case "disconnected":
-							o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v服 加入了互通", msg.ServerName))
+							o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v 加入了互通", msg.ServerName))
 						case "consolemsg":
 							pterm.Info.Println(msg.Data)
 						case "player.join":
 							o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v %v 加入了游戏", msg.ServerName, msg.Data))
 						case "player.left":
 							o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v %v 退出了游戏", msg.ServerName, msg.Data))
-						case "get_data_serverlist":
-							o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("目前连接的服服互通服务器列表: %v", msg.Data))
 						}
 
 					}
@@ -116,8 +118,9 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 				return nil
 			}
 			if err := sendJson(map[string]interface{}{
-				"KeyCode":    "SuperRentalServerLink made by SuperScript",
-				"server":     o.ServerName,
+				"KeyCode": "SuperRentalServerLink made by SuperScript",
+				"server":  o.ServerName,
+				// 不泄露服务器号
 				"serverName": o.ServerName,
 			}); err != nil {
 				printErr(err)
@@ -134,7 +137,7 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 				}
 				if err := sendJson(map[string]interface{}{
 					"data_type": "msg",
-					"data":      fmt.Sprintf("§7<§a%v§7> §7%v", chat.Name, strings.Join(chat.Msg, " ")),
+					"data":      fmt.Sprintf("§7<§f%v§7> §7%v", chat.Name, strings.Join(chat.Msg, " ")),
 				}); err != nil {
 					return
 				}
@@ -169,7 +172,7 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 		}
 		conn, err := net.Dial("tcp", o.ServerAddr)
 		if err != nil {
-			pterm.Error.Println("无法连接至服服互通", err)
+			pterm.Error.Println("无法连接至服服互通: ", err)
 		} else {
 			pterm.Info.Println("已连接至服服互通服务器", o.ServerAddr)
 			decoder := json.NewDecoder(conn)
@@ -212,7 +215,7 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 				"serverName": o.ServerName,
 				"token":      token,
 				"channel":    additonalData["频道"],
-				"robotType":  "DotCS",
+				"robotType":  "Omega",
 			}); err != nil {
 				printErr(err)
 				return
@@ -235,9 +238,9 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 						case "msg":
 							o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v %v", msg.ServerName, msg.Data))
 						case "connected":
-							o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v服 加入了互通", msg.ServerName))
+							o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v 加入了互通", msg.ServerName))
 						case "disconnected":
-							o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v服 加入了互通", msg.ServerName))
+							o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v 加入了互通", msg.ServerName))
 						case "consolemsg":
 							pterm.Info.Println(msg.Data)
 						case "player.join":
@@ -283,6 +286,6 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 			})
 		}
 	} else {
-		panic(fmt.Errorf("连接模式: %v 未支持", o.Mode))
+		panic(fmt.Errorf("意外的连接模式: %v 未支持，你需要使用已有连接模式", o.Mode))
 	}
 }
