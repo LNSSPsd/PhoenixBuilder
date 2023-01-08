@@ -100,13 +100,7 @@ func (bdump *BDumpLegacy) writeHeader(w *bytes.Buffer) error {
 	}
 	// 内部文件头
 	_, err = w.Write([]byte{0})
-	if err != nil {
-		return err
-	}
-	_, err = w.Write([]byte{0})
-	return err
-	// 写入作者之名
-	// 注：现在不再写入作者信息
+  return err
 }
 
 func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
