@@ -100,7 +100,7 @@ func (bdump *BDumpLegacy) writeHeader(w *bytes.Buffer) error {
 	}
 	// 内部文件头
 	_, err = w.Write([]byte{0})
-  return err
+	return err
 }
 
 func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
