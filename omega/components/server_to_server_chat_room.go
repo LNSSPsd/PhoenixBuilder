@@ -59,10 +59,8 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 		pterm.Info.Println("服服互通: 还没有设置在公屏聊天栏显示的服务器名, 将会显示为", o.ServerName, ", 你可以在 配置文件-服服互通 中以更改")
 	}
 	pterm.Info.Println("连接模式: ", o.Mode)
-	if o.ServerAddr == "124.222.13.238:24013" {
-		o.ServerAddr = "222.187.232.63:24013"
-	}
 	if o.Mode == "SuperScript@DotCS" {
+		// This protocol was abandoned
 		conn, err := net.Dial("tcp", o.ServerAddr)
 		if err != nil {
 			pterm.Error.Println("无法连接至服服互通", err)
@@ -163,9 +161,10 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 			})
 		}
 	} else if o.Mode == "SuperScript@DotCS-V2" {
+		// V2 Server source code: github.com/SuperScript-PRC/SuperLink
 		additonalData := o.ProtocolSpecificData[o.Mode]
 		printErr := func(err error) {
-			pterm.Error.Println("到服服互通服务器连接出现错误 ", err, " 连接终止")
+			pterm.Error.Println("连接 服服互通 中心服务器出现问题： ", err, " 连接终止")
 		}
 		if additonalData == nil {
 			panic(fmt.Errorf("该协议需要附加数据"))
@@ -260,7 +259,7 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 				}
 				if err := sendJson(map[string]interface{}{
 					"data_type": "msg",
-					"data":      fmt.Sprintf("§7<§a%v§7> §7%v", chat.Name, strings.Join(chat.Msg, " ")),
+					"data":      fmt.Sprintf("§7<§f%v§7> §7%v", chat.Name, strings.Join(chat.Msg, " ")),
 				}); err != nil {
 					return
 				}
