@@ -22,7 +22,8 @@ type SeverToServerChatRoom struct {
 }
 
 func (o *SeverToServerChatRoom) Init(cfg *defines.ComponentConfig) {
-	if cfg.Version == "0.0. 1" {
+	if cfg.Version == "0.0.1" {
+		// There's no users use this version, is it?
 		cfg.Configs["服务器名"] = ""
 		cfg.Version = "0.0.2"
 		cfg.Upgrade()
@@ -36,6 +37,11 @@ func (o *SeverToServerChatRoom) Init(cfg *defines.ComponentConfig) {
 			},
 		}
 		cfg.Version = "0.0.3"
+		cfg.Upgrade()
+	}
+	if cfg.Version == "0.0.3" {
+		cfg.Configs["中心服务器地址"] = "222.187.232.63:24013" // safer & faster
+		cfg.Version = "0.0.4"
 		cfg.Upgrade()
 	}
 	m, _ := json.Marshal(cfg.Configs)
