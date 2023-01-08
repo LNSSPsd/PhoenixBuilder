@@ -332,12 +332,12 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 							NeedRedstone:       nrb,
 						}
 						//fmt.Printf("%#v\n",cbdata)
-					} /*else {
+					} else {
 						pnd, hasNBT := item["__tag"]
 						if hasNBT {
 							nbtData = []byte(pnd.(string))
 						}
-					}*/
+					}
 					lb := chunk.RuntimeIDToLegacyBlock(runtimeId)
 					blocks[counter] = &types.Module{
 						Block: &types.Block{
