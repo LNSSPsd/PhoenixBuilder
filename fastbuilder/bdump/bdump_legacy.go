@@ -281,6 +281,7 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 				// ——Happy2018new
 			}
 		}
+		/*
 		if mdl.NBTData != nil {
 			err := writer.WriteCommand(&command.AssignNBTData{
 				Data: mdl.NBTData,
@@ -289,7 +290,7 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 				return err
 			}
 		}
-
+		*/
 	}
 	return nil
 }
