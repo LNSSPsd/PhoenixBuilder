@@ -100,6 +100,10 @@ func (bdump *BDumpLegacy) writeHeader(w *bytes.Buffer) error {
 	}
 	// 内部文件头
 	_, err = w.Write([]byte{0})
+	if err != nil {
+		return err
+	}
+	_, err = w.Write([]byte{0})
 	return err
 }
 
@@ -282,14 +286,14 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 			}
 		}
 		/*
-		if mdl.NBTData != nil {
-			err := writer.WriteCommand(&command.AssignNBTData{
-				Data: mdl.NBTData,
-			})
-			if err != nil {
-				return err
+			if mdl.NBTData != nil {
+				err := writer.WriteCommand(&command.AssignNBTData{
+					Data: mdl.NBTData,
+				})
+				if err != nil {
+					return err
+				}
 			}
-		}
 		*/
 	}
 	return nil
