@@ -38,76 +38,56 @@ func GetData(input interface{}) (string, error) {
 		return fmt.Sprintf("%vd", strconv.FormatFloat(float64(value6), 'f', 16, 64)), nil
 	}
 	// double
-	value, result := input.([]interface{})
+	value7, result := input.([]byte)
 	if result {
-		if len(value) > 0 {
-			_, result = value[0].(byte)
-			if result {
-				ans := make([]string, 0)
-				for _, i := range value {
-					got, err := i.(byte)
-					if err {
-						ans = append(ans, fmt.Sprintf("%vb", int(got)))
-					} else {
-						return "", fmt.Errorf("GetData: Failed in %#v", i)
-					}
-				}
-				return fmt.Sprintf("[B; %v]", strings.Join(ans, ", ")), nil
-			}
-			// byte_array
-			_, result = value[0].(int32)
-			if result {
-				ans := make([]string, 0)
-				for _, i := range value {
-					got, err := i.(int32)
-					if err {
-						ans = append(ans, fmt.Sprintf("%v", got))
-					} else {
-						return "", fmt.Errorf("GetData: Failed in %#v", i)
-					}
-				}
-				return fmt.Sprintf("[I; %v]", strings.Join(ans, ", ")), nil
-			}
-			// int_array
-			_, result = value[0].(int64)
-			if result {
-				ans := make([]string, 0)
-				for _, i := range value {
-					got, err := i.(int64)
-					if err {
-						ans = append(ans, fmt.Sprintf("%v", got))
-					} else {
-						return "", fmt.Errorf("GetData: Failed in %#v", i)
-					}
-				}
-				return fmt.Sprintf("[L; %v]", strings.Join(ans, ", ")), nil
-			}
-			// long_array
+		ans := []string{}
+		for _, i := range value7 {
+			ans = append(ans, fmt.Sprintf("%vb", int(i)))
 		}
-		got, err := List(value)
-		if err != nil {
-			return "", fmt.Errorf("GetData: Failed in %#v", value)
-		} else {
-			return got, nil
-		}
-		// list
+		return fmt.Sprintf("[B; %v]", strings.Join(ans, ", ")), nil
 	}
-	// byte_array, int_array, long_array, list
-	value7, result := input.(string)
+	// byte_array
+	value8, result := input.(string)
 	if result {
-		return fmt.Sprintf("\"%v\"", value7), nil
+		return fmt.Sprintf("\"%v\"", value8), nil
 	}
 	// string
-	value8, result := input.(map[string]interface{})
+	value9, result := input.([]interface{})
 	if result {
-		compound, err := Compound(value8, false)
+		list, err := List(value9)
 		if err != nil {
-			return "", fmt.Errorf("GetData: Failed in %#v", value8)
-		} else {
-			return compound, nil
+			return "", fmt.Errorf("GetData: Failed in %#v", value9)
 		}
+		return list, nil
+	}
+	// list
+	value10, result := input.(map[string]interface{})
+	if result {
+		compound, err := Compound(value10, false)
+		if err != nil {
+			return "", fmt.Errorf("GetData: Failed in %#v", value10)
+		}
+		return compound, nil
 	}
 	// compound
+	value11, result := input.([]int32)
+	if result {
+		ans := []string{}
+		for _, i := range value11 {
+			ans = append(ans, fmt.Sprintf("%v", i))
+		}
+		return fmt.Sprintf("[I; %v]", strings.Join(ans, ", ")), nil
+	}
+	// int_array
+	value12, result := input.([]int64)
+	if result {
+		ans := []string{}
+		for _, i := range value12 {
+			ans = append(ans, fmt.Sprintf("%v", i))
+		}
+		return fmt.Sprintf("[L; %v]", strings.Join(ans, ", ")), nil
+	}
+	// long_array
 	return "", fmt.Errorf("GetData: Failed because of unknown type of the target data, occured in %#v", input)
 }
 
@@ -148,9 +128,8 @@ func List(input []interface{}) (string, error) {
 		got, err := GetData(value)
 		if err != nil {
 			return "", fmt.Errorf("List: Crashed in input[\"%v\"]; errorLogs = %v; input = %#v", key, err, input)
-		} else {
-			ans = append(ans, got)
 		}
+		ans = append(ans, got)
 	}
 	return fmt.Sprintf("[%v]", strings.Join(ans, ", ")), nil
 }
