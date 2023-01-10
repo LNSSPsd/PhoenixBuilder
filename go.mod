@@ -33,7 +33,7 @@ require (
 replace rogchap.com/v8go v0.7.0 => ./depends/v8go@v0.7.0
 
 require (
-	github.com/Tnze/go-mc v1.17.0
+	github.com/Tnze/go-mc v1.17.1
 	github.com/andybalholm/brotli v1.0.3
 	github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb
 	github.com/disintegration/imaging v1.6.2

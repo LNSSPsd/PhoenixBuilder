@@ -1,4 +1,4 @@
-package TranslateNBTInerface
+package lexport_depends
 
 import (
 	"fmt"
@@ -23,10 +23,10 @@ func GetData(input interface{}) (string, error) {
 		return fmt.Sprintf("%vl", input.(int64)), nil
 		// long
 	case reflect.Float32:
-		return fmt.Sprintf("%vf", strconv.FormatFloat(float64(input.(float32)), 'f', 16, 32)), nil
+		return fmt.Sprintf("%vf", strconv.FormatFloat(float64(input.(float32)), 'f', -1, 32)), nil
 		// float
 	case reflect.Float64:
-		return fmt.Sprintf("%vf", strconv.FormatFloat(float64(input.(float64)), 'f', 16, 32)), nil
+		return fmt.Sprintf("%vf", strconv.FormatFloat(float64(input.(float64)), 'f', -1, 32)), nil
 		// double
 	case reflect.Array:
 		ans := []string{}

@@ -1,16 +1,19 @@
 package interfaces
 
 import (
-	"github.com/google/uuid"
+	"phoenixbuilder/minecraft/protocol/packet"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 type CommandSender interface {
 	GetUUIDMap() *sync.Map
 	ClearUUIDMap()
 	GetBlockUpdateSubscribeMap() *sync.Map
-	SendCommand(string,uuid.UUID) error
-	SendWSCommand(string,uuid.UUID) error
+	SendCommand(string, uuid.UUID) error
+	SendWSCommand(string, uuid.UUID) error
+	SendWSCommandWithResponce(string) (*packet.CommandOutput, error)
 	SendSizukanaCommand(string) error
 	SendChat(string) error
 	Output(string) error

@@ -67,12 +67,10 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		u_d0, _ := uuid.NewUUID()
 		env.CommandSender.SendWSCommand("gamemode c", u_d0)
 		// 改创造
-		u_d1, _ := uuid.NewUUID()
-		chann := make(chan *packet.CommandOutput)
-		(*env.CommandSender.GetUUIDMap()).Store(u_d1.String(), chann)
-		env.CommandSender.SendWSCommand("querytarget @s", u_d1)
-		resp := <-chann
-		close(chann)
+		resp, err := env.CommandSender.SendWSCommandWithResponce("querytarget @s")
+		if err != nil {
+			panic(err)
+		}
 		var dimension float64 = 0
 		var got interface{}
 		var testAreaIsLoaded string = "testforblocks ~-31 -64 ~-31 ~31 319 ~31 ~-31 -64 ~-31"
@@ -100,21 +98,16 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 			currentProgress := useForProgress[key]
 			env.CommandSender.Output(pterm.Info.Sprintf("Fetching data from area [%v, %v]", currentProgress.Posx, currentProgress.Posz))
 			// 打印进度
-			u_d2, _ := uuid.NewUUID()
-			wchan := make(chan *packet.CommandOutput)
-			(*env.CommandSender.GetUUIDMap()).Store(u_d2.String(), wchan)
-			env.CommandSender.SendWSCommand(fmt.Sprintf("tp %d %d %d", value.BeginX+value.SizeX/2, value.BeginY+value.SizeY/2, value.BeginZ+value.SizeZ/2), u_d2)
-			<-wchan
-			close(wchan)
+			_, err = env.CommandSender.SendWSCommandWithResponce(fmt.Sprintf("tp %d %d %d", value.BeginX+value.SizeX/2, value.BeginY+value.SizeY/2, value.BeginZ+value.SizeZ/2))
+			if err != nil {
+				panic(err)
+			}
 			// 传送玩家
 			for {
-				u_d3, _ := uuid.NewUUID()
-				chann := make(chan *packet.CommandOutput)
-				(*env.CommandSender.GetUUIDMap()).Store(u_d3.String(), chann)
-				env.CommandSender.SendWSCommand(testAreaIsLoaded, u_d3)
-				resp := <-chann
-				close(chann)
-				//fmt.Printf("%#v\n",resp)
+				resp, err = env.CommandSender.SendWSCommandWithResponce(testAreaIsLoaded)
+				if err != nil {
+					panic(err)
+				}
 				if resp.OutputMessages[0].Message != "commands.generic.outOfWorld" {
 					break
 				}

@@ -1,13 +1,37 @@
-package TranslateNBTInerface
+package blockNBT_depends
 
 import (
 	"fmt"
+	"phoenixbuilder/fastbuilder/commands_generator"
+	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/types"
+	"phoenixbuilder/io/commands"
 	"strings"
 )
 
-// 检查一个方块是否是有效的容器；这里的有效指的是可以被 replaceitem 命令生效的容器
-func CheckIfIsEffectiveContainer(name string) (string, error) {
+type ContainerInput struct {
+	ContainerData *map[string]interface{}
+	Environment   *environment.PBEnvironment
+	Mainsettings  *types.MainConfig
+	BlockInfo     *types.Module
+}
+
+func Container(input *ContainerInput) error {
+	if input.BlockInfo.StringNBT != nil {
+		containerdata, err := getContainerDataRun(*input.ContainerData, *input.BlockInfo.Block.Name)
+		if err != nil {
+			return fmt.Errorf("Container: Failed to place the entity block named %v at (%v,%v,%v), and the error log is %v", *input.BlockInfo.Block.Name, input.BlockInfo.Point.X, input.BlockInfo.Point.Y, input.BlockInfo.Point.Z, err)
+		}
+		input.BlockInfo.ChestData = &containerdata
+	}
+	err := placeContainer(input.Environment, input.Mainsettings, input.BlockInfo)
+	if err != nil {
+		return fmt.Errorf("Container: Failed to place the entity block named %v at (%v,%v,%v), and the error log is %v", *input.BlockInfo.Block.Name, input.BlockInfo.Point.X, input.BlockInfo.Point.Y, input.BlockInfo.Point.Z, err)
+	}
+	return nil
+}
+
+func checkIfIsEffectiveContainer(name string) (string, error) {
 	index := map[string]string{
 		"blast_furnace":      "Items",
 		"lit_blast_furnace":  "Items",
@@ -33,19 +57,18 @@ func CheckIfIsEffectiveContainer(name string) (string, error) {
 	if ok {
 		return value, nil
 	}
-	// return "", fmt.Errorf("CheckIfIsEffectiveContainer: \"%v\" not found", name)
-	return "", fmt.Errorf("")
+	return "", fmt.Errorf("checkIfIsEffectiveContainer: \"%v\" not found", name)
 }
 
 // 将 Interface NBT 转换为 types.ChestData
-func GetContainerData(container interface{}) (types.ChestData, error) {
+func getContainerData(container interface{}) (types.ChestData, error) {
 	var correct []interface{} = make([]interface{}, 0)
 	// 初始化
 	got, normal := container.([]interface{})
 	if !normal {
 		got, normal := container.(map[string]interface{})
 		if !normal {
-			return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container; container = %#v", container)
+			return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container; container = %#v", container)
 		}
 		correct = append(correct, got)
 	} else {
@@ -64,27 +87,27 @@ func GetContainerData(container interface{}) (types.ChestData, error) {
 		// 初始化
 		containerData, normal := value.(map[string]interface{})
 		if !normal {
-			return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v]; container[%v] = %#v", key, key, value)
+			return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v]; container[%v] = %#v", key, key, value)
 		}
 		// correct 这个列表中的每一项都必须是一个复合标签，也就得是 map[string]interface{} 才行
 		_, ok := containerData["Count"]
 		if !ok {
-			return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Count\"]; container[%v] = %#v", key, key, containerData)
+			return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"Count\"]; container[%v] = %#v", key, key, containerData)
 		}
 		count_got, normal := containerData["Count"].(byte)
 		if !normal {
-			return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Count\"]; container[%v] = %#v", key, key, containerData)
+			return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"Count\"]; container[%v] = %#v", key, key, containerData)
 		}
 		count = uint8(count_got)
 		// 拿一下物品数量
 		// 这个物品数量是一定存在的，拿不到必须报错哦
 		_, ok = containerData["Damage"]
 		if !ok {
-			return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Damage\"]; container[%v] = %#v", key, key, containerData)
+			return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"Damage\"]; container[%v] = %#v", key, key, containerData)
 		}
 		damage_got, normal := containerData["Damage"].(int16)
 		if !normal {
-			return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Damage\"]; container[%v] = %#v", key, key, containerData)
+			return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"Damage\"]; container[%v] = %#v", key, key, containerData)
 		}
 		itemData = uint16(damage_got)
 		// 拿一下物品的 Damage 值
@@ -95,7 +118,7 @@ func GetContainerData(container interface{}) (types.ChestData, error) {
 		if ok {
 			tag, normal := containerData["tag"].(map[string]interface{})
 			if !normal {
-				return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"tag\"]; container[%v] = %#v", key, key, containerData)
+				return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"tag\"]; container[%v] = %#v", key, key, containerData)
 			}
 			// 这个 container["tag"] 一定是一个复合标签，如果不是就必须报错哦
 			// 真的是吗（？
@@ -103,7 +126,7 @@ func GetContainerData(container interface{}) (types.ChestData, error) {
 			if ok {
 				got, normal := tag["Damage"].(int32)
 				if !normal {
-					return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"tag\"]; container[%v] = %#v", key, key, containerData)
+					return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"tag\"]; container[%v] = %#v", key, key, containerData)
 				}
 				itemData = uint16(got)
 			}
@@ -115,17 +138,17 @@ func GetContainerData(container interface{}) (types.ChestData, error) {
 		if ok {
 			Block, normal := containerData["Block"].(map[string]interface{})
 			if !normal {
-				return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Block\"]; container[%v] = %#v", key, key, containerData)
+				return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"Block\"]; container[%v] = %#v", key, key, containerData)
 			}
 			// 这个 container["Block"] 一定是一个复合标签，如果不是就必须报错哦
 			// 如果 Block 找得到则说明这个物品是一个方块
 			_, ok = Block["val"]
 			if !ok {
-				return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Block\"][\"val\"]; container[%v][\"Block\"] = %#v", key, key, Block)
+				return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"Block\"][\"val\"]; container[%v][\"Block\"] = %#v", key, key, Block)
 			}
 			got, normal := Block["val"].(int16)
 			if !normal {
-				return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Block\"][\"val\"]; container[%v][\"Block\"] = %#v", key, key, Block)
+				return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"Block\"][\"val\"]; container[%v][\"Block\"] = %#v", key, key, Block)
 			}
 			itemData = uint16(got)
 			// 如果这个物品是个方块，也就是 Block 找得到的话
@@ -142,11 +165,11 @@ func GetContainerData(container interface{}) (types.ChestData, error) {
 		// 需要说明的是，以上列举的三个情况不能涵盖所有的物品数据值(附加值)的情况，所以我希望可以有个人看一下普世情况是长什么样的，请帮帮我！
 		_, ok = containerData["Name"]
 		if !ok {
-			return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Name\"]; container[%v] = %#v", key, key, containerData)
+			return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"Name\"]; container[%v] = %#v", key, key, containerData)
 		}
 		got, normal := containerData["Name"].(string)
 		if !normal {
-			return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Name\"]; container[%v] = %#v", key, key, containerData)
+			return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"Name\"]; container[%v] = %#v", key, key, containerData)
 		}
 		name = strings.Replace(got, "minecraft:", "", 1)
 		// 拿一下这个物品的物品名称
@@ -156,7 +179,7 @@ func GetContainerData(container interface{}) (types.ChestData, error) {
 		if ok {
 			got, normal := containerData["Slot"].(byte)
 			if !normal {
-				return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Slot\"]; container[%v] = %#v", key, key, containerData)
+				return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"Slot\"]; container[%v] = %#v", key, key, containerData)
 			}
 			slot = uint8(got)
 		}
@@ -173,18 +196,18 @@ func GetContainerData(container interface{}) (types.ChestData, error) {
 	return ans, nil
 }
 
-// 主函数
-func GetContainerDataRun(blockNBT map[string]interface{}, blockName string) (types.ChestData, error) {
-	key, err := CheckIfIsEffectiveContainer(blockName)
+// 取得容器数据的主函数
+func getContainerDataRun(blockNBT map[string]interface{}, blockName string) (types.ChestData, error) {
+	key, err := checkIfIsEffectiveContainer(blockName)
 	if err != nil {
-		return types.ChestData{}, fmt.Errorf("GetContainerDataRun: Not a supported container")
+		return types.ChestData{}, fmt.Errorf("getContainerDataRun: Not a supported container")
 	}
 	got, ok := blockNBT[key]
 	// 这里是确定一下这个容器是否是我们支持了的容器
 	if ok {
-		ans, err := GetContainerData(got)
+		ans, err := getContainerData(got)
 		if err != nil {
-			return types.ChestData{}, fmt.Errorf("GetContainerDataRun: %v", err)
+			return types.ChestData{}, fmt.Errorf("getContainerDataRun: %v", err)
 		}
 		return ans, nil
 	}
@@ -192,4 +215,30 @@ func GetContainerDataRun(blockNBT map[string]interface{}, blockName string) (typ
 	return types.ChestData{}, nil
 	// 对于唱片机和讲台这种容器，如果它们没有被放物品的话，那么对应的 key 是找不到的
 	// 但是这不是一个错误，所以我们返回一个空的 types.ChestData 和一个空的 error
+}
+
+func placeContainer(
+	environment *environment.PBEnvironment,
+	Mainsettings *types.MainConfig,
+	BlockInfo *types.Module,
+) error {
+	cmdsender := environment.CommandSender.(*commands.CommandSender)
+	// prepare
+	if BlockInfo.Block != nil {
+		request := commands_generator.SetBlockRequest(BlockInfo, Mainsettings)
+		_, err := cmdsender.SendWSCommandWithResponce(request)
+		if err != nil {
+			return fmt.Errorf("placeContainer: %v", err)
+		}
+	}
+	// place block
+	got := commands_generator.ReplaceItemRequest(BlockInfo, Mainsettings)
+	for _, value := range got {
+		err := cmdsender.SendDimensionalCommand(value)
+		if err != nil {
+			return fmt.Errorf("placeContainer: %v", err)
+		}
+	}
+	// replaceitem
+	return nil
 }

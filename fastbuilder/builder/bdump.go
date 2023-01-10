@@ -298,13 +298,13 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 				return fmt.Errorf("Error: BlockConstantStringID exceeded BlockPool length")
 			}
 			blockName := &blocksStrPool[int(cmd.BlockConstantStringID)]
-			pos:=types.Position{
+			pos := types.Position{
 				X: brushPosition[0] + config.Position.X,
 				Y: brushPosition[1] + config.Position.Y,
 				Z: brushPosition[2] + config.Position.Z,
 			}
 			blc <- &types.Module{
-				Block: &types.Block {
+				Block: &types.Block{
 					Name: blockName,
 					Data: cmd.BlockData,
 				},
@@ -339,6 +339,19 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			}
 		case *command.AssignNBTData:
 			// We are not able to do anything with those data currently
+		case *command.PlaceBlockWithNBTData:
+			blc <- &types.Module{
+				Block: &types.Block{
+					Name:        &blocksStrPool[int(cmd.BlockConstantStringID)],
+					BlockStates: &cmd.BlockStatesString,
+				},
+				StringNBT: &cmd.StringNBT,
+				Point: types.Position{
+					X: brushPosition[0] + config.Position.X,
+					Y: brushPosition[1] + config.Position.Y,
+					Z: brushPosition[2] + config.Position.Z,
+				},
+			}
 		case *command.PlaceBlockWithBlockStates:
 			if int(cmd.BlockConstantStringID) >= len(blocksStrPool) {
 				return fmt.Errorf("Error: BlockID exceeded BlockPool")

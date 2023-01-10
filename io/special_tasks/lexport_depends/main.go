@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"phoenixbuilder/fastbuilder/types"
-	TranslateNBTInerface "phoenixbuilder/io/special_tasks/lexport_depends/TranslateNBTInterface"
 	"strconv"
 	"strings"
 )
@@ -209,7 +208,7 @@ func GetMCStructureData(area Area, structure map[string]interface{}) (Mcstructur
 		if !normal {
 			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"states\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
 		}
-		blockStates, err := TranslateNBTInerface.Compound(value_states, true)
+		blockStates, err := Compound(value_states, true)
 		if err != nil {
 			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"states\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
 		}
@@ -399,10 +398,6 @@ func ExportBaseOnChunkSize(
 				}
 				// 获得基本信息
 				var hasNBT bool = false
-				var containerDataMark bool = false
-				var containerData types.ChestData = types.ChestData{}
-				var commandBlockDataMark bool = false
-				var commandBlockData types.CommandBlockData = types.CommandBlockData{}
 				var string_nbt string = ""
 				var err error = fmt.Errorf("ExportBaseOnChunk: Initialization error")
 				// 变量初始化
@@ -427,46 +422,28 @@ func ExportBaseOnChunkSize(
 							return []*types.Module{}, fmt.Errorf("ExportBaseOnChunk: Crashed by invalid \"block_entity_data\", occured in %#v", block_position_data["block_entity_data"])
 						}
 						// 拿一下这个方块的方块实体数据
-						containerData, err = TranslateNBTInerface.GetContainerDataRun(block_entity_data, foreground_blockName)
-						if fmt.Sprintf("%v", err) != "GetContainerDataRun: Not a supported container" && err != nil {
-							return []*types.Module{}, fmt.Errorf("ExportBaseOnChunk: %v", err)
-						}
-						// 检查一下这个 NBT 方块是不是容器，如果不是会返回一个叫做 "GetContainerDataRun: Not a supported container" 的错误
-						if err == nil {
-							containerDataMark = true
-							// 标记当前被处理的方块是一个容器
-							if foreground_blockName == "chest" || foreground_blockName == "trapped_chest" {
-								var useOfChest string = "chest"
-								if foreground_blockName == "chest" {
-									useOfChest = "trapped_chest"
-								}
-								// 如果这是个箱子，那么先放个陷阱箱
-								// 反过来，如果这是个陷阱箱，那么先放个箱子
-								ans = append(ans, &types.Module{
-									Block: &types.Block{
-										Name: &useOfChest,
-										Data: 0,
-									},
-									Point: types.Position{
-										X: i[KEY].BeginX - currentExport.BeginX,
-										Y: i[KEY].BeginY + j - currentExport.BeginY,
-										Z: i[KEY].BeginZ - currentExport.BeginZ,
-									},
-								})
+						if foreground_blockName == "chest" || foreground_blockName == "trapped_chest" {
+							var useOfChest string = "chest"
+							if foreground_blockName == "chest" {
+								useOfChest = "trapped_chest"
 							}
-							// 对于箱子和陷阱箱的附加处理是为了解决箱子间的连接问题，让所有的箱子都不再连接；不知道有没有人愿意解决这个问题呢？
+							// 如果这是个箱子，那么先放个陷阱箱
+							// 反过来，如果这是个陷阱箱，那么先放个箱子
+							ans = append(ans, &types.Module{
+								Block: &types.Block{
+									Name: &useOfChest,
+									Data: 0,
+								},
+								Point: types.Position{
+									X: i[KEY].BeginX - currentExport.BeginX,
+									Y: i[KEY].BeginY + j - currentExport.BeginY,
+									Z: i[KEY].BeginZ - currentExport.BeginZ,
+								},
+							})
 						}
-						// 容器
-						if foreground_blockName == "command_block" || foreground_blockName == "repeating_command_block" || foreground_blockName == "chain_command_block" {
-							commandBlockData, err = TranslateNBTInerface.GetCommandBlockData(block_entity_data, foreground_blockName)
-							if err != nil {
-								return []*types.Module{}, fmt.Errorf("ExportBaseOnChunk: %v", err)
-							}
-							commandBlockDataMark = true
-						}
-						// 命令方块
+						// 对于箱子和陷阱箱的附加处理是为了解决箱子间的连接问题，让所有的箱子都不再连接；不知道有没有人愿意解决这个问题呢？
 						hasNBT = true
-						string_nbt, err = TranslateNBTInerface.Compound(block_entity_data, false)
+						string_nbt, err = Compound(block_entity_data, false)
 						if err != nil {
 							return []*types.Module{}, fmt.Errorf("ExportBaseOnChunk: %v", err)
 						}
@@ -502,29 +479,14 @@ func ExportBaseOnChunkSize(
 						},
 					}
 					// 简单地初始化一下一个单个的元素
-					if commandBlockDataMark {
-						single.Block.Data = uint16(foreground_blockData)
-						single.CommandBlockData = &commandBlockData
-					}
-					// 命令方块
-					if !commandBlockDataMark && containerDataMark {
-						single.Block.Data = uint16(foreground_blockData)
-						single.ChestData = &containerData
-					}
-					// 容器
-					// 优先级比命令方块低一些
 					if hasNBT {
-						single.NBTData = []byte(string_nbt)
+						single.StringNBT = &string_nbt
+						single.Block.Data = uint16(foreground_blockData) // use for container
 					}
-					// operation 39 - RecordBlockEntityData
-					// 更多信息请见
-					// https://github.com/LNSSPsd/PhoenixBuilder/issues/83
-					if !commandBlockDataMark && !containerDataMark {
-						single.Block.BlockStates = &foreground_blockStates
-					}
-					// 普通方块
+					single.Block.BlockStates = &foreground_blockStates
+					// 放入数据
 					ans = append(ans, single)
-					// 提交单个元素
+					// 提交
 				}
 				// 放置前景层的方块
 			}
