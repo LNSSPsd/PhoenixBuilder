@@ -7,8 +7,8 @@ github.com/Kodeworks/golang-image-ico v0.0.0-20141118225523-73f0f4cfade9/go.mod 
 github.com/MarvinJWendt/testza v0.1.0 h1:4m+JkB/4e0nUlXdIa10Mg0poUz9CanQKjB3L+xecjAo=
 github.com/MarvinJWendt/testza v0.1.0/go.mod h1:7AxNvlfeHP7Z/hDQ5JtE3OKYT3XFUeLCDE2DQninSqs=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
-github.com/Tnze/go-mc v1.17.0 h1:eux33waaSNAUJmnRjYjUmR3NgoHgQStFxHSBYg9I1WM=
-github.com/Tnze/go-mc v1.17.0/go.mod h1:t0AI38F1BEmmy8/uLhr9RCOUeDbBj3oUNQH9akjzMc0=
+github.com/Tnze/go-mc v1.17.1 h1:Dt5xBw3fPQTMIgH4831njCqF35YJ5k3tfw1H5p379UA=
+github.com/Tnze/go-mc v1.17.1/go.mod h1:t0AI38F1BEmmy8/uLhr9RCOUeDbBj3oUNQH9akjzMc0=
 github.com/akavel/rsrc v0.8.0/go.mod h1:uLoCtb9J+EyAqh+26kdrTgmzRBFPGOolLWKpdxkKq+c=
 github.com/andybalholm/brotli v1.0.3/go.mod h1:fO7iG3H7G2nSZ7m0zPUDn85XEX2GTukHGRSepvi9Eig=
 github.com/andybalholm/brotli v1.0.4 h1:V7DdXeJtZscaqfNuAdSRuRFzuiKlHSC/Zh3zl9qY3JY=

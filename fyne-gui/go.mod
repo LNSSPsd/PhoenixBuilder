@@ -44,7 +44,7 @@ require (
 )
 
 require (
-	github.com/Tnze/go-mc v1.17.0 // indirect
+	github.com/Tnze/go-mc v1.17.1 // indirect
 	github.com/brentp/intintmap v0.0.0-20190211203843-30dc0ade9af9 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/disintegration/imaging v1.6.2 // indirect
