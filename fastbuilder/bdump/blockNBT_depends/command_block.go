@@ -53,7 +53,7 @@ func parseCommandBlockData(Cb map[string]interface{}, BlockName string) (types.C
 	if ok {
 		command, normal = Cb["Command"].(string)
 		if !normal {
-			return types.CommandBlockData{}, fmt.Errorf("CommandBlockParseData: Crashed in Cb[\"Command\"]; Cb = %#v", Cb)
+			return types.CommandBlockData{}, fmt.Errorf("parseCommandBlockData: Crashed in Cb[\"Command\"]; Cb = %#v", Cb)
 		}
 	}
 	// Command
@@ -61,7 +61,7 @@ func parseCommandBlockData(Cb map[string]interface{}, BlockName string) (types.C
 	if ok {
 		customName, normal = Cb["CustomName"].(string)
 		if !normal {
-			return types.CommandBlockData{}, fmt.Errorf("CommandBlockParseData: Crashed in Cb[\"CustomName\"]; Cb = %#v", Cb)
+			return types.CommandBlockData{}, fmt.Errorf("parseCommandBlockData: Crashed in Cb[\"CustomName\"]; Cb = %#v", Cb)
 		}
 	}
 	// CustomName
@@ -69,7 +69,7 @@ func parseCommandBlockData(Cb map[string]interface{}, BlockName string) (types.C
 	if ok {
 		lastOutput, normal = Cb["LastOutput"].(string)
 		if !normal {
-			return types.CommandBlockData{}, fmt.Errorf("CommandBlockParseData: Crashed in Cb[\"LastOutput\"]; Cb = %#v", Cb)
+			return types.CommandBlockData{}, fmt.Errorf("parseCommandBlockData: Crashed in Cb[\"LastOutput\"]; Cb = %#v", Cb)
 		}
 	}
 	// LastOutput
@@ -80,14 +80,14 @@ func parseCommandBlockData(Cb map[string]interface{}, BlockName string) (types.C
 	} else if BlockName == "chain_command_block" {
 		mode = 2
 	} else {
-		return types.CommandBlockData{}, fmt.Errorf("CommandBlockParseData: Not a command block; Cb = %#v", Cb)
+		return types.CommandBlockData{}, fmt.Errorf("parseCommandBlockData: Not a command block; Cb = %#v", Cb)
 	}
 	// mode
 	_, ok = Cb["TickDelay"]
 	if ok {
 		tickDelay, normal = Cb["TickDelay"].(int32)
 		if !normal {
-			return types.CommandBlockData{}, fmt.Errorf("CommandBlockParseData: Crashed in Cb[\"TickDelay\"]; Cb = %#v", Cb)
+			return types.CommandBlockData{}, fmt.Errorf("parseCommandBlockData: Crashed in Cb[\"TickDelay\"]; Cb = %#v", Cb)
 		}
 	}
 	// TickDelay
@@ -95,7 +95,7 @@ func parseCommandBlockData(Cb map[string]interface{}, BlockName string) (types.C
 	if ok {
 		got, normal := Cb["ExecuteOnFirstTick"].(byte)
 		if !normal {
-			return types.CommandBlockData{}, fmt.Errorf("CommandBlockParseData: Crashed in Cb[\"ExecuteOnFirstTick\"]; Cb = %#v", Cb)
+			return types.CommandBlockData{}, fmt.Errorf("parseCommandBlockData: Crashed in Cb[\"ExecuteOnFirstTick\"]; Cb = %#v", Cb)
 		}
 		if got == byte(0) {
 			executeOnFirstTick = false
@@ -108,7 +108,7 @@ func parseCommandBlockData(Cb map[string]interface{}, BlockName string) (types.C
 	if ok {
 		got, normal := Cb["TrackOutput"].(byte)
 		if !normal {
-			return types.CommandBlockData{}, fmt.Errorf("CommandBlockParseData: Crashed in Cb[\"TrackOutput\"]; Cb = %#v", Cb)
+			return types.CommandBlockData{}, fmt.Errorf("parseCommandBlockData: Crashed in Cb[\"TrackOutput\"]; Cb = %#v", Cb)
 		}
 		if got == byte(0) {
 			trackOutput = false
@@ -121,7 +121,7 @@ func parseCommandBlockData(Cb map[string]interface{}, BlockName string) (types.C
 	if ok {
 		got, normal := Cb["conditionalMode"].(byte)
 		if !normal {
-			return types.CommandBlockData{}, fmt.Errorf("CommandBlockParseData: Crashed in Cb[\"conditionalMode\"]; Cb = %#v", Cb)
+			return types.CommandBlockData{}, fmt.Errorf("parseCommandBlockData: Crashed in Cb[\"conditionalMode\"]; Cb = %#v", Cb)
 		}
 		if got == byte(0) {
 			conditionalMode = false
@@ -134,7 +134,7 @@ func parseCommandBlockData(Cb map[string]interface{}, BlockName string) (types.C
 	if ok {
 		got, normal := Cb["auto"].(byte)
 		if !normal {
-			return types.CommandBlockData{}, fmt.Errorf("CommandBlockParseData: Crashed in Cb[\"auto\"]; Cb = %#v", Cb)
+			return types.CommandBlockData{}, fmt.Errorf("parseCommandBlockData: Crashed in Cb[\"auto\"]; Cb = %#v", Cb)
 		}
 		if got == byte(0) {
 			needRedstone = true
