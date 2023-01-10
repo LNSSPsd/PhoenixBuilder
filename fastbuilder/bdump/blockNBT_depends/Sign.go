@@ -14,9 +14,9 @@ import (
 // 这个结构体实际上是不需要的，但为了方便读者了解各个数据的数据类型，所以用了这样一个结构体
 type SignData struct {
 	TextOwner                   string
-	IgnoreLighting              bool
+	IgnoreLighting              byte
 	SignTextColor               int32
-	TextIgnoreLegacyBugResolved bool
+	TextIgnoreLegacyBugResolved byte
 	Text                        string
 }
 
@@ -39,9 +39,9 @@ func parseSignData(Sign *map[string]interface{}) (*SignData, error) {
 	var ok bool = false
 	var normal bool = false
 	var textOwner string = ""
-	var ignoreLighting bool = false
+	var ignoreLighting byte = byte(0)
 	var signTextColor int32 = 0
-	var textIgnoreLegacyBugResolved bool = false
+	var textIgnoreLegacyBugResolved byte = byte(0)
 	var text string = ""
 	// prepare
 	SIGN := *Sign
@@ -59,16 +59,9 @@ func parseSignData(Sign *map[string]interface{}) (*SignData, error) {
 	if !ok {
 		return &SignData{}, fmt.Errorf("parseSignData: Could not find Sign[\"IgnoreLighting\"]; Sign = %#v", SIGN)
 	}
-	got, normal := SIGN["IgnoreLighting"].(byte)
+	ignoreLighting, normal = SIGN["IgnoreLighting"].(byte)
 	if !normal {
 		return &SignData{}, fmt.Errorf("parseSignData: Could not parse Sign[\"IgnoreLighting\"]; Sign = %#v", SIGN)
-	}
-	if got == byte(0) {
-		ignoreLighting = false
-	} else if got == byte(1) {
-		ignoreLighting = true
-	} else {
-		return &SignData{}, fmt.Errorf("parseSignData: Unexpected data type, occured in [\"IgnoreLighting\"]; Sign = %#v", SIGN)
 	}
 	// IgnoreLighting
 	_, ok = SIGN["SignTextColor"]
@@ -84,16 +77,9 @@ func parseSignData(Sign *map[string]interface{}) (*SignData, error) {
 	if !ok {
 		return &SignData{}, fmt.Errorf("parseSignData: Could not find Sign[\"TextIgnoreLegacyBugResolved\"]; Sign = %#v", SIGN)
 	}
-	got, normal = SIGN["TextIgnoreLegacyBugResolved"].(byte)
+	textIgnoreLegacyBugResolved, normal = SIGN["TextIgnoreLegacyBugResolved"].(byte)
 	if !normal {
 		return &SignData{}, fmt.Errorf("parseSignData: Could not parse Sign[\"TextIgnoreLegacyBugResolved\"]; Sign = %#v", SIGN)
-	}
-	if got == byte(0) {
-		textIgnoreLegacyBugResolved = false
-	} else if got == byte(1) {
-		textIgnoreLegacyBugResolved = true
-	} else {
-		return &SignData{}, fmt.Errorf("parseSignData: Unexpected data type, occured in [\"TextIgnoreLegacyBugResolved\"]; Sign = %#v", SIGN)
 	}
 	// TextIgnoreLegacyBugResolved
 	_, ok = SIGN["Text"]
