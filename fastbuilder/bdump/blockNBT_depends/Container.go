@@ -9,6 +9,28 @@ import (
 	"strings"
 )
 
+var ContainerIndexList map[string]string = map[string]string{
+	"blast_furnace":      "Items",
+	"lit_blast_furnace":  "Items",
+	"smoker":             "Items",
+	"lit_smoker":         "Items",
+	"furnace":            "Items",
+	"lit_furnace":        "Items",
+	"chest":              "Items",
+	"barrel":             "Items",
+	"trapped_chest":      "Items",
+	"lectern":            "book",
+	"hopper":             "Items",
+	"dispenser":          "Items",
+	"dropper":            "Items",
+	"cauldron":           "Items",
+	"lava_cauldron":      "Items",
+	"jukebox":            "RecordItem",
+	"brewing_stand":      "Items",
+	"undyed_shulker_box": "Items",
+	"shulker_box":        "Items",
+}
+
 type ContainerInput struct {
 	ContainerData *map[string]interface{}
 	Environment   *environment.PBEnvironment
@@ -32,28 +54,7 @@ func Container(input *ContainerInput) error {
 }
 
 func checkIfIsEffectiveContainer(name string) (string, error) {
-	index := map[string]string{
-		"blast_furnace":      "Items",
-		"lit_blast_furnace":  "Items",
-		"smoker":             "Items",
-		"lit_smoker":         "Items",
-		"furnace":            "Items",
-		"lit_furnace":        "Items",
-		"chest":              "Items",
-		"barrel":             "Items",
-		"trapped_chest":      "Items",
-		"lectern":            "book",
-		"hopper":             "Items",
-		"dispenser":          "Items",
-		"dropper":            "Items",
-		"cauldron":           "Items",
-		"lava_cauldron":      "Items",
-		"jukebox":            "RecordItem",
-		"brewing_stand":      "Items",
-		"undyed_shulker_box": "Items",
-		"shulker_box":        "Items",
-	}
-	value, ok := index[name]
+	value, ok := ContainerIndexList[name]
 	if ok {
 		return value, nil
 	}
