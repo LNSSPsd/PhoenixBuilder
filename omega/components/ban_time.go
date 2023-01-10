@@ -57,7 +57,7 @@ type bannedDeviceIDDetails struct {
 func (o *BanTime) Init(cfg *defines.ComponentConfig) {
 	if cfg.Version == "0.0.1" {
 		cfg.Version = "0.0.2"
-		cfg.Configs["设备封禁时踢出指令"] = []string{"kick [player] 当前设备已被临时封禁\n剩余时间: [day]天[hour]时[min]分[sec]秒"}
+		cfg.Configs["设备封禁时踢出指令"] = []string{"kick [player] 当前设备已被封禁\n剩余时间: [day]天[hour]时[min]分[sec]秒"}
 		cfg.Configs["是否检查设备ID"] = false
 		cfg.Configs["设备ID相关说明"] = "机器人仅能获取到附近玩家的设备ID, 建议在玩家上线时将机器人传送至其位置"
 		cfg.Upgrade()
