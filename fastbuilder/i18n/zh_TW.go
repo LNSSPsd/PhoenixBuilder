@@ -72,7 +72,7 @@ var I18nDict_zh_TW map[uint16]string = map[uint16]string{
 	InvalidPosition:                     "未獲取到有效座標。（可忽略此錯誤）",
 	Lang_Config_ErrOnCreate:             "建立語言配置文檔時出錯：%v",
 	Lang_Config_ErrOnSave:               "儲存语言配置時出錯：%v",
-	LanguageName:                        "繁體中文（台灣）",
+	LanguageName:                        "繁體中文（中国台灣）",
 	LanguageUpdated:                     "语言偏好已更新",
 	Logout_Done:                         "已从FastBuilder用戶中心退出登入。",
 	Menu_BackButton:                     "< 返回",
