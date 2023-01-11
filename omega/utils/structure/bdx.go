@@ -581,16 +581,22 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 					RTID: runtimeIdPoolUsing.Convert(dataval),
 					NBT:  commandBlockNbt,
 				}
-			} else if cmd == 37 || cmd == 38 {
+			} else if cmd == 37 || cmd == 38 || cmd == 40 {
 				// var runtimeId uint32
-				if cmd == 37 {
+				if cmd == 37 || cmd == 40 {
 					rIdBuf := make([]byte, 2)
 					_, err = br.Read(rIdBuf)
 					// runtimeId = uint32(binary.BigEndian.Uint16(rIdBuf))
+					// 当 cmd = 40 时，这时候读取的是“BlockConstantStringID uint16”
 				} else {
 					rIdBuf := make([]byte, 4)
 					_, err = br.Read(rIdBuf)
 					// runtimeId = binary.BigEndian.Uint32(rIdBuf)
+				}
+				if cmd == 40 {
+					BlockData := make([]byte, 2)
+					_, err = br.Read(BlockData)
+					// BlockData uint16
 				}
 				slotCountCon := make([]byte, 1)
 				br.Read(slotCountCon)
