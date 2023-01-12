@@ -7,7 +7,7 @@ body:
     label: "检查项"
     description: "请检查下列项目，并勾选确认。"
     options:
-    - label: "我已在 [Issues 页面](https://github.com/LNSSPsd/PhoenixBuilder/issues?q=is%3Aissue+) 中搜索，确认了这一 Bug 未被提交过。"
+    - label: "我已在 [Issues 页面](https://github.com/LNSSPsd/PhoenixBuilder/issues?q=is%3Aissue+) 中搜索，确认了在已激活的议题中这一议题未被提及过。"
       required: true
 - type: textarea
   id: "yml-2"
