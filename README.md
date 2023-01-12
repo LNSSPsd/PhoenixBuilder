@@ -1,6 +1,6 @@
 # PhoenixBuilder
 
-[standard-readme compliant](https://img.shields.io/badge/License-AGPL%203.0-brightgreen.svg?style=flat-square)
+![license](https://img.shields.io/badge/License-AGPL%203.0-brightgreen.svg?style=flat-square)
 
 PhoenixBuilder is a multifunctional structure generating tool for the Bedrock Edition of Minecraft (which forked by NetEase),based on gophertunnel.
 
