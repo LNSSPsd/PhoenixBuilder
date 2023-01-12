@@ -9,7 +9,7 @@ var I18nDict_zh_CN map[uint16]string = map[uint16]string{
 	Auth_FailedToRequestEntry:           "未能请求租赁服入口，请检查租赁服等级设置是否关闭及租赁服密码是否正确。",
 	Auth_HelperNotCreated： 		    "辅助用户尚未创建，请前往用户中心进行创建。",
 	Auth_InvalidFBVersion: 	             "Fastbuilder版本不是最新版，请更新或用'--no-update-check'启动。",
-	Auth_HelperNotCreated： 		    "辅助用户尚未创建，请前往用户中心进行创建。"
+	Auth_HelperNotCreated： “辅助用户尚未创建，请前往用户中心进行创建。",
 	Auth_InvalidToken:                   "无效Token，请重新登录。",
 	Auth_InvalidUser:                    "无效用户，请重新登录。",
 	Auth_ServerNotFound:                 "租赁服未找到，请检查租赁服是否对所有人开放。",
