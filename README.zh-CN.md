@@ -18,7 +18,8 @@ PhoenixBuilder 是一个基于 gophertunnel 的《我的世界:基岩版》多�
 
 你可以在[Releases选项卡](https://github.com/LNSSPsd/PhoenixBuilder/releases)中选择下载适用于您设备的预构建版本
 
-如果您的设备基于Linux则推荐使用Ubuntu22.04，预构建的文件需要相对较高的`libc6`版本
+如果您的运行环境基于Linux，则推荐使用较高版本的Glibc，这是因为预构建是在Ubuntu 22上完成的。
+或者，您可以选择在您的本地环境下编译本源码。
 
 ## 使用说明
 
