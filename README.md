@@ -2,7 +2,7 @@
 
 Language tab
 
-[中文简体](./README.zh-CN.md)|[English](./README.md)
+[English](./README.md) | [中文简体](./README.zh-CN.md)
 
 [![license](https://img.shields.io/badge/License-AGPL%203.0-brightgreen.svg?style=flat-square)](https://github.com/LNSSPsd/PhoenixBuilder/blob/main/LICENSE)
 
