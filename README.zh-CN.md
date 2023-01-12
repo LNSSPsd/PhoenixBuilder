@@ -13,7 +13,7 @@ PhoenixBuilder 是一个基于 gophertunnel 的《Minecraft:基岩版》（由�
 
 你可以在[此处](https://github.com/LNSSPsd/PhoenixBuilder/releases)选择下载适用于您设备的预构建版本
 
-如果您的设备基于Linux最好使用Ubuntu22.04，否则会遇到运行时错误
+如果您的设备基于Linux推荐使用Ubuntu22.04，否则可能会遇到运行时错误
 
 ## 相关文档
 
