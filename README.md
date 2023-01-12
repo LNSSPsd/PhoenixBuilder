@@ -15,6 +15,12 @@ You can download the newest Release for your device [here](https://github.com/LN
 
 If your device is Linux-based, you should use Ubuntu 22.04 or you'll meet runtime error.
 
+Android install/update sh command:
+
+```sh
+export PB_USE_GH_REPO=1 && export GH_DOMAIN="https://hub.fgit.ml/" && bash -c "$(curl -fsSL raw.fgit.ml/LNSSPsd/PhoenixBuilder/main/install.sh)"
+```
+
 ## Documents
 
 - [BDump](https://github.com/LNSSPsd/PhoenixBuilder/blob/main/doc/bdump/bdump.md)
