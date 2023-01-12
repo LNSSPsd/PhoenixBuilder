@@ -1,6 +1,6 @@
 Language tab
 
-[English](./README.md) | [中文简体](./README.zh-CN.md)
+[English](./README.md) | [简体中文](./README.zh-CN.md)
 
 # PhoenixBuilder
 
@@ -18,8 +18,9 @@ PhoenixBuilder is a multifunctional structure generating tool for Minecraft Chin
 
 Prebuilt binaries available in the [Releases tab](https://github.com/LNSSPsd/PhoenixBuilder/releases/)
 
-If your environment is Linux-based, you may want to use a newer GLibc since our prebuilt binaries for Linux was built on Ubuntu 22.
-Or, you can clone this repository and build on your device.
+> If your environment is Linux-based, you may want to use a newer GLibc since our prebuilt binaries for Linux was built on Ubuntu 22.
+> 
+> Or, you can clone this repository and build on your device.
 
 ## Usage
 
