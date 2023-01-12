@@ -18,7 +18,8 @@ PhoenixBuilder is a multifunctional structure generating tool for Minecraft Chin
 
 Prebuilt binaries available in the [Releases tab](https://github.com/LNSSPsd/PhoenixBuilder/releases/)
 
-If your device is Linux-based, you should use Ubuntu 22.04.Because that those prebuilt binaries require a relatively high `Libc6` version.
+If your environment is Linux-based, you may want to use a newer GLibc since our prebuilt binaries for Linux was built on Ubuntu 22.
+Or, you can clone this repository and build on your device.
 
 ## Usage
 
