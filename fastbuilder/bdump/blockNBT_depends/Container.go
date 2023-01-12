@@ -29,6 +29,9 @@ var ContainerIndexList map[string]string = map[string]string{
 	"brewing_stand":      "Items",
 	"undyed_shulker_box": "Items",
 	"shulker_box":        "Items",
+	// 以上都是现阶段支持了的容器
+	"frame":      "Item",
+	"glow_frame": "Item",
 }
 
 type ContainerInput struct {

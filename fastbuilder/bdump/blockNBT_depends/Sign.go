@@ -11,7 +11,6 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
-// 这个结构体实际上是不需要的，但为了方便读者了解各个数据的数据类型，所以用了这样一个结构体
 type SignData struct {
 	TextOwner                   string
 	IgnoreLighting              byte

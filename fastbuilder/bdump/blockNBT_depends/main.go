@@ -89,6 +89,9 @@ var index = map[string]string{
 	"crimson_hanging_sign":   "Sign",
 	"warped_hanging_sign":    "Sign",
 	// 告示牌
+	"glow_frame": "Frame",
+	"frame":      "Frame",
+	// 物品展示框
 }
 
 // 检查这个方块实体是否已被支持
@@ -140,6 +143,17 @@ func placeBlockWithNBTData(input *input) (interface{}, error) {
 			return nil, fmt.Errorf("placeBlockWithNBTData: %v", err)
 		}
 		// 告示牌
+	case "Frame":
+		err = Frame(&FrameInput{
+			Environment:  input.Environment,
+			Mainsettings: input.Mainsettings,
+			BlockInfo:    input.BlockInfo,
+			Frame:        input.BlockNBT,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("placeBlockWithNBTData: %v", err)
+		}
+		// 物品展示框
 	default:
 		request := commands_generator.SetBlockRequest(input.BlockInfo, input.Mainsettings)
 		cmdsender := input.Environment.CommandSender.(*commands.CommandSender)
