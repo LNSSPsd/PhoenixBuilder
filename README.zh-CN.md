@@ -4,6 +4,8 @@
 
 PhoenixBuilder 是一个基于 gophertunnel 的《Minecraft:基岩版》（由网易代理）多功能结构生成工具。
 
+[FastBuilder官网](https://fastbulider.pro)
+
 ## 内容列表
 
 - [安装](#安装)
