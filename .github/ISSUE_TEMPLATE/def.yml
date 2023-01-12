@@ -1,0 +1,26 @@
+name: "综合反馈"
+description: "提出疑问或反馈Bug"
+body:
+- type: checkboxes
+  id: "yml-1"
+  attributes:
+    label: "检查项"
+    description: "请检查下列项目，并勾选确认。"
+    options:
+    - label: "我已在 [Issues 页面](https://github.com/LNSSPsd/PhoenixBuilder/issues?q=is%3Aissue+) 中搜索，确认了这一 Bug 未被提交过。"
+      required: true
+- type: textarea
+  id: "yml-2"
+  attributes:
+    label: 描述
+    description: "请详细描述您想要反馈的项目"
+  validations:
+    required: true
+- type: textarea
+  id: "yml-3"
+  attributes:
+    label: 附件
+    description: "上传其余附件"
+    placeholder: "先点击这个文本框，然后再将文件直接拖拽到文本框中以上传。"
+  validations:
+    required: false
