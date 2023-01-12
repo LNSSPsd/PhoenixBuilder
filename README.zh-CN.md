@@ -2,9 +2,7 @@
 
 [![license](https://img.shields.io/badge/License-AGPL%203.0-brightgreen.svg?style=flat-square)](https://github.com/LNSSPsd/PhoenixBuilder/blob/main/LICENSE)
 
-PhoenixBuilder 是一个基于 gophertunnel 的《Minecraft:基岩版》（由网易代理）多功能结构生成工具。
-
-[FastBuilder官网](https://fastbulider.pro)
+PhoenixBuilder 是一个基于 gophertunnel 的多功能 Minecraft 中国版 结构生成工具。
 
 ## 内容列表
 
@@ -14,15 +12,9 @@ PhoenixBuilder 是一个基于 gophertunnel 的《Minecraft:基岩版》（由�
 
 ## 安装
 
-你可以在[此处](https://github.com/LNSSPsd/PhoenixBuilder/releases)选择下载适用于您设备的预构建版本
+你可以在[Releases选项卡](https://github.com/LNSSPsd/PhoenixBuilder/releases)中选择下载适用于您设备的预构建版本
 
-如果您的设备基于Linux推荐使用Ubuntu22.04，否则可能会遇到运行时错误
-
-附Linux平台安装/更新sh命令（方法同样适用于iOS/macOS/Android等类unix）:
-
-```sh
-export PB_USE_GH_REPO=1 && export GH_DOMAIN="https://hub.fgit.ml/" && bash -c "$(curl -fsSL raw.fgit.ml/LNSSPsd/PhoenixBuilder/main/install.sh)"
-```
+如果您的设备基于Linux则推荐使用Ubuntu22.04，预构建的文件需要相对较高的`libc6`版本
 
 ## 使用说明
 
