@@ -8,7 +8,8 @@ PhoenixBuilder is a multifunctional structure generating tool based on gophertun
 
 ## Table of Contents
 
-- [Install](#install)
+- [Install](#Install)
+- [Usage](#Usage)
 - [Documents](#Documents)
 
 ## Install
@@ -22,6 +23,10 @@ Android install/update sh command:
 ```sh
 export PB_USE_GH_REPO=1 && export GH_DOMAIN="https://hub.fgit.ml/" && bash -c "$(curl -fsSL raw.fgit.ml/LNSSPsd/PhoenixBuilder/main/install.sh)"
 ```
+
+## Usage
+
+Click [here](https://fastbuilder.pro/phoenix.html) to read
 
 ## Documents
 
