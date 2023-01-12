@@ -18,7 +18,7 @@ PhoenixBuilder 是一个基于 gophertunnel 的《Minecraft:基岩版》（由�
 
 如果您的设备基于Linux推荐使用Ubuntu22.04，否则可能会遇到运行时错误
 
-附安卓安装/更新shell命令:
+附Linux平台安装/更新sh命令（方法同样适用于iOS/macOS/Android等类unix）:
 
 ```sh
 export PB_USE_GH_REPO=1 && export GH_DOMAIN="https://hub.fgit.ml/" && bash -c "$(curl -fsSL raw.fgit.ml/LNSSPsd/PhoenixBuilder/main/install.sh)"
