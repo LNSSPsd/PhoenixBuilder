@@ -11,7 +11,8 @@ PhoenixBuilder is a multifunctional structure generating tool for the Bedrock Ed
 
 ## Install
 
-You can download the newest Release in [here](https://github.com/LNSSPsd/PhoenixBuilder/releases) and choose your device to use it.
+You can download the newest Release for your device [here](https://github.com/LNSSPsd/PhoenixBuilder/releases) to use it.
+If your device is Linux-based, you should use Ubuntu 22.04 or you'll meet runtime error
 
 ## Documents
 
