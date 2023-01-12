@@ -1,8 +1,8 @@
-# PhoenixBuilder
-
 语言选项卡
 
 [中文简体](./README.zh-CN.md) | [English](./README.md)
+
+# PhoenixBuilder
 
 [![license](https://img.shields.io/badge/License-AGPL%203.0-brightgreen.svg?style=flat-square)](https://github.com/LNSSPsd/PhoenixBuilder/blob/main/LICENSE)
 
