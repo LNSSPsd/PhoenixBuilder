@@ -6,7 +6,12 @@ PhoenixBuilder is a multifunctional structure generating tool for the Bedrock Ed
 
 ## Table of Contents
 
+- [Install](#install)
 - [Documents](#Documents)
+
+## Install
+
+You can download the newest Release in [here](https://github.com/LNSSPsd/PhoenixBuilder/releases) and choose your device to use it.
 
 ## Documents
 
