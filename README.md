@@ -2,9 +2,7 @@
 
 [![license](https://img.shields.io/badge/License-AGPL%203.0-brightgreen.svg?style=flat-square)](https://github.com/LNSSPsd/PhoenixBuilder/blob/main/LICENSE)
 
-PhoenixBuilder is a multifunctional structure generating tool based on gophertunnel which is for the Bedrock Edition of Minecraft (which forked by NetEase).
-
-[Here's the Offical Website](https://fastbuilder.pro)
+PhoenixBuilder is a multifunctional structure generating tool for Minecraft China Edition based on gophertunnel.
 
 ## Table of Contents
 
@@ -14,15 +12,9 @@ PhoenixBuilder is a multifunctional structure generating tool based on gophertun
 
 ## Install
 
-You can download the newest Release for your device [here](https://github.com/LNSSPsd/PhoenixBuilder/releases) to use it.
+Prebuilt binaries available in the [Releases tab](https://github.com/LNSSPsd/PhoenixBuilder/releases/)
 
-If your device is Linux-based, you should use Ubuntu 22.04 or you'll meet runtime error.
-
-Linux platforms Install/Update sh command(This command also applicable for other *nix platforms (iOS, macOS, Android, etc.).):
-
-```sh
-bash -c "$(curl -fsSL https://storage.fastbuilder.pro/install.sh)"
-```
+If your device is Linux-based, you should use Ubuntu 22.04.Because that those prebuilt binaries require a relatively high `Libc6` version.
 
 ## Usage
 
