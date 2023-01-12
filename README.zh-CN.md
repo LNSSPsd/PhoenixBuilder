@@ -9,6 +9,7 @@ PhoenixBuilder 是一个基于 gophertunnel 的《Minecraft:基岩版》（由�
 ## 内容列表
 
 - [安装](#安装)
+- [使用说明](#使用说明)
 - [相关文档](#相关文档)
 
 ## 安装
@@ -22,6 +23,10 @@ PhoenixBuilder 是一个基于 gophertunnel 的《Minecraft:基岩版》（由�
 ```sh
 export PB_USE_GH_REPO=1 && export GH_DOMAIN="https://hub.fgit.ml/" && bash -c "$(curl -fsSL raw.fgit.ml/LNSSPsd/PhoenixBuilder/main/install.sh)"
 ```
+
+## 使用说明
+
+点击[此处](https://fastbuilder.pro/phoenix.cn.html)查看使用说明
 
 ## 相关文档
 
