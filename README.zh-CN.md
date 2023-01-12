@@ -6,7 +6,7 @@
 
 [![license](https://img.shields.io/badge/License-AGPL%203.0-brightgreen.svg?style=flat-square)](https://github.com/LNSSPsd/PhoenixBuilder/blob/main/LICENSE)
 
-PhoenixBuilder 是一个基于 gophertunnel 的多功能 Minecraft 中国版 结构生成工具。
+PhoenixBuilder 是一个基于 gophertunnel 的《我的世界:基岩版》多功能结构生成工具。
 
 ## 内容列表
 
