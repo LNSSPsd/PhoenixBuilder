@@ -263,8 +263,8 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 			if err != nil {
 				return err
 			}
-		} else if mdl.StringNBT == nil {
-			if mdl.Block.BlockStates == nil {
+		} else {
+			if len(mdl.Block.BlockStates) == 0{
 				err := writer.WriteCommand(&command.PlaceBlock{
 					BlockConstantStringID: uint16(blocksPalette[*mdl.Block.Name]),
 					BlockData:             uint16(mdl.Block.Data),
@@ -275,7 +275,7 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 			} else {
 				err := writer.WriteCommand(&command.PlaceBlockWithBlockStates{
 					BlockConstantStringID: uint16(blocksPalette[*mdl.Block.Name]),
-					BlockStatesString:     *mdl.Block.BlockStates,
+					BlockStatesString:     mdl.Block.BlockStates,
 				})
 				if err != nil {
 					return err

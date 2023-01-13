@@ -455,7 +455,7 @@ func ExportBaseOnChunkSize(
 					ans = append(ans, &types.Module{
 						Block: &types.Block{
 							Name:        &background_blockName,
-							BlockStates: &background_blockStates,
+							BlockStates: background_blockStates,
 						},
 						Point: types.Position{
 							X: i[KEY].BeginX - currentExport.BeginX,
@@ -483,7 +483,7 @@ func ExportBaseOnChunkSize(
 						single.StringNBT = &string_nbt
 						single.Block.Data = uint16(foreground_blockData) // use for container
 					}
-					single.Block.BlockStates = &foreground_blockStates
+					single.Block.BlockStates = foreground_blockStates
 					// 放入数据
 					ans = append(ans, single)
 					// 提交
