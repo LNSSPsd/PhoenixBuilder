@@ -42,7 +42,9 @@ func (o *SeverToServerChatRoom) Init(cfg *defines.ComponentConfig) {
 		cfg.Upgrade()
 	}
 	if cfg.Version == "0.0.3" {
-		cfg.Configs["中心服务器地址"] = "222.187.232.63:24013"
+		if cfg.Configs["中心服务器地址"] == "124.222.13.238" {
+			pterm.Warning.Println("服服互通： 原服务器地址 124.222.13.238 已被弃用， 请在之后更改")
+		}
 		cfg.Configs["断线自动重连"] = false
 		cfg.Version = "0.0.4"
 		cfg.Upgrade()
@@ -61,11 +63,17 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 			if len(code) > 6 {
 				code = code[:6]
 			}
-			o.ServerName = "服务器-" + code
+			o.ServerName = "租赁服-" + code
 		} else {
-			o.ServerName = "匿名服务器"
+			o.ServerName = "匿名租赁服"
 		}
 		pterm.Warning.Println("服服互通: 还没有设置在公屏聊天栏显示的服务器名, 将会显示为", o.ServerName, ", 你可以在 配置文件-服服互通 中以更改")
+	}
+	if o.ServerAddr == "需要自行填写" {
+		panic(fmt.Errorf("服服互通： 还没有填写 中心服务器地址， 你需要自行填写或者查找可用的服务器"))
+	}
+	if !strings.Contains(o.ServerAddr, ":") {
+		panic(fmt.Errorf("服服互通： 中心服务器地址有误， 你可能忘记填写端口了(格式可能是：x.x.x.x:24013)"))
 	}
 	pterm.Info.Println("连接模式: ", o.Mode)
 	if o.Mode == "SuperScript@DotCS" {
@@ -180,18 +188,25 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 		if additonalData == nil {
 			panic(fmt.Errorf("该协议需要附加数据"))
 		}
+		if len(o.ServerName) > 15 {
+			for _p := 0; _p < 3; _p++ {
+				pterm.Warning.Println("服服互通： 服务器名长度大于15， 很可能无法连接至中心服务器！")
+			}
+		}
 		pterm.Info.Println("正在尝试登录到服服互通服务端..")
 		go func() {
 			for {
 				if retrying > 0 {
 					pterm.Info.Println(fmt.Sprintf("服服互通 第%v次重连中心服务器， 下次重连间隔将会变为%v秒", retrying, retryTime))
 				}
+				isConnected := false
 				conn, err := net.Dial("tcp", o.ServerAddr)
 				if err != nil {
 					pterm.Error.Println("无法连接至服服互通服务器: ", err)
 					return
 				} else {
 					pterm.Info.Println("已连接至服服互通服务器", o.ServerAddr)
+					isConnected = true
 					decoder := json.NewDecoder(conn)
 					// encoder := json.NewEncoder(conn)
 					var loginData struct {
@@ -211,20 +226,22 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 					token = nil
 					if loginData.NeedToken {
 						if additonalData == nil || additonalData["token"] == nil {
-							panic(fmt.Errorf("需要 token"))
+							panic(fmt.Errorf("服服互通： 该中心服务器需要 token"))
 						} else {
 							token = additonalData["token"]
 						}
 					}
 					sendJson := func(data interface{}) error {
-						if buf, err := json.Marshal(data); err != nil {
-							pterm.Error.Println(err)
-							return err
-						} else {
-							// pterm.Info.Println(buf)
-							if _, err := conn.Write(buf); err != nil {
-								printErr(err)
+						if isConnected {
+							if buf, err := json.Marshal(data); err != nil {
+								pterm.Error.Println(err)
 								return err
+							} else {
+								// pterm.Info.Println(buf)
+								if _, err := conn.Write(buf); err != nil {
+									printErr(err)
+									return err
+								}
 							}
 						}
 						return nil
@@ -237,6 +254,7 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 						"channel":    additonalData["频道"],
 						"robotType":  "Omega",
 					}); err != nil {
+						isConnected = false
 						if o.AutoReconnect {
 							pterm.Warning.Println(fmt.Sprintf("登录 服服互通服务端 时发生错误， 但是自动重连已打开， 将在 %vs 后尝试重连", retryTime))
 							time.Sleep(time.Duration(retryTime) * time.Second)
@@ -289,6 +307,7 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 						}
 						if err := decoder.Decode(&msg); err != nil {
 							printErr(err)
+							isConnected = false
 							if o.AutoReconnect {
 								pterm.Warning.Println(fmt.Sprintf("与 服服互通服务端 断开连接， 但是自动重连已打开， 将在 %vs 后尝试重连", retryTime))
 								time.Sleep(time.Duration(retryTime) * time.Second)
