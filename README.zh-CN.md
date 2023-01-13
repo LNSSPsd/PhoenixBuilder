@@ -1,12 +1,25 @@
-语言选项卡
+<p align="center">
+  <br>简体中文 | <a href="README.md">English</a>
+</p>
+<h1 align="center">PhoenixBuilder
+<p align="center">
+  <a href="https://github.com/LNSSPsd/PhoenixBuilder/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-AGPL%203.0-brightgreen.svg?style=flat" alt="LICENSE"></a>
+  <a href="https://github.com/LNSSPsd/PhoenixBuilder/releases"><img src="https://img.shields.io/github/v/release/LNSSPsd/PhoenixBuilder?display_name=tag&sort=semver" alt="lrelease"></a>
+  <a href="#"><img src="https://img.shields.io/github/commits-since/LNSSPsd/PhoenixBuilder/v4.0.0/main.svg?style=flat&color=gold" alt="commits"></a>
+  <a href="https://github.com/LNSSPsd/PhoenixBuilder/stargazers"><img src="https://img.shields.io/github/stars/LNSSPsd/PhoenixBuilder.svg?style=falt" alt="stars"></a>
+</p>
+  
+<p align="center">
+  <a href="https://github.com/LNSSPsd/PhoenixBuilder/issues"><img src="https://img.shields.io/github/issues/LNSSPsd/PhoenixBuilder.svg?style=flat" alt="opissues"></a>
+  <a href="https://github.com/LNSSPsd/PhoenixBuilder/issues?q=is%3Aissue+is%3Aclosed"><img src="https://img.shields.io/github/issues-closed/LNSSPsd/PhoenixBuilder.svg?style=flat&color=success" alt="clissues"></a>
+  <a href="https://github.com/LNSSPsd/PhoenixBuilder/pulls"><img src="https://img.shields.io/github/issues-pr/LNSSPsd/PhoenixBuilder.svg?style=falt" alt="oppr"></a>
+  <a href="https://github.com/LNSSPsd/PhoenixBuilder/pulls?q=is%3Apr+is%3Aclosed"><img src="https://img.shields.io/github/issues-pr-closed/LNSSPsd/PhoenixBuilder.svg?style=flat&color=success" alt="clpr"></a>
+</p>
+<p align="center">
+  <h5 align="center">PhoenixBuilder 是一个基于 gophertunnel 的《我的世界:基岩版》多功能结构生成工具。
+</p>
 
-[简体中文](./README.zh-CN.md) | [English](./README.md)
 
-# PhoenixBuilder
-
-[![license](https://img.shields.io/badge/License-AGPL%203.0-brightgreen.svg?style=flat-square)](https://github.com/LNSSPsd/PhoenixBuilder/blob/main/LICENSE)
-
-PhoenixBuilder 是一个基于 gophertunnel 的《我的世界:基岩版》多功能结构生成工具。
 
 ## 内容列表
 
