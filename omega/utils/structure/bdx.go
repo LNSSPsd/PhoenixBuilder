@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"phoenixbuilder/fastbuilder/bdump/blockNBT_depends"
+	"phoenixbuilder/fastbuilder/bdump/command"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/world_provider"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
-	"phoenixbuilder/fastbuilder/bdump/command"
 
 	"github.com/andybalholm/brotli"
 )
@@ -64,15 +65,15 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				break
 			}
 			_cmd, err := command.ReadCommand(br)
-			if(err!=nil) {
-				err=fmt.Errorf("%s: %v", I18n.T(I18n.BDump_FailedToGetConstructCmd), err)
+			if err != nil {
+				err = fmt.Errorf("%s: %v", I18n.T(I18n.BDump_FailedToGetConstructCmd), err)
 				return
 			}
-			_, isTerminate:=_cmd.(*command.Terminate)
+			_, isTerminate := _cmd.(*command.Terminate)
 			if isTerminate {
 				break
 			}
-			switch cmd:=_cmd.(type) {
+			switch cmd := _cmd.(type) {
 			case *command.CreateConstantString:
 				legacyRunTimeIDRemapper.AddBlockNamePalette(paletteIDCounter, cmd.ConstantString)
 				paletteIDCounter++
@@ -80,12 +81,10 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 			case *command.AddInt16ZValue0:
 				brushPosition[2] += int(cmd.Value)
 			case *command.PlaceBlock:
-				blockId := cmd.BlockConstantStringID
-				blockData := cmd.BlockData
 				blockChan <- &IOBlockForDecoder{
 					Pos:       brushPosition,
-					BlockName: legacyRunTimeIDRemapper.palatteIDToBlockNameMapping[blockId],
-					BlockData: blockData,
+					BlockName: legacyRunTimeIDRemapper.palatteIDToBlockNameMapping[cmd.BlockConstantStringID],
+					BlockData: cmd.BlockData,
 				}
 			case *command.AddZValue0:
 				brushPosition[2]++
@@ -94,16 +93,14 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 			case *command.AddInt32ZValue0:
 				brushPosition[2] += int(cmd.Value)
 			case *command.PlaceBlockWithBlockStates:
-				blockId := cmd.BlockConstantStringID
-				block_states_string := cmd.BlockStatesString
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos5], file may be corrupted")
 					return
 				}
 				blockChan <- &IOBlockForDecoder{
 					Pos:         brushPosition,
-					BlockStates: block_states_string,
-					BlockName:   legacyRunTimeIDRemapper.palatteIDToBlockNameMapping[blockId],
+					BlockStates: cmd.BlockStatesString,
+					BlockName:   legacyRunTimeIDRemapper.palatteIDToBlockNameMapping[cmd.BlockConstantStringID],
 				}
 			case *command.AddXValue:
 				brushPosition[0]++
@@ -132,6 +129,10 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 			case *command.SetCommandBlockData:
 				// Omega originally deal w/ it in a wrong way
 				// I have no idea on how to correct it.
+
+				// ^ 如果你读了注释就知道那个 blockName 是给 op13 用的
+				// ^ 而这个并不是 op13
+				// ——Happy2018new
 				commandBlockData := cmd.CommandBlockData
 				cbmode := commandBlockData.Mode
 				command := commandBlockData.Command
@@ -144,19 +145,36 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				case packet.CommandBlockChain:
 					blockName = "chain_command_block"
 				}
+				var executeOnFirstTick uint8 = 0
+				if commandBlockData.ExecuteOnFirstTick {
+					executeOnFirstTick = 1
+				}
+				var auto uint8 = 0
+				if !commandBlockData.NeedsRedstone {
+					auto = 1
+				}
+				var trackOutput uint8 = 0
+				if commandBlockData.TrackOutput {
+					trackOutput = 1
+				}
+				var conditionalmode uint8 = 0
+				if commandBlockData.Conditional {
+					conditionalmode = 1
+				}
 				commandBlockNbt := map[string]interface{}{
 					"id":                 "CommandBlock",
 					"Command":            command,
 					"CustomName":         cusname,
-					"ExecuteOnFirstTick": commandBlockData.ExecuteOnFirstTick,
+					"ExecuteOnFirstTick": executeOnFirstTick,
 					"TickDelay":          commandBlockData.TickDelay,
-					"auto":               !commandBlockData.NeedsRedstone,
-					"TrackOutput":        commandBlockData.TrackOutput,
-					"conditionalMode":    commandBlockData.Conditional,
+					"auto":               auto,
+					"TrackOutput":        trackOutput,
+					"conditionalMode":    conditionalmode,
 				}
+				runtimeID, _ := chunk.LegacyBlockToRuntimeID(blockName, 0)
 				blockChan <- &IOBlockForDecoder{
 					Pos:  brushPosition,
-					BlockName: blockName,
+					RTID: runtimeID,
 					NBT:  commandBlockNbt,
 				}
 			case *command.PlaceCommandBlockWithCommandBlockData:
@@ -172,19 +190,36 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				case packet.CommandBlockChain:
 					blockName = "chain_command_block"
 				}
+				var executeOnFirstTick uint8 = 0
+				if commandBlockData.ExecuteOnFirstTick {
+					executeOnFirstTick = 1
+				}
+				var auto uint8 = 0
+				if !commandBlockData.NeedsRedstone {
+					auto = 1
+				}
+				var trackOutput uint8 = 0
+				if commandBlockData.TrackOutput {
+					trackOutput = 1
+				}
+				var conditionalmode uint8 = 0
+				if commandBlockData.Conditional {
+					conditionalmode = 1
+				}
 				commandBlockNbt := map[string]interface{}{
 					"id":                 "CommandBlock",
 					"Command":            command,
 					"CustomName":         cusname,
-					"ExecuteOnFirstTick": commandBlockData.ExecuteOnFirstTick,
+					"ExecuteOnFirstTick": executeOnFirstTick,
 					"TickDelay":          commandBlockData.TickDelay,
-					"auto":               !commandBlockData.NeedsRedstone,
-					"TrackOutput":        commandBlockData.TrackOutput,
-					"conditionalMode":    commandBlockData.Conditional,
+					"auto":               auto,
+					"TrackOutput":        trackOutput,
+					"conditionalMode":    conditionalmode,
 				}
+				runtimeID, _ := chunk.LegacyBlockToRuntimeID(blockName, cmd.BlockData)
 				blockChan <- &IOBlockForDecoder{
 					Pos:  brushPosition,
-					BlockName: blockName,
+					RTID: runtimeID,
 					NBT:  commandBlockNbt,
 				}
 			case *command.AddInt8XValue:
@@ -223,7 +258,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 					RTID: runtimeIdPoolUsing.Convert(cmd.BlockRuntimeID),
 				}
 			case *command.PlaceRuntimeBlockWithCommandBlockData:
-				commandBlockData:=cmd.CommandBlockData
+				commandBlockData := cmd.CommandBlockData
 				commandBlockNbt := map[string]interface{}{
 					"id":                 "CommandBlock",
 					"Command":            commandBlockData.Command,
@@ -241,7 +276,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 					NBT:  commandBlockNbt,
 				}
 			case *command.PlaceRuntimeBlockWithCommandBlockDataAndUint32RuntimeID:
-				commandBlockData:=cmd.CommandBlockData
+				commandBlockData := cmd.CommandBlockData
 				commandBlockNbt := map[string]interface{}{
 					"id":                 "CommandBlock",
 					"Command":            commandBlockData.Command,
@@ -264,6 +299,50 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				// Does not work at first
 			case *command.PlaceRuntimeBlockWithChestDataAndUint32RuntimeID:
 			case *command.AssignNBTData:
+			case *command.PlaceBlockWithNBTData:
+				nbt, err := blockNBT_depends.ParseStringNBT(&cmd.StringNBT)
+				NBT := *nbt
+				got, normal := NBT.(map[string]interface{})
+				if !normal {
+					infoSender(fmt.Sprintf("Failed to get string-nbt for operation 41, and the error log is %v; StringNBT = %#v\n", err, cmd.StringNBT))
+					return
+				}
+				if err != nil {
+					infoSender(fmt.Sprintf("Failed to parse string-nbt for operation 41, because of this string-nbt is not a compound; StringNBT = %#v\n", cmd.StringNBT))
+					return
+				}
+				blockName := legacyRunTimeIDRemapper.palatteIDToBlockNameMapping[cmd.BlockConstantStringID]
+				if blockName == "command_block" || blockName == "repeating_command_block" || blockName == "chain_command_block" {
+					need, err := blockNBT_depends.ParseStringBlockStates(&cmd.BlockStatesString)
+					if err != nil {
+						infoSender(fmt.Sprintf("Failed to get the block state of a command block; BlockStatesString = %#v\n", cmd.BlockStatesString))
+						return
+					}
+					NEED := *need
+					_, ok := NEED["facing_direction"]
+					if !ok {
+						infoSender(fmt.Sprintf("Failed to get the facing direction of a command block; BlockStatesString = %#v\n", cmd.BlockStatesString))
+						return
+					}
+					facing_direction, normal := NEED["facing_direction"].(int32)
+					if !normal {
+						infoSender(fmt.Sprintf("Failed to get the facing direction of a command block; BlockStatesString = %#v\n", cmd.BlockStatesString))
+						return
+					}
+					runtimeId, _ := chunk.LegacyBlockToRuntimeID(legacyRunTimeIDRemapper.palatteIDToBlockNameMapping[cmd.BlockConstantStringID], uint16(facing_direction))
+					blockChan <- &IOBlockForDecoder{
+						Pos:  brushPosition,
+						RTID: runtimeId,
+						NBT:  got,
+					}
+				} else {
+					blockChan <- &IOBlockForDecoder{
+						Pos:         brushPosition,
+						BlockStates: cmd.BlockStatesString,
+						BlockName:   blockName,
+						NBT:         got,
+					}
+				}
 			default:
 				// fmt.Println("ERROR!")
 				infoSender(fmt.Sprintf("BUG: unimplemented method found : %#v", _cmd))

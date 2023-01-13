@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
@@ -18,8 +19,9 @@ import (
 )
 
 type Omega struct {
-	adaptor  defines.ConnectionAdaptor
-	pktsChan chan packet.Packet
+	Environment environment.PBEnvironment
+	adaptor     defines.ConnectionAdaptor
+	pktsChan    chan packet.Packet
 
 	CloseFns     []func() error
 	stopC        chan struct{}
@@ -299,7 +301,12 @@ func (o *Omega) NoChunkRequestCache() {
 	o.Reactor.chunkAssembler.NoCache()
 }
 
-func (o *Omega) Activate() {
+func (o *Omega) GetPhoenixBuilderEnvironment() environment.PBEnvironment {
+	return o.Environment
+}
+
+func (o *Omega) Activate(Environment environment.PBEnvironment) {
+	o.Environment = Environment
 	defer o.Stop()
 	go func() {
 		packetFeeder := o.adaptor.GetPacketFeeder()

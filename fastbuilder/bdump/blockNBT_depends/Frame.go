@@ -146,6 +146,11 @@ func placeFrame(
 		return fmt.Errorf("placeFrame: Unexpected BlockInfo.Block.BlockStates[\"facing_direction\"]; BlockInfo.Block.BlockStates = %#v", BlockInfo.Block.BlockStates)
 	}
 	// get facing_direction
+	_, err = cmdsender.SendWSCommandWithResponce(fmt.Sprintf("tp %v %v %v", BlockInfo.Point.X, BlockInfo.Point.Y, BlockInfo.Point.Z))
+	if err != nil {
+		return fmt.Errorf("placeFrame: %v", err)
+	}
+	// teleport
 	if protocol.CurrentProtocol == 504 {
 		networkID, ok := ItemRunTimeID[FrameData.Item[0].Name]
 		if ok {

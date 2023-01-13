@@ -172,18 +172,25 @@ func PlaceBlockWithNBTDataRun(
 	Mainsettings *types.MainConfig,
 	IsFastMode bool,
 	BlockInfo *types.Module,
+	InterfaceNBT map[string]interface{},
 ) error {
-	got, err := ParseStringNBT(BlockInfo.StringNBT)
-	if err != nil {
-		return fmt.Errorf("PlaceBlockWithNBTDataRun: Failed to place the entity block named %v at (%v,%v,%v), and the error log is %v", *BlockInfo.Block.Name, BlockInfo.Point.X, BlockInfo.Point.Y, BlockInfo.Point.Z, err)
-	}
-	GOT := *got
-	BlockNBT, normal := GOT.(map[string]interface{})
-	if !normal {
-		return fmt.Errorf("PlaceBlockWithNBTDataRun: Failed to place the entity block named %v at (%v,%v,%v), and the error log is could not parse *BlockInfo.StringNBT; *BlockInfo.StringNBT = %#v", *BlockInfo.Block.Name, BlockInfo.Point.X, BlockInfo.Point.Y, BlockInfo.Point.Z, *BlockInfo.StringNBT)
+	var normal bool = false
+	var BlockNBT map[string]interface{} = map[string]interface{}{}
+	if InterfaceNBT == nil {
+		got, err := ParseStringNBT(BlockInfo.StringNBT)
+		if err != nil {
+			return fmt.Errorf("PlaceBlockWithNBTDataRun: Failed to place the entity block named %v at (%v,%v,%v), and the error log is %v", *BlockInfo.Block.Name, BlockInfo.Point.X, BlockInfo.Point.Y, BlockInfo.Point.Z, err)
+		}
+		GOT := *got
+		BlockNBT, normal = GOT.(map[string]interface{})
+		if !normal {
+			return fmt.Errorf("PlaceBlockWithNBTDataRun: Failed to place the entity block named %v at (%v,%v,%v), and the error log is could not parse *BlockInfo.StringNBT; *BlockInfo.StringNBT = %#v", *BlockInfo.Block.Name, BlockInfo.Point.X, BlockInfo.Point.Y, BlockInfo.Point.Z, *BlockInfo.StringNBT)
+		}
+	} else {
+		BlockNBT = InterfaceNBT
 	}
 	TYPE := checkIfIsEffectiveNBTBlock(*BlockInfo.Block.Name)
-	_, err = placeBlockWithNBTData(&input{
+	_, err := placeBlockWithNBTData(&input{
 		Environment:        Environment,
 		Mainsettings:       Mainsettings,
 		IsFastMode:         IsFastMode,

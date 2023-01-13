@@ -110,6 +110,6 @@ func EnableOmegaSystem(env *environment.PBEnvironment) (*EmbeddedAdaptor, func()
 	return ea, func() {
 		fmt.Println("Starting Omega in a second")
 		time.Sleep(time.Second)
-		omega.Activate()
+		omega.Activate(*env)
 	}
 }

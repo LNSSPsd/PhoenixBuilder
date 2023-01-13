@@ -562,7 +562,7 @@ func (g *GameCtrl) PlaceCommandBlock(pos define.CubePos, commandBlockName string
 		if withAirPrePlace {
 			cmd := outputDimensionalCommand(fmt.Sprintf("setblock %v %v %v %v %v", pos[0], pos[1], pos[2], "air", 0), botName)
 			g.SendWOCmd(cmd)
-			time.Sleep(100 * time.Millisecond)
+			//time.Sleep(100 * time.Millisecond)
 		}
 		cmd := outputDimensionalCommand(fmt.Sprintf("setblock %v %v %v %v %v", pos[0], pos[1], pos[2], strings.Replace(commandBlockName, "minecraft:", "", 1), commandBlockData), botName)
 		g.SendWOCmd(cmd)

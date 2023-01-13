@@ -2,6 +2,9 @@ package structure
 
 import (
 	"fmt"
+	"phoenixbuilder/fastbuilder/bdump/blockNBT_depends"
+	"phoenixbuilder/fastbuilder/environment"
+	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/mirror"
 	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
@@ -38,7 +41,7 @@ func outputDimensionalCommand(command string, botName string) string {
 	return fmt.Sprintf("execute @a[name=\"%v\"] ~ ~ ~ %v", botName, command)
 }
 
-func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepTime time.Duration, botName string) {
+func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepTime time.Duration, botName string, env environment.PBEnvironment) {
 	o.delayBlocks = make(map[define.CubePos]*IOBlockForBuilder)
 	// o.delayBlocksMu = sync.Mutex{}
 	counter := 0
@@ -157,45 +160,64 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 			counter += 4096
 			time.Sleep(boostSleepTime)
 		} else {
-			if block.NBT != nil && !o.IgnoreNbt && block.NBT["id"] == "CommandBlock" {
-				// cmd := fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(blk.Name, "minecraft:", "", 1), blk.Val)
-				// o.BlockCmdSender(cmd)
-				// lastDelayBlock = block
-				// deferSendBlock(block)
-				placeStart := time.Now()
-				quickDone := false
-				if cfg, err := utils.GenCommandBlockUpdateFromNbt(block.Pos, blk.Name, block.NBT); err == nil {
-					fallBackActionsMu.Lock()
-					fallBackActions[block.Pos] = func() {
-						pterm.Warning.Printfln("命令方块放置超时 @ %v time out!", block.Pos)
-						pterm.Warning.Printfln("重新尝试放置命令方块: 坐标: %v 名称: %v %v 信息: %v", block.Pos, blk.Name, blk.Val, block.NBT)
+			if block.NBT != nil && !o.IgnoreNbt {
+				if block.NBT["id"] == "CommandBlock" {
+					// cmd := fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(blk.Name, "minecraft:", "", 1), blk.Val)
+					// o.BlockCmdSender(cmd)
+					// lastDelayBlock = block
+					// deferSendBlock(block)
+					placeStart := time.Now()
+					quickDone := false
+					if cfg, err := utils.GenCommandBlockUpdateFromNbt(block.Pos, blk.Name, block.NBT); err == nil {
+						fallBackActionsMu.Lock()
+						fallBackActions[block.Pos] = func() {
+							pterm.Warning.Printfln("命令方块放置超时 @ %v time out!", block.Pos)
+							pterm.Warning.Printfln("重新尝试放置命令方块: 坐标: %v 名称: %v %v 信息: %v", block.Pos, blk.Name, blk.Val, block.NBT)
+							o.Ctrl.PlaceCommandBlock(block.Pos, blk.Name, int(blk.Val), false, true, cfg, func(done bool) {
+								if !done {
+									pterm.Error.Printfln("命令方块放置失败: 坐标: %v 名称: %v %v 信息: %v", block.Pos, blk.Name, blk.Val, block.NBT)
+								}
+							}, time.Second*3, botName)
+						}
+						fallBackActionsMu.Unlock()
 						o.Ctrl.PlaceCommandBlock(block.Pos, blk.Name, int(blk.Val), false, true, cfg, func(done bool) {
-							if !done {
-								pterm.Error.Printfln("命令方块放置失败: 坐标: %v 名称: %v %v 信息: %v", block.Pos, blk.Name, blk.Val, block.NBT)
+							if done {
+								quickDone = true
+								fallBackActionsMu.Lock()
+								pterm.Success.Printfln("命令方块放置成功 @ %v", block.Pos)
+								delete(fallBackActions, block.Pos)
+								fallBackActionsMu.Unlock()
 							}
 						}, time.Second*3, botName)
-					}
-					fallBackActionsMu.Unlock()
-					o.Ctrl.PlaceCommandBlock(block.Pos, blk.Name, int(blk.Val), false, true, cfg, func(done bool) {
-						if done {
-							quickDone = true
-							fallBackActionsMu.Lock()
-							pterm.Success.Printfln("命令方块放置成功 @ %v", block.Pos)
-							delete(fallBackActions, block.Pos)
-							fallBackActionsMu.Unlock()
+						for time.Since(placeStart) < time.Millisecond*50 {
+							if !quickDone {
+								time.Sleep(time.Millisecond)
+							} else {
+								break
+							}
 						}
-					}, time.Second*3, botName)
-					for time.Since(placeStart) < time.Millisecond*50 {
-						if !quickDone {
-							time.Sleep(time.Millisecond)
-						} else {
-							break
-						}
+					} else {
+						pterm.Error.Println("无法从NBT: %v 获得命令方块数据 %v", block.NBT, err)
 					}
 				} else {
-					pterm.Error.Println("无法从NBT: %v 获得命令方块数据 %v", block.NBT, err)
+					err := blockNBT_depends.PlaceBlockWithNBTDataRun(
+						&env,
+						&types.MainConfig{},
+						false,
+						&types.Module{
+							Block: &types.Block{
+								Name:        &block.BlockName,
+								BlockStates: block.BlockStates,
+							},
+							Point:     types.Position{X: block.Pos.X(), Y: block.Pos.Y(), Z: block.Pos.Z()},
+							StringNBT: nil,
+						},
+						block.NBT,
+					)
+					if err != nil {
+						pterm.Warning.Printf("Build: %v", err)
+					}
 				}
-
 			} else {
 				// fmt.Println(block.BlockName, block.BlockStates, block.BlockData, "test")
 				if block.BlockName != "" && block.BlockStates != "" {
