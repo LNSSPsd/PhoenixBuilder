@@ -295,10 +295,38 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				}
 			case *command.PlaceRuntimeBlockWithChestData:
 				// This part does not work at first
-			case *command.PlaceBlockWithChestData:
-				// Does not work at first
 			case *command.PlaceRuntimeBlockWithChestDataAndUint32RuntimeID:
+				// This part does not work at first
 			case *command.AssignNBTData:
+				// We are not able to do anything with those data currently
+			case *command.PlaceBlockWithChestData:
+				blockName := legacyRunTimeIDRemapper.palatteIDToBlockNameMapping[cmd.BlockConstantStringID]
+				_, ok := blockNBT_depends.ContainerIndexList[blockName]
+				if ok && blockName != "frame" && blockName != "glow_frame" {
+					ans := make([]interface{}, 0)
+					for _, value := range cmd.ChestSlots {
+						ans = append(ans, map[string]interface{}{
+							"Name":   value.Name,
+							"Count":  value.Count,
+							"Slot":   value.Slot,
+							"Damage": int16(value.Damage),
+						})
+					}
+					blockChan <- &IOBlockForDecoder{
+						Pos:       brushPosition,
+						BlockData: cmd.BlockData,
+						BlockName: blockName,
+						NBT: map[string]interface{}{
+							blockNBT_depends.ContainerIndexList[blockName]: ans,
+						},
+					}
+				} else {
+					blockChan <- &IOBlockForDecoder{
+						Pos:       brushPosition,
+						BlockData: cmd.BlockData,
+						BlockName: blockName,
+					}
+				}
 			case *command.PlaceBlockWithNBTData:
 				nbt, err := blockNBT_depends.ParseStringNBT(&cmd.StringNBT)
 				NBT := *nbt

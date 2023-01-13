@@ -200,6 +200,7 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 						pterm.Error.Println("无法从NBT: %v 获得命令方块数据 %v", block.NBT, err)
 					}
 				} else {
+					string_nbt := ""
 					err := blockNBT_depends.PlaceBlockWithNBTDataRun(
 						&env,
 						&types.MainConfig{},
@@ -208,9 +209,10 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 							Block: &types.Block{
 								Name:        &block.BlockName,
 								BlockStates: block.BlockStates,
+								Data:        block.BlockData,
 							},
 							Point:     types.Position{X: block.Pos.X(), Y: block.Pos.Y(), Z: block.Pos.Z()},
-							StringNBT: nil,
+							StringNBT: &string_nbt,
 						},
 						block.NBT,
 					)
