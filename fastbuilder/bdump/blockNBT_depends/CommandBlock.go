@@ -152,7 +152,7 @@ func parseCommandBlockData(Cb map[string]interface{}, BlockName string) (types.C
 		ExecuteOnFirstTick: executeOnFirstTick,
 		TrackOutput:        trackOutput,
 		Conditional:        conditionalMode,
-		NeedRedstone:       needRedstone,
+		NeedsRedstone:      needRedstone,
 	}, nil
 }
 

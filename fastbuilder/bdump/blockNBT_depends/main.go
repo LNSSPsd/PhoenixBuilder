@@ -1,14 +1,11 @@
 package blockNBT_depends
 
 import (
-	"bytes"
 	"fmt"
 	"phoenixbuilder/fastbuilder/commands_generator"
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/io/commands"
-
-	"github.com/Tnze/go-mc/nbt"
 )
 
 // 此结构体用于本文件中 PlaceBlockWithNBTData 函数的输入部分
@@ -24,9 +21,9 @@ type input struct {
 
 // 此表用于记录现阶段支持了的方块实体
 var index = map[string]string{
-	"command_block":           "command_block",
-	"chain_command_block":     "command_block",
-	"repeating_command_block": "command_block",
+	"command_block":           "CommandBlock",
+	"chain_command_block":     "CommandBlock",
+	"repeating_command_block": "CommandBlock",
 	// 命令方块
 	"blast_furnace":      "Container",
 	"lit_blast_furnace":  "Container",
@@ -103,12 +100,18 @@ func checkIfIsEffectiveNBTBlock(blockName string) string {
 	return ""
 }
 
-// 带有 NBT 数据放置方块；返回值 interface{} 字段可能在后期会用到，但目前这个字段都是返回 nil
+/*
+带有 NBT 数据放置方块；返回值 interface{} 字段可能在后期会用到，但目前这个字段都是返回 nil
+
+如果你也想参与更多方块实体的支持，可以去看看这个库 https://github.com/df-mc/dragonfly
+
+这个库也是用了 gophertunnel 的
+*/
 func placeBlockWithNBTData(input *input) (interface{}, error) {
 	var err error
 	// prepare
 	switch *input.TypeName {
-	case "command_block":
+	case "CommandBlock":
 		err = CommandBlock(&CommandBlockInput{
 			Cb:           input.BlockNBT,
 			BlockName:    input.BlockInfo.Block.Name,
@@ -159,6 +162,7 @@ func placeBlockWithNBTData(input *input) (interface{}, error) {
 		cmdsender := input.Environment.CommandSender.(*commands.CommandSender)
 		cmdsender.SendDimensionalCommand(request)
 		return nil, nil
+		// 其他没有支持的方块实体
 	}
 	return nil, nil
 }
@@ -169,14 +173,15 @@ func PlaceBlockWithNBTDataRun(
 	IsFastMode bool,
 	BlockInfo *types.Module,
 ) error {
-	var buf bytes.Buffer
-	err := nbt.NewEncoder(&buf).Encode(nbt.StringifiedMessage(*BlockInfo.StringNBT), "")
+	got, err := ParseStringNBT(BlockInfo.StringNBT)
 	if err != nil {
-		return fmt.Errorf("PlaceBlockWithNBTDataRun: %v", err)
+		return fmt.Errorf("PlaceBlockWithNBTDataRun: Failed to place the entity block named %v at (%v,%v,%v), and the error log is %v", *BlockInfo.Block.Name, BlockInfo.Point.X, BlockInfo.Point.Y, BlockInfo.Point.Z, err)
 	}
-	var BlockNBT map[string]interface{}
-	nbt.Unmarshal(buf.Bytes(), &BlockNBT)
-	// get inerface NBT, saved in BlockNBT
+	GOT := *got
+	BlockNBT, normal := GOT.(map[string]interface{})
+	if !normal {
+		return fmt.Errorf("PlaceBlockWithNBTDataRun: Failed to place the entity block named %v at (%v,%v,%v), and the error log is could not parse *BlockInfo.StringNBT; *BlockInfo.StringNBT = %#v", *BlockInfo.Block.Name, BlockInfo.Point.X, BlockInfo.Point.Y, BlockInfo.Point.Z, *BlockInfo.StringNBT)
+	}
 	TYPE := checkIfIsEffectiveNBTBlock(*BlockInfo.Block.Name)
 	_, err = placeBlockWithNBTData(&input{
 		Environment:        Environment,

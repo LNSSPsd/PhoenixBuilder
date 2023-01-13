@@ -1,7 +1,7 @@
 package blockNBT_depends
 
 /*
-export from netease 2.5
+export from netease mc 2.5
 
 only items that can be activated by the replaceitem command are exported
 

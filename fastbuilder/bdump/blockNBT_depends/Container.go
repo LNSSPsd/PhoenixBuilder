@@ -32,6 +32,7 @@ var ContainerIndexList map[string]string = map[string]string{
 	// 以上都是现阶段支持了的容器
 	"frame":      "Item",
 	"glow_frame": "Item",
+	// 物品展示框依赖于容器解析相关
 }
 
 type ContainerInput struct {
@@ -84,10 +85,15 @@ func getContainerData(container interface{}) (types.ChestData, error) {
 	// correct 就是处理结果
 	ans := make(types.ChestData, 0)
 	for key, value := range correct {
-		var count uint8 = uint8(0)
-		var itemData uint16 = uint16(0)
+		var count uint8 = 0
+		var itemData uint16 = 0
 		var name string = ""
-		var slot uint8 = uint8(0)
+		var slot uint8 = 0
+		var enchList []interface{}
+		var item_lock uint8 = 0
+		var keep_on_death uint8 = 0
+		var can_place_on []string = []string{}
+		var can_destroy []string = []string{}
 		// 初始化
 		containerData, normal := value.(map[string]interface{})
 		if !normal {
@@ -104,7 +110,7 @@ func getContainerData(container interface{}) (types.ChestData, error) {
 		}
 		count = uint8(count_got)
 		// 拿一下物品数量
-		// 这个物品数量是一定存在的，拿不到必须报错哦
+		// 它(物品数量)是一定存在的
 		_, ok = containerData["Damage"]
 		if !ok {
 			return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"Damage\"]; container[%v] = %#v", key, key, containerData)
@@ -114,28 +120,52 @@ func getContainerData(container interface{}) (types.ChestData, error) {
 			return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"Damage\"]; container[%v] = %#v", key, key, containerData)
 		}
 		itemData = uint16(damage_got)
-		// 拿一下物品的 Damage 值
+		// 获取物品的 Damage 值
 		// 这里的 Damage 值不一定就是物品的数据值(附加值)
-		// 不过这个 Damage 值是一定存在的，拿不到必须报错哦
-		// 真的一定存在吗（？
+		// 此处的 Damage 字段是一定存在的
 		_, ok = containerData["tag"]
 		if ok {
 			tag, normal := containerData["tag"].(map[string]interface{})
 			if !normal {
 				return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"tag\"]; container[%v] = %#v", key, key, containerData)
 			}
-			// 这个 container["tag"] 一定是一个复合标签，如果不是就必须报错哦
-			// 真的是吗（？
+			// 这个 container["tag"] 一定是一个复合标签
 			_, ok = tag["Damage"]
 			if ok {
 				got, normal := tag["Damage"].(int32)
 				if !normal {
-					return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"tag\"]; container[%v] = %#v", key, key, containerData)
+					return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"tag\"][\"Damage\"]; containe[%v][\"tag\"] = %#v", key, key, tag)
 				}
 				itemData = uint16(got)
 			}
+			// container["tag"]["Damage"]
+			_, ok = tag["minecraft:item_lock"]
+			if ok {
+				item_lock, normal = tag["minecraft:item_lock"].(byte)
+				if !normal {
+					return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"tag\"][\"minecraft:item_lock\"]; container[%v][\"tag\"] = %#v", key, key, tag)
+				}
+			}
+			// container["tag"]["minecraft:item_lock"]
+			// 此数据为 1 时使用 lock_in_slot ，为 2 时使用 lock_in_inventory
+			_, ok = tag["minecraft:keep_on_death"]
+			if ok {
+				keep_on_death, normal = tag["minecraft:keep_on_death"].(byte)
+				if !normal {
+					return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"tag\"][\"minecraft:keep_on_death\"]; container[%v][\"tag\"] = %#v", key, key, tag)
+				}
+			}
+			// container["tag"]["minecraft:keep_on_death"]
+			_, ok = tag["ench"]
+			if ok {
+				enchList, normal = tag["ench"].([]interface{})
+				if !normal {
+					return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"tag\"][\"ench\"]; container[%v][\"tag\"] = %#v", key, key, tag)
+				}
+			}
+			// // container["tag"]["ench"]
 		}
-		// 拿一下这个工具的耐久值（当然也可能是别的，甚至它都不是个工具）
+		// 拿一下这个工具的耐久值（当然也可能是别的，甚至它都不是个工具）及其他一些数据
 		// 这个 tag 里的 Damage 实际上也不一定就是物品的数据值(附加值)
 		// 需要说明的是，tag 不一定存在，且 tag 存在，Damage 也不一定存在
 		_, ok = containerData["Block"]
@@ -161,12 +191,13 @@ func getContainerData(container interface{}) (types.ChestData, error) {
 		// 拿一下这个方块的方块数据值(附加值)
 		// 这个 Block 里的 val 一定是这个物品对应的方块的方块数据值(附加值)
 		// 需要说明的是，Block 不一定存在，但如果 Block 存在，则 val 一定存在
-		// 除非网易尝试打击我们，把 val 扣掉了
-
-		// 以上三个都在拿物品数据值(附加值)
-		// 需要说明的是，数据值的获取优先级是这样的
-		// Damage < tag["Damage"] < Block["val"]
-		// 需要说明的是，以上列举的三个情况不能涵盖所有的物品数据值(附加值)的情况，所以我希望可以有个人看一下普世情况是长什么样的，请帮帮我！
+		// 仅限网易我的世界中国版导出的结构有此 val 字段
+		/*
+			以上三个都在拿物品数据值(附加值)
+			需要说明的是，数据值的获取优先级是这样的
+			Damage < tag["Damage"] < Block["val"]
+			需要说明的是，以上列举的三个情况不能涵盖所有的物品数据值(附加值)的情况，所以我希望可以有个人看一下普世情况是长什么样的，请帮帮我！
+		*/
 		_, ok = containerData["Name"]
 		if !ok {
 			return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"Name\"]; container[%v] = %#v", key, key, containerData)
@@ -178,7 +209,7 @@ func getContainerData(container interface{}) (types.ChestData, error) {
 		name = strings.Replace(got, "minecraft:", "", 1)
 		// 拿一下这个物品的物品名称
 		// 可以看到，我这里是把命名空间删了的
-		// 这个物品名称是一定存在的，拿不到必须报错哦
+		// 它(物品名称)是一定存在的
 		_, ok = containerData["Slot"]
 		if ok {
 			got, normal := containerData["Slot"].(byte)
@@ -189,11 +220,48 @@ func getContainerData(container interface{}) (types.ChestData, error) {
 		}
 		// 拿一下这个物品所在的栏位(槽位)
 		// 这个栏位(槽位)不一定存在，例如唱片机和讲台这种就不存在了(这种方块就一个物品，就不需要这个数据了)
+		_, ok = containerData["CanPlaceOn"]
+		if ok {
+			got, normal := containerData["CanPlaceOn"].([]interface{})
+			if !normal {
+				return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"CanPlaceOn\"]; container[%v] = %#v", key, key, containerData)
+			}
+			for singleBlockIndex, singleBlock := range got {
+				singleBlockString, normal := singleBlock.(string)
+				if !normal {
+					return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"CanPlaceOn\"][%v]; container[%v][\"CanPlaceOn\"] = %#v", key, singleBlockIndex, key, got)
+				}
+				can_place_on = append(can_place_on, strings.Replace(singleBlockString, "minecraft:", "", 1))
+			}
+		}
+		// 物品组件 - can_place_on
+		// 此字段不一定存在
+		_, ok = containerData["CanDestroy"]
+		if ok {
+			got, normal := containerData["CanDestroy"].([]interface{})
+			if !normal {
+				return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"CanDestroy\"]; container[%v] = %#v", key, key, containerData)
+			}
+			for singleBlockIndex, singleBlock := range got {
+				singleBlockString, normal := singleBlock.(string)
+				if !normal {
+					return types.ChestData{}, fmt.Errorf("getContainerData: Crashed in container[%v][\"CanDestroy\"][%v]; container[%v][\"CanDestroy\"] = %#v", key, singleBlockIndex, key, got)
+				}
+				can_destroy = append(can_destroy, strings.Replace(singleBlockString, "minecraft:", "", 1))
+			}
+		}
+		// 物品组件 - can_destroy
+		// 此字段不一定存在
 		ans = append(ans, types.ChestSlot{
-			Name:   name,
-			Count:  count,
-			Damage: itemData,
-			Slot:   slot,
+			Name:        name,
+			Count:       count,
+			Damage:      itemData,
+			Slot:        slot,
+			ItemLock:    item_lock,
+			KeepOnDeath: keep_on_death,
+			CanPlaceOn:  can_place_on,
+			CanDestroy:  can_destroy,
+			EnchList:    enchList,
 		})
 		// 提交数据
 	}
@@ -215,10 +283,10 @@ func getContainerDataRun(blockNBT map[string]interface{}, blockName string) (typ
 		}
 		return ans, nil
 	}
-	// 如果这是个容器且对应的 key 可以找到，那么就去拿一下对应的 types.ChestData 结构体
+	// 如果这是个容器且对应的 key 可以找到，那么就去拿一下对应的 ContainerData 结构体
 	return types.ChestData{}, nil
 	// 对于唱片机和讲台这种容器，如果它们没有被放物品的话，那么对应的 key 是找不到的
-	// 但是这不是一个错误，所以我们返回一个空的 types.ChestData 和一个空的 error
+	// 但是这不是一个错误，所以我们返回一个空的 ContainerData 和一个空的 error
 }
 
 func placeContainer(

@@ -343,7 +343,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			blc <- &types.Module{
 				Block: &types.Block{
 					Name:        &blocksStrPool[int(cmd.BlockConstantStringID)],
-					BlockStates: &cmd.BlockStatesString,
+					BlockStates: cmd.BlockStatesString,
 				},
 				StringNBT: &cmd.StringNBT,
 				Point: types.Position{

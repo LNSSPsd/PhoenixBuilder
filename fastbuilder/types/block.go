@@ -33,16 +33,21 @@ type CommandBlockData struct {
 	ExecuteOnFirstTick bool //byte
 	TrackOutput        bool //byte
 	Conditional        bool
-	NeedsRedstone       bool
+	NeedsRedstone      bool
 }
 
 type ChestData []ChestSlot
 
 type ChestSlot struct {
-	Name   string
-	Count  uint8
-	Damage uint16
-	Slot   uint8
+	Name        string
+	Count       uint8
+	Damage      uint16
+	Slot        uint8
+	ItemLock    uint8
+	KeepOnDeath uint8
+	CanPlaceOn  []string
+	CanDestroy  []string
+	EnchList    []interface{}
 }
 
 type ConstBlock struct {
