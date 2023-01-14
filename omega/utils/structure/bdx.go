@@ -297,7 +297,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				// This part does not work at first
 			case *command.PlaceRuntimeBlockWithChestDataAndUint32RuntimeID:
 				// This part does not work at first
-			case *command.AssignNBTData:
+			case *command.AssignDebugData:
 				// We are not able to do anything with those data currently
 			case *command.PlaceBlockWithChestData:
 				blockName := legacyRunTimeIDRemapper.palatteIDToBlockNameMapping[cmd.BlockConstantStringID]

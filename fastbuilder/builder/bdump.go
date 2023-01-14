@@ -337,7 +337,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 					Point:     pos,
 				}
 			}
-		case *command.AssignNBTData:
+		case *command.AssignDebugData:
 			// We are not able to do anything with those data currently
 		case *command.PlaceBlockWithNBTData:
 			blc <- &types.Module{

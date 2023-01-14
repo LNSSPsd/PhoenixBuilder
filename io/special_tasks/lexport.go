@@ -97,18 +97,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		allAreas := make([]mcstructure.Mcstructure, 0)
 		for key, value := range splittedAreas {
 			currentProgress := indicativeMap[key]
-			env.CommandSender.Output(pterm.Info.Sprintf("Fetching data from area [%d, %d]", currentProgress[0], currentProgress[1]))
-			u_d2, _ := uuid.NewUUID()
-			wchan := make(chan *packet.CommandOutput)
-			(*env.CommandSender.GetUUIDMap()).Store(u_d2.String(), wchan)
-			env.CommandSender.SendWSCommand(fmt.Sprintf("tp %d %d %d", value.BeginX+value.SizeX/2, value.BeginY+value.SizeY/2, value.BeginZ+value.SizeZ/2), u_d2)
-			<-wchan
-			close(wchan)
-			// Wait until the chunks successfully load
-		allAreas := make([]lexport_depends.Mcstructure, 0)
-		for key, value := range allAreasSplitAns {
-			currentProgress := useForProgress[key]
-			env.CommandSender.Output(pterm.Info.Sprintf("Fetching data from area [%v, %v]", currentProgress.Posx, currentProgress.Posz))
+			env.CommandSender.Output(pterm.Info.Sprintf("Fetching data from area [%v, %v]", currentProgress[0], currentProgress[1]))
 			// 打印进度
 			_, err = env.CommandSender.SendWSCommandWithResponce(fmt.Sprintf("tp %d %d %d", value.BeginX+value.SizeX/2, value.BeginY+value.SizeY/2, value.BeginZ+value.SizeZ/2))
 			if err != nil {
@@ -124,6 +113,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 					break
 				}
 			}
+			// 等待当前被访问的区块加载完成
 			ExportWaiter = make(chan map[string]interface{})
 			env.Connection.(*minecraft.Conn).WritePacket(&packet.StructureTemplateDataRequest{
 				StructureName: "mystructure:aaaaa",
