@@ -273,16 +273,13 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 					return err
 				}
 			} else {
-				err := writer.WriteCommand(&command.PlaceBlockWithBlockStates{
+				err := writer.WriteCommand(&command.PlaceBlockWithBlockStatesDeprecated{
 					BlockConstantStringID: uint16(blocksPalette[*mdl.Block.Name]),
 					BlockStatesString:     mdl.Block.BlockStates,
 				})
 				if err != nil {
 					return err
 				}
-				// 以方块状态为依据放置方块
-				// 我更推荐使用这一个方式来放置方块，因为方块数据值(附加值)已不被新加入的方块使用
-				// ——Happy2018new
 			}
 		} else {
 			err := writer.WriteCommand(&command.PlaceBlockWithNBTData{

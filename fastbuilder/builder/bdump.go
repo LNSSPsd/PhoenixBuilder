@@ -321,7 +321,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			}
 		case *command.AssignDebugData:
 			// Not going to do anything with those data
-		case *command.PlaceBlockWithBlockStates:
+		case *command.PlaceBlockWithBlockStatesDeprecated:
 			if int(cmd.BlockConstantStringID) >= len(blocksStrPool) {
 				return fmt.Errorf("Error: BlockID exceeded BlockPool")
 			}

@@ -93,8 +93,6 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 			case *command.AddInt32ZValue0:
 				brushPosition[2] += int(cmd.Value)
 			case *command.PlaceBlockWithBlockStatesDeprecated:
-				blockId := cmd.BlockConstantStringID
-				block_states_string := cmd.BlockStatesString
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos5], file may be corrupted")
 					return
