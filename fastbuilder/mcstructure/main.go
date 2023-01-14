@@ -307,9 +307,9 @@ func SearchForBlock(structureInfo Area, pos BlockPos) (int, error) {
 /*
 基于区块的大小对整个待导出区域进行重排，并写入对应的方块、NBT数据
 
-allAreas 对整个待导出区域按 64*64 大小拆分，且蛇形拆分(使用SplitArea拆分)，然后再获取拆分得到的各个小区域的 mcstructure 数据，然后处理后制成此 allAreas 表
+allChunks 对整个待导出区域按 64*64 大小拆分，且蛇形拆分(使用SplitArea拆分)，然后再获取拆分得到的各个小区域的 mcstructure 数据，然后处理后制成此 allChunks 表
 
-allAreasFindUse 通过 区域坐标 来查这个区域在 allAreas 表的位置
+chunkPosIndicator 通过 区域坐标 来查这个区域在 allChunks 表的位置
 
 currentExport 当前 Task 指定的导出区域，也就是根据 set(get) 和 setend(get end) 制成的 Area
 */
