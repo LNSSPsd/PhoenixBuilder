@@ -1,4 +1,4 @@
-package lexport_depends
+package mcstructure
 
 import (
 	"fmt"

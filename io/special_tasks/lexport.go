@@ -9,9 +9,9 @@ import (
 	"phoenixbuilder/fastbuilder/bdump"
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/environment"
+	"phoenixbuilder/fastbuilder/mcstructure"
 	"phoenixbuilder/fastbuilder/parsing"
 	"phoenixbuilder/fastbuilder/task"
-	"phoenixbuilder/io/special_tasks/lexport_depends"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -46,14 +46,13 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		beginPos.Z = endPos.Z
 		endPos.Z = save
 	}
-	// 取得起点坐标和终点坐标
+
 	if beginPos.Y < -64 {
 		beginPos.Y = -64
 	}
 	if endPos.Y > 320 {
 		endPos.Y = 320
 	}
-	// 虽然应该不会有人尝试超高度，不过我觉得还是要处理一下这个细节（
 	go func() {
 		defer func() {
 			err := recover()
@@ -63,14 +62,16 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 				env.CommandSender.Output(pterm.Error.Sprintf("%v", err))
 			}
 		}()
-		// 当出现惊慌的时候不应该全部崩掉，而是尝试恢复其
+
 		u_d0, _ := uuid.NewUUID()
 		env.CommandSender.SendWSCommand("gamemode c", u_d0)
-		// 改创造
-		resp, err := env.CommandSender.SendWSCommandWithResponce("querytarget @s")
-		if err != nil {
-			panic(err)
-		}
+
+		u_d1, _ := uuid.NewUUID()
+		chann := make(chan *packet.CommandOutput)
+		(*env.CommandSender.GetUUIDMap()).Store(u_d1.String(), chann)
+		env.CommandSender.SendWSCommand("querytarget @s", u_d1)
+		resp := <-chann
+		close(chann)
 		var dimension float64 = 0
 		var got interface{}
 		var testAreaIsLoaded string = "testforblocks ~-31 -64 ~-31 ~31 319 ~31 ~-31 -64 ~-31"
@@ -90,9 +91,20 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		// OutputMessages[0].Message 字段是 "commands.generic.outOfWorld"
 		// 你可能会说，为什么不用 testforblock 命令给单个方块作检测，这是因为
 		// 目标待导出区域最大是 64*64 ，而只对单方块检测并不能保证整个待导出区域都已经加载了
-		allAreasSplitAns, allAreasFindUse, useForProgress := lexport_depends.SplitArea(beginPos.X, beginPos.Y, beginPos.Z, endPos.X, endPos.Y, endPos.Z, 64, 64, true)
+		splittedAreas, reversedMap, indicativeMap := mcstructure.SplitArea(mcstructure.BlockPos{int32(beginPos.X), int32(beginPos.Y), int32(beginPos.Z)}, mcstructure.BlockPos{int32(endPos.X), int32(endPos.Y), int32(endPos.Z)}, 64, 64, true)
 		// 拆分目标导出区域为若干个小区域
 		// 每个小区域最大 64*64
+		allAreas := make([]mcstructure.Mcstructure, 0)
+		for key, value := range splittedAreas {
+			currentProgress := indicativeMap[key]
+			env.CommandSender.Output(pterm.Info.Sprintf("Fetching data from area [%d, %d]", currentProgress[0], currentProgress[1]))
+			u_d2, _ := uuid.NewUUID()
+			wchan := make(chan *packet.CommandOutput)
+			(*env.CommandSender.GetUUIDMap()).Store(u_d2.String(), wchan)
+			env.CommandSender.SendWSCommand(fmt.Sprintf("tp %d %d %d", value.BeginX+value.SizeX/2, value.BeginY+value.SizeY/2, value.BeginZ+value.SizeZ/2), u_d2)
+			<-wchan
+			close(wchan)
+			// Wait until the chunks successfully load
 		allAreas := make([]lexport_depends.Mcstructure, 0)
 		for key, value := range allAreasSplitAns {
 			currentProgress := useForProgress[key]
@@ -112,10 +124,9 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 					break
 				}
 			}
-			// 确认目标区域是否已经加载
 			ExportWaiter = make(chan map[string]interface{})
 			env.Connection.(*minecraft.Conn).WritePacket(&packet.StructureTemplateDataRequest{
-				StructureName: "PhoenixBuilder:LexportUsed",
+				StructureName: "mystructure:aaaaa",
 				Position:      protocol.BlockPos{int32(value.BeginX), int32(value.BeginY), int32(value.BeginZ)},
 				Settings: protocol.StructureSettings{
 					PaletteName:               "default",
@@ -128,43 +139,42 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 					Mirror:                    0,
 					Integrity:                 100,
 					Seed:                      0,
-					AllowNonTickingChunks:     false,
+					AllowNonTickingChunks:     true,
 				},
 				RequestType: packet.StructureTemplateRequestExportFromSave,
 			})
 			exportData := <-ExportWaiter
 			close(ExportWaiter)
 			// 获取 mcstructure
-			got, err := lexport_depends.GetMCStructureData(value, exportData)
+			got, err := mcstructure.GetMCStructureData(value, exportData)
 			if err != nil {
 				panic(err)
 			} else {
 				allAreas = append(allAreas, got)
 			}
-			// 添加数据
 		}
 		env.CommandSender.Output(pterm.Info.Sprint("Data received, processing......"))
 		env.CommandSender.Output(pterm.Info.Sprint("Extracting blocks......"))
-		// 打印进度
-		ans, err := lexport_depends.ExportBaseOnChunkSize(allAreas, allAreasFindUse, lexport_depends.Area{
-			BeginX: beginPos.X,
-			BeginY: beginPos.Y,
-			BeginZ: beginPos.Z,
-			SizeX:  endPos.X - beginPos.X + 1,
-			SizeY:  endPos.Y - beginPos.Y + 1,
-			SizeZ:  endPos.Z - beginPos.Z + 1,
+
+		processedData, err := mcstructure.DumpBlocks(allAreas, reversedMap, mcstructure.Area{
+			BeginX: int32(beginPos.X),
+			BeginY: int32(beginPos.Y),
+			BeginZ: int32(beginPos.Z),
+			SizeX:  int32(endPos.X - beginPos.X + 1),
+			SizeY:  int32(endPos.Y - beginPos.Y + 1),
+			SizeZ:  int32(endPos.Z - beginPos.Z + 1),
 		})
 		if err != nil {
 			panic(err)
 		}
-		// 重排处理并写入方块数据
+
 		outputResult := bdump.BDumpLegacy{
-			Blocks: ans,
+			Blocks: processedData,
 		}
 		if strings.LastIndex(cfg.Path, ".bdx") != len(cfg.Path)-4 || len(cfg.Path) < 4 {
 			cfg.Path += ".bdx"
 		}
-		// 确定输出位置并封装结果
+
 		env.CommandSender.Output(pterm.Info.Sprint("Writing output file......"))
 		err, signerr := outputResult.WriteToFile(cfg.Path, env.LocalCert, env.LocalKey)
 		if err != nil {
@@ -176,7 +186,6 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 			env.CommandSender.Output(pterm.Success.Sprint("File signed successfully"))
 		}
 		env.CommandSender.Output(pterm.Success.Sprintf("Successfully exported your structure to %v", cfg.Path))
-		// 导出
 	}()
 	return nil
 }
