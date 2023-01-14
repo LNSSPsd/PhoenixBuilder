@@ -546,7 +546,7 @@ func (o *Partol) Inject(frame defines.MainFrame) {
 }
 
 func (o *Partol) Activate() {
-	if o.EnablePartol == false {
+	if !o.EnablePartol {
 		return
 	}
 	count := 0
