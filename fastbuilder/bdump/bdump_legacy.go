@@ -129,6 +129,24 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 		cursor++
 	}
 	for _, mdl := range bdump.Blocks {
+		blkst := mdl.Block.BlockStates
+		if len(blkst) == 0 {
+			continue
+		}
+		_, found := blocksPalette[blkst]
+		if found {
+			continue
+		}
+		err := writer.WriteCommand(&command.CreateConstantString{
+			ConstantString: blkst,
+		})
+		if err != nil {
+			return err
+		}
+		blocksPalette[blkst] = cursor
+		cursor++
+	}
+	for _, mdl := range bdump.Blocks {
 		for {
 			if mdl.Point.X != brushPosition[0] {
 				if mdl.Point.X-brushPosition[0] == 1 {
@@ -273,9 +291,9 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 					return err
 				}
 			} else {
-				err := writer.WriteCommand(&command.PlaceBlockWithBlockStatesDeprecated{
-					BlockConstantStringID: uint16(blocksPalette[*mdl.Block.Name]),
-					BlockStatesString:     mdl.Block.BlockStates,
+				err := writer.WriteCommand(&command.PlaceBlockWithBlockStates{
+					BlockConstantStringID:       uint16(blocksPalette[*mdl.Block.Name]),
+					BlockStatesConstantStringID: uint16(blocksPalette[mdl.Block.BlockStates]),
 				})
 				if err != nil {
 					return err
@@ -283,9 +301,9 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 			}
 		} else {
 			err := writer.WriteCommand(&command.PlaceBlockWithNBTData{
-				BlockConstantStringID: uint16(blocksPalette[*mdl.Block.Name]),
-				BlockStatesString:     mdl.Block.BlockStates,
-				StringNBT:             *mdl.StringNBT,
+				BlockConstantStringID:       uint16(blocksPalette[*mdl.Block.Name]),
+				BlockStatesConstantStringID: uint16(blocksPalette[mdl.Block.BlockStates]),
+				StringNBT:                   *mdl.StringNBT,
 			})
 			if err != nil {
 				return err

@@ -321,6 +321,19 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			}
 		case *command.AssignDebugData:
 			// Not going to do anything with those data
+		case *command.PlaceBlockWithNBTData:
+			blc <- &types.Module{
+				Block: &types.Block{
+					Name:        &blocksStrPool[int(cmd.BlockConstantStringID)],
+					BlockStates: blocksStrPool[int(cmd.BlockStatesConstantStringID)],
+				},
+				StringNBT: &cmd.StringNBT,
+				Point: types.Position{
+					X: brushPosition[0] + config.Position.X,
+					Y: brushPosition[1] + config.Position.Y,
+					Z: brushPosition[2] + config.Position.Z,
+				},
+			}
 		case *command.PlaceBlockWithBlockStatesDeprecated:
 			if int(cmd.BlockConstantStringID) >= len(blocksStrPool) {
 				return fmt.Errorf("Error: BlockID exceeded BlockPool")

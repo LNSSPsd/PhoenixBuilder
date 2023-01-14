@@ -340,21 +340,22 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 					return
 				}
 				blockName := legacyRunTimeIDRemapper.palatteIDToBlockNameMapping[cmd.BlockConstantStringID]
+				blockStates := legacyRunTimeIDRemapper.palatteIDToBlockNameMapping[cmd.BlockStatesConstantStringID]
 				if blockName == "command_block" || blockName == "repeating_command_block" || blockName == "chain_command_block" {
-					need, err := blockNBT_depends.ParseStringBlockStates(&cmd.BlockStatesString)
+					need, err := blockNBT_depends.ParseStringBlockStates(&blockStates)
 					if err != nil {
-						infoSender(fmt.Sprintf("Failed to get the block state of a command block; BlockStatesString = %#v\n", cmd.BlockStatesString))
+						infoSender(fmt.Sprintf("Failed to get the block state of a command block; BlockStatesString = %#v\n", blockStates))
 						return
 					}
 					NEED := *need
 					_, ok := NEED["facing_direction"]
 					if !ok {
-						infoSender(fmt.Sprintf("Failed to get the facing direction of a command block; BlockStatesString = %#v\n", cmd.BlockStatesString))
+						infoSender(fmt.Sprintf("Failed to get the facing direction of a command block; BlockStatesString = %#v\n", blockStates))
 						return
 					}
 					facing_direction, normal := NEED["facing_direction"].(int32)
 					if !normal {
-						infoSender(fmt.Sprintf("Failed to get the facing direction of a command block; BlockStatesString = %#v\n", cmd.BlockStatesString))
+						infoSender(fmt.Sprintf("Failed to get the facing direction of a command block; BlockStatesString = %#v\n", blockStates))
 						return
 					}
 					runtimeId, _ := chunk.LegacyBlockToRuntimeID(legacyRunTimeIDRemapper.palatteIDToBlockNameMapping[cmd.BlockConstantStringID], uint16(facing_direction))
@@ -366,7 +367,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				} else {
 					blockChan <- &IOBlockForDecoder{
 						Pos:         brushPosition,
-						BlockStates: cmd.BlockStatesString,
+						BlockStates: blockStates,
 						BlockName:   blockName,
 						NBT:         got,
 					}

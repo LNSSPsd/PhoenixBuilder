@@ -6,9 +6,9 @@ import (
 )
 
 type PlaceBlockWithNBTData struct {
-	BlockConstantStringID uint16
-	BlockStatesString     string
-	StringNBT             string
+	BlockConstantStringID       uint16
+	BlockStatesConstantStringID uint16
+	StringNBT                   string
 }
 
 func (_ *PlaceBlockWithNBTData) ID() uint16 {
@@ -26,7 +26,8 @@ func (cmd *PlaceBlockWithNBTData) Marshal(writer io.Writer) error {
 	if err != nil {
 		return err
 	}
-	_, err = writer.Write(append([]byte(cmd.BlockStatesString), 0))
+	binary.BigEndian.PutUint16(buf, cmd.BlockStatesConstantStringID)
+	_, err = writer.Write(buf)
 	if err != nil {
 		return err
 	}
@@ -41,11 +42,12 @@ func (cmd *PlaceBlockWithNBTData) Unmarshal(reader io.Reader) error {
 		return err
 	}
 	cmd.BlockConstantStringID = binary.BigEndian.Uint16(buf)
-	blockStates, err := readString(reader)
+	buf = make([]byte, 2)
+	_, err = io.ReadAtLeast(reader, buf, 2)
 	if err != nil {
 		return err
 	}
-	cmd.BlockStatesString = blockStates
+	cmd.BlockStatesConstantStringID = binary.BigEndian.Uint16(buf)
 	StringNBT, err := readString(reader)
 	if err != nil {
 		return err
