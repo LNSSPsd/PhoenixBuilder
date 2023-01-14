@@ -92,6 +92,12 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				// Command: NOP
 			case *command.AddInt32ZValue0:
 				brushPosition[2] += int(cmd.Value)
+			case *command.PlaceBlockWithBlockStates:
+				blockChan <- &IOBlockForDecoder{
+					Pos:         brushPosition,
+					BlockName:   legacyRunTimeIDRemapper.palatteIDToBlockNameMapping[cmd.BlockConstantStringID],
+					BlockStates: legacyRunTimeIDRemapper.palatteIDToBlockNameMapping[cmd.BlockStatesConstantStringID],
+				}
 			case *command.PlaceBlockWithBlockStatesDeprecated:
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos5], file may be corrupted")
