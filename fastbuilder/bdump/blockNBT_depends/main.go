@@ -167,6 +167,13 @@ func placeBlockWithNBTData(input *input) (interface{}, error) {
 	return nil, nil
 }
 
+/*
+此函数是 package blockNBT_depends 的主函数
+
+如果调用此函数的是 FastBuilder ，则 InterfaceNBT 字段应该为 nil
+
+反之，如果调用此函数的是 Omega ，则直接传入 InterfaceNBT ，且 *BlockInfo.StringNBT 字段为 ""
+*/
 func PlaceBlockWithNBTDataRun(
 	Environment *environment.PBEnvironment,
 	Mainsettings *types.MainConfig,
