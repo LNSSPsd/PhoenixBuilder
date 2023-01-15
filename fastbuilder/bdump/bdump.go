@@ -320,7 +320,6 @@ func (bdump *BDump) writeBlocks(w io.Writer) error {
 				}
 			}
 		*/
-
 	}
 	return nil
 }
