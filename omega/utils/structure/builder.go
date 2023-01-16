@@ -160,7 +160,7 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 			counter += 4096
 			time.Sleep(boostSleepTime)
 		} else {
-			if block.NBT != nil && !o.IgnoreNbt {
+			if block.NBT != nil && !o.IgnoreNbt && block.BlockName != "" {
 				if block.NBT["id"] == "CommandBlock" {
 					// cmd := fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(blk.Name, "minecraft:", "", 1), blk.Val)
 					// o.BlockCmdSender(cmd)
@@ -168,19 +168,19 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 					// deferSendBlock(block)
 					placeStart := time.Now()
 					quickDone := false
-					if cfg, err := utils.GenCommandBlockUpdateFromNbt(block.Pos, blk.Name, block.NBT); err == nil {
+					if cfg, err := utils.GenCommandBlockUpdateFromNbt(block.Pos, block.BlockName, block.NBT); err == nil {
 						fallBackActionsMu.Lock()
 						fallBackActions[block.Pos] = func() {
 							pterm.Warning.Printfln("命令方块放置超时 @ %v time out!", block.Pos)
-							pterm.Warning.Printfln("重新尝试放置命令方块: 坐标: %v 名称: %v %v 信息: %v", block.Pos, blk.Name, blk.Val, block.NBT)
-							o.Ctrl.PlaceCommandBlock(block.Pos, blk.Name, int(blk.Val), false, true, cfg, func(done bool) {
+							pterm.Warning.Printfln("重新尝试放置命令方块: 坐标: %v 名称: %v %v 信息: %v", block.Pos, block.BlockName, blk.Val, block.NBT)
+							o.Ctrl.PlaceCommandBlock(block.Pos, block.BlockName, int(blk.Val), false, true, cfg, func(done bool) {
 								if !done {
-									pterm.Error.Printfln("命令方块放置失败: 坐标: %v 名称: %v %v 信息: %v", block.Pos, blk.Name, blk.Val, block.NBT)
+									pterm.Error.Printfln("命令方块放置失败: 坐标: %v 名称: %v %v 信息: %v", block.Pos, block.BlockName, blk.Val, block.NBT)
 								}
 							}, time.Second*3, botName)
 						}
 						fallBackActionsMu.Unlock()
-						o.Ctrl.PlaceCommandBlock(block.Pos, blk.Name, int(blk.Val), false, true, cfg, func(done bool) {
+						o.Ctrl.PlaceCommandBlock(block.Pos, block.BlockName, int(blk.Val), false, true, cfg, func(done bool) {
 							if done {
 								quickDone = true
 								fallBackActionsMu.Lock()

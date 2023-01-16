@@ -177,11 +177,11 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 					"TrackOutput":        trackOutput,
 					"conditionalMode":    conditionalmode,
 				}
-				runtimeID, _ := chunk.LegacyBlockToRuntimeID(blockName, 0)
 				blockChan <- &IOBlockForDecoder{
-					Pos:  brushPosition,
-					RTID: runtimeID,
-					NBT:  commandBlockNbt,
+					Pos:       brushPosition,
+					BlockName: blockName,
+					BlockData: 0,
+					NBT:       commandBlockNbt,
 				}
 			case *command.PlaceCommandBlockWithCommandBlockData:
 				commandBlockData := cmd.CommandBlockData
@@ -222,11 +222,11 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 					"TrackOutput":        trackOutput,
 					"conditionalMode":    conditionalmode,
 				}
-				runtimeID, _ := chunk.LegacyBlockToRuntimeID(blockName, cmd.BlockData)
 				blockChan <- &IOBlockForDecoder{
-					Pos:  brushPosition,
-					RTID: runtimeID,
-					NBT:  commandBlockNbt,
+					Pos:       brushPosition,
+					BlockName: blockName,
+					BlockData: cmd.BlockData,
+					NBT:       commandBlockNbt,
 				}
 			case *command.AddInt8XValue:
 				brushPosition[0] += int(cmd.Value)
