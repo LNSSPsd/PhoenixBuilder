@@ -20,19 +20,60 @@ type PlayerKitOmega struct {
 	uq              *uqHolder.UQHolder
 	ctrl            *GameCtrl
 	name            string
-	persistStorage  map[string]string
 	violatedStorage map[string]interface{}
 	OnParamMsg      func(chat *defines.GameChat) (catch bool)
 	playerUQ        *uqHolder.Player
-	Permission      map[string]bool
 }
 
-func (p *PlayerKitOmega) HasPermission(key string) bool {
-	if auth, hasK := p.Permission[key]; hasK && auth {
-		return true
+func sendAdventureSettingsPacket(p *PlayerKitOmega, adventureFlag, actionPermissions uint32) {
+	getCommandPermissionLevel := func() uint32 {
+		if actionPermissions>>5%2 == 1 {
+			return packet.CommandPermissionLevelHost
+		}
+		return packet.CommandPermissionLevelNormal
 	}
-	return false
+	getPermissionLevel := func() uint32 {
+		switch actionPermissions {
+		case 447:
+			return packet.PermissionLevelOperator
+		case 287:
+			return packet.PermissionLevelMember
+		default:
+			if actionPermissions != 0 {
+				return packet.PermissionLevelCustom
+			}
+		}
+		return packet.PermissionLevelVisitor
+	}
+	p.ctrl.SendMCPacket(&packet.AdventureSettings{
+		Flags:                  adventureFlag,
+		CommandPermissionLevel: getCommandPermissionLevel(),
+		ActionPermissions:      actionPermissions,
+		PermissionLevel:        getPermissionLevel(),
+		PlayerUniqueID:         p.playerUQ.EntityUniqueID,
+	})
 }
+
+func (p *PlayerKitOmega) GetAdventureFlag(key uint32) bool {
+	return p.playerUQ.PropertiesFlag&key > 0
+}
+
+func (p *PlayerKitOmega) SetAdventureFlag(key uint32, b bool) {
+	if p.GetAdventureFlag(key) != b {
+		sendAdventureSettingsPacket(p, p.playerUQ.PropertiesFlag^key, p.playerUQ.ActionPermissions)
+	}
+}
+
+func (p *PlayerKitOmega) GetActionPermission(key uint32) bool {
+	return p.playerUQ.ActionPermissions&key > 0
+}
+
+func (p *PlayerKitOmega) SetActionPermission(key uint32, b bool) {
+	if p.GetActionPermission(key) != b {
+		sendAdventureSettingsPacket(p, p.playerUQ.PropertiesFlag, p.playerUQ.ActionPermissions^key)
+	}
+}
+
 func (b *PlayerKitOmega) GetPlayerNameByUUid(Theuuid string) string {
 	UUID, err := uuid.Parse(Theuuid)
 	if err != nil {
@@ -96,10 +137,6 @@ func (p *PlayerKitOmega) GetPos(selector string) chan *define.CubePos {
 		send(nil)
 	}()
 	return c
-}
-
-func (p *PlayerKitOmega) SetPermission(key string, b bool) {
-	p.Permission[key] = b
 }
 
 func (p *PlayerKitOmega) SetOnParamMsg(f func(chat *defines.GameChat) (catch bool)) error {
