@@ -55,32 +55,24 @@ func sendAdventureSettingsPacket(p *PlayerKitOmega, adventureFlag, actionPermiss
 }
 
 func (p *PlayerKitOmega) GetAdventureFlag(key uint32) bool {
-	if uq := p.GetRelatedUQ(); uq != nil {
-		return uq.PropertiesFlag&key > 0
-	}
-	return false
+	uq := p.GetRelatedUQ()
+	return uq != nil && uq.PropertiesFlag&key > 0
 }
 
 func (p *PlayerKitOmega) SetAdventureFlag(key uint32, b bool) {
-	if uq := p.GetRelatedUQ(); uq != nil {
-		if p.GetAdventureFlag(key) != b {
-			sendAdventureSettingsPacket(p, uq.PropertiesFlag^key, uq.ActionPermissions)
-		}
+	if uq := p.GetRelatedUQ(); uq != nil && p.GetAdventureFlag(key) != b {
+		sendAdventureSettingsPacket(p, uq.PropertiesFlag^key, uq.ActionPermissions)
 	}
 }
 
 func (p *PlayerKitOmega) GetActionPermission(key uint32) bool {
-	if uq := p.GetRelatedUQ(); uq != nil {
-		return uq.ActionPermissions&key > 0
-	}
-	return false
+	uq := p.GetRelatedUQ()
+	return uq != nil && uq.ActionPermissions&key > 0
 }
 
 func (p *PlayerKitOmega) SetActionPermission(key uint32, b bool) {
-	if uq := p.GetRelatedUQ(); uq != nil {
-		if p.GetActionPermission(key) != b {
-			sendAdventureSettingsPacket(p, uq.PropertiesFlag, uq.ActionPermissions^key)
-		}
+	if uq := p.GetRelatedUQ(); uq != nil && p.GetActionPermission(key) != b {
+		sendAdventureSettingsPacket(p, uq.PropertiesFlag, uq.ActionPermissions^key)
 	}
 }
 
