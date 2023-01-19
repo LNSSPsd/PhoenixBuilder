@@ -27,7 +27,7 @@ type PlayerKitOmega struct {
 
 func sendAdventureSettingsPacket(p *PlayerKitOmega, adventureFlag, actionPermissions uint32) {
 	getCommandPermissionLevel := func() uint32 {
-		if actionPermissions&packet.ActionPermissionOperator > 0 {
+		if actionPermissions&packet.ActionPermissionOperator != 0 {
 			return packet.CommandPermissionLevelHost
 		}
 		return packet.CommandPermissionLevelNormal
@@ -56,7 +56,7 @@ func sendAdventureSettingsPacket(p *PlayerKitOmega, adventureFlag, actionPermiss
 
 func (p *PlayerKitOmega) GetAdventureFlag(key uint32) bool {
 	uq := p.GetRelatedUQ()
-	return uq != nil && uq.PropertiesFlag&key > 0
+	return uq != nil && uq.PropertiesFlag&key != 0
 }
 
 func (p *PlayerKitOmega) SetAdventureFlag(key uint32, b bool) {
@@ -67,7 +67,7 @@ func (p *PlayerKitOmega) SetAdventureFlag(key uint32, b bool) {
 
 func (p *PlayerKitOmega) GetActionPermission(key uint32) bool {
 	uq := p.GetRelatedUQ()
-	return uq != nil && uq.ActionPermissions&key > 0
+	return uq != nil && uq.ActionPermissions&key != 0
 }
 
 func (p *PlayerKitOmega) SetActionPermission(key uint32, b bool) {
