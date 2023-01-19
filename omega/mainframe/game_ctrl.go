@@ -27,7 +27,7 @@ type PlayerKitOmega struct {
 
 func sendAdventureSettingsPacket(p *PlayerKitOmega, adventureFlag, actionPermissions uint32) {
 	getCommandPermissionLevel := func() uint32 {
-		if actionPermissions>>5%2 == 1 {
+		if actionPermissions&packet.ActionPermissionOperator > 0 {
 			return packet.CommandPermissionLevelHost
 		}
 		return packet.CommandPermissionLevelNormal
