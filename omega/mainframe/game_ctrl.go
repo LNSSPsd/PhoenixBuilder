@@ -62,14 +62,16 @@ func (p *PlayerKitOmega) GetAdventureFlag(key uint32) (bool, error) {
 	return false, errors.New("fail")
 }
 
-func (p *PlayerKitOmega) SetAdventureFlag(key uint32, value bool) bool {
+func (p *PlayerKitOmega) SetAdventureFlag(key uint32, value bool) (changeSent bool, err error) {
 	if uq := p.GetRelatedUQ(); uq != nil {
 		if (uq.PropertiesFlag&key != 0) != value {
 			sendAdventureSettingsPacket(p, uq.PropertiesFlag^key, uq.ActionPermissions)
+			changeSent = true
 		}
-		return true
+	} else {
+		err = errors.New("fail")
 	}
-	return false
+	return changeSent, err
 }
 
 func (p *PlayerKitOmega) GetActionPermission(key uint32) (bool, error) {
@@ -79,14 +81,16 @@ func (p *PlayerKitOmega) GetActionPermission(key uint32) (bool, error) {
 	return false, errors.New("fail")
 }
 
-func (p *PlayerKitOmega) SetActionPermission(key uint32, value bool) bool {
+func (p *PlayerKitOmega) SetActionPermission(key uint32, value bool) (changeSent bool, err error) {
 	if uq := p.GetRelatedUQ(); uq != nil {
 		if (uq.ActionPermissions&key != 0) != value {
 			sendAdventureSettingsPacket(p, uq.PropertiesFlag, uq.ActionPermissions^key)
+			changeSent = true
 		}
-		return true
+	} else {
+		err = errors.New("fail")
 	}
-	return false
+	return changeSent, err
 }
 
 func (b *PlayerKitOmega) GetPlayerNameByUUid(Theuuid string) string {
