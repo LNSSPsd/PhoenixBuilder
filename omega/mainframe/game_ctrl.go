@@ -2,6 +2,7 @@ package mainframe
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft/protocol"
@@ -54,26 +55,38 @@ func sendAdventureSettingsPacket(p *PlayerKitOmega, adventureFlag, actionPermiss
 	})
 }
 
-func (p *PlayerKitOmega) GetAdventureFlag(key uint32) bool {
-	uq := p.GetRelatedUQ()
-	return uq != nil && uq.PropertiesFlag&key != 0
-}
-
-func (p *PlayerKitOmega) SetAdventureFlag(key uint32, b bool) {
-	if uq := p.GetRelatedUQ(); uq != nil && p.GetAdventureFlag(key) != b {
-		sendAdventureSettingsPacket(p, uq.PropertiesFlag^key, uq.ActionPermissions)
+func (p *PlayerKitOmega) GetAdventureFlag(key uint32) (bool, error) {
+	if uq := p.GetRelatedUQ(); uq != nil {
+		return uq.PropertiesFlag&key != 0, nil
 	}
+	return false, errors.New("fail")
 }
 
-func (p *PlayerKitOmega) GetActionPermission(key uint32) bool {
-	uq := p.GetRelatedUQ()
-	return uq != nil && uq.ActionPermissions&key != 0
-}
-
-func (p *PlayerKitOmega) SetActionPermission(key uint32, b bool) {
-	if uq := p.GetRelatedUQ(); uq != nil && p.GetActionPermission(key) != b {
-		sendAdventureSettingsPacket(p, uq.PropertiesFlag, uq.ActionPermissions^key)
+func (p *PlayerKitOmega) SetAdventureFlag(key uint32, value bool) bool {
+	if uq := p.GetRelatedUQ(); uq != nil {
+		if (uq.PropertiesFlag&key != 0) != value {
+			sendAdventureSettingsPacket(p, uq.PropertiesFlag^key, uq.ActionPermissions)
+		}
+		return true
 	}
+	return false
+}
+
+func (p *PlayerKitOmega) GetActionPermission(key uint32) (bool, error) {
+	if uq := p.GetRelatedUQ(); uq != nil {
+		return uq.ActionPermissions&key != 0, nil
+	}
+	return false, errors.New("fail")
+}
+
+func (p *PlayerKitOmega) SetActionPermission(key uint32, value bool) bool {
+	if uq := p.GetRelatedUQ(); uq != nil {
+		if (uq.ActionPermissions&key != 0) != value {
+			sendAdventureSettingsPacket(p, uq.PropertiesFlag, uq.ActionPermissions^key)
+		}
+		return true
+	}
+	return false
 }
 
 func (b *PlayerKitOmega) GetPlayerNameByUUid(Theuuid string) string {
@@ -87,6 +100,7 @@ func (b *PlayerKitOmega) GetPlayerNameByUUid(Theuuid string) string {
 	}
 	return ""
 }
+
 func (p *PlayerKitOmega) GetPos(selector string) chan *define.CubePos {
 	s := utils.FormatByReplacingOccurrences(selector, map[string]interface{}{
 		"[player]": "\"" + p.name + "\"",
