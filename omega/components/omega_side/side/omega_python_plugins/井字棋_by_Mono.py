@@ -1,4 +1,4 @@
-# 插件: 开
+# 插件: 关
 
 from threading import Thread
 import time
