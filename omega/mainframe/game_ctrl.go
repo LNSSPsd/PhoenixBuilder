@@ -538,14 +538,9 @@ func (g *GameCtrl) onBlockActor(p *packet.BlockActorData) {
 	}
 }
 
-// 修复非主世界维度不能导入的问题
-func outputDimensionalCommand(command string, botName string) string {
-	return fmt.Sprintf("execute @a[name=\"%v\"] ~ ~ ~ %v", botName, command)
-}
-
 func (g *GameCtrl) PlaceCommandBlock(pos define.CubePos, commandBlockName string, commandBlockData int,
 	withMove, withAirPrePlace bool, updatePacket *packet.CommandBlockUpdate,
-	onDone func(done bool), timeOut time.Duration, botName string) {
+	onDone func(done bool), timeOut time.Duration) {
 	done := make(chan bool)
 	go func() {
 		select {
@@ -560,11 +555,11 @@ func (g *GameCtrl) PlaceCommandBlock(pos define.CubePos, commandBlockName string
 			time.Sleep(100 * time.Millisecond)
 		}
 		if withAirPrePlace {
-			cmd := outputDimensionalCommand(fmt.Sprintf("setblock %v %v %v %v %v", pos[0], pos[1], pos[2], "air", 0), botName)
+			cmd := fmt.Sprintf("setblock %v %v %v %v %v", pos[0], pos[1], pos[2], "air", 0)
 			g.SendWOCmd(cmd)
 			time.Sleep(100 * time.Millisecond)
 		}
-		cmd := outputDimensionalCommand(fmt.Sprintf("setblock %v %v %v %v %v", pos[0], pos[1], pos[2], strings.Replace(commandBlockName, "minecraft:", "", 1), commandBlockData), botName)
+		cmd := fmt.Sprintf("setblock %v %v %v %v %v", pos[0], pos[1], pos[2], strings.Replace(commandBlockName, "minecraft:", "", 1), commandBlockData)
 		g.SendWOCmd(cmd)
 		g.onBlockActorCbs[pos] = func(cp define.CubePos, bad *packet.BlockActorData) {
 			go func() {

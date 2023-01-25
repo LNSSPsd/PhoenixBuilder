@@ -15,22 +15,38 @@ import (
 	"github.com/lucasb-eyer/go-colorful"
 )
 
+// the input of this function is nemc runtime id, and should only from the network (chunk data packet), so it should never be "not found" if mapping and input is correct
+var NEMCAirRID uint32
+var AirRID uint32
+
+// for query speed, these two functions do not have "found" return value
+// for not found, it will return (mc/nemc) air rtid
+// note: for an unknown (nemc/mc) rtid -> mapping -> (mc/nemc) air -> mapping -> (nemc/air) air, after twice conversion, it will be (nemc/mc) air, not the origin value
+var NEMCRuntimeIDToStandardRuntimeID func(nemcRuntimeID uint32) (runtimeID uint32)
+var StandardRuntimeIDToNEMCRuntimeID func(runtimeID uint32) (nemcRuntimeID uint32)
+
+// the only place nemc runtime id is used is in decoding of chunk data packet, so in any other place, standard runtime id is used
+// so in function below, the "runtimeID" is always standard runtime id, not nemc runtime id
+
+var LegacyAirBlock *LegacyBlock
+var JavaAirBlock = "minecraft:air"
+
+// if not found, always return air block/rid/state, not nil/empty .etc
+var RuntimeIDToLegacyBlock func(runtimeID uint32) (legacyBlock *LegacyBlock, found bool)
+var LegacyBlockToRuntimeID func(name string, data uint16) (runtimeID uint32, found bool)
 var StateToRuntimeID func(name string, properties map[string]any) (runtimeID uint32, found bool)
 var RuntimeIDToState func(runtimeID uint32) (name string, properties map[string]any, found bool)
 var RuntimeIDToBlock func(runtimeID uint32) (block *GeneralBlock, found bool)
-var NEMCRuntimeIDToStandardRuntimeID func(nemcRuntimeID uint32) (runtimeID uint32)
-var RuntimeIDToLegacyBlock func(runtimeID uint32) (legacyBlock *LegacyBlock)
-var LegacyBlockToRuntimeID func(name string, data uint16) (runtimeID uint32, found bool)
-var AirRID uint32
-var NEMCAirRID uint32
+var JavaToRuntimeID func(javaBlockStr string) (runtimeID uint32, found bool)
+var RuntimeIDToJava func(runtimeID uint32) (javaBlockStr string, found bool)
+
+var SchematicBlockToRuntimeID func(block, data byte) (runtimeID uint32, found bool)
+var SchematicBlockToRuntimeIDStaticMapping []uint32
 var stateRuntimeIDs = map[StateHash]uint32{}
 var Blocks []*GeneralBlock
 var LegacyBlocks []*LegacyBlock
 var LegacyRuntimeIDs = map[LegacyBlockHash]uint32{}
-
-var JavaToRuntimeID func(javaBlockStr string) (runtimeID uint32, found bool)
 var JavaStrToRuntimeIDMapping map[string]uint32
-var RuntimeIDToJava func(runtimeID uint32) (javaBlockStr string, found bool)
 var RuntimeIDToJavaStrMapping map[uint32]string
 
 const (
@@ -133,14 +149,16 @@ func registerBlockState(s *GeneralBlock) {
 }
 
 type MappingIn struct {
-	RIDToMCBlock   []*GeneralBlock
-	NEMCRidToMCRid []int16
-	NEMCRidToVal   []uint8
-	NEMCToName     []string
-	JavaToRid      map[string]uint32
+	RIDToMCBlock       []*GeneralBlock
+	NEMCRidToMCRid     []uint32
+	MCRidToNEMCRid     []uint32
+	NEMCRidToVal       []uint8
+	NEMCToName         []string
+	JavaToRid          map[string]uint32
+	AirRID, NEMCAirRID uint32
 }
 
-var SchematicBlockMapping = []string{
+var SchematicBlockNames = []string{
 	"air",
 	"stone",
 	"grass",
@@ -484,30 +502,38 @@ func InitMapping(mappingInData []byte) {
 		panic("blockStateData read fail")
 	}
 
+	AirRID = mappingIn.AirRID
+	NEMCAirRID = mappingIn.NEMCAirRID
+
 	RuntimeIDToState = func(runtimeID uint32) (name string, properties map[string]interface{}, found bool) {
 		if runtimeID >= uint32(len(Blocks)) {
-			return "", nil, false
+			return "minecraft:air", nil, false
 		}
 		name, properties = Blocks[runtimeID].EncodeBlock()
 		return name, properties, true
 	}
 	RuntimeIDToBlock = func(runtimeID uint32) (block *GeneralBlock, found bool) {
 		if runtimeID >= uint32(len(Blocks)) {
-			return nil, false
+			return Blocks[AirRID], false
 		}
 		return Blocks[runtimeID], true
 	}
 
 	StateToRuntimeID = func(name string, properties map[string]interface{}) (runtimeID uint32, found bool) {
-		rid, ok := stateRuntimeIDs[StateHash{name: name, properties: hashProperties(properties)}]
-		return rid, ok
+		if rid, ok := stateRuntimeIDs[StateHash{name: name, properties: hashProperties(properties)}]; ok {
+			return rid, true
+		} else {
+			return AirRID, false
+		}
 	}
 
 	nemcToMCRIDMapping := mappingIn.NEMCRidToMCRid
 
-	NEMCAirRID = 6565
 	NEMCRuntimeIDToStandardRuntimeID = func(nemcRuntimeID uint32) (runtimeID uint32) {
 		return uint32(nemcToMCRIDMapping[nemcRuntimeID])
+	}
+	StandardRuntimeIDToNEMCRuntimeID = func(runtimeID uint32) (nemcRuntimeID uint32) {
+		return uint32(mappingIn.MCRidToNEMCRid[runtimeID])
 	}
 	if NEMCRuntimeIDToStandardRuntimeID(NEMCAirRID) != AirRID {
 		panic(fmt.Errorf("air rid not matching: %d vs %d", NEMCRuntimeIDToStandardRuntimeID(NEMCAirRID), AirRID))
@@ -516,29 +542,31 @@ func InitMapping(mappingInData []byte) {
 	nemcToVal := mappingIn.NEMCRidToVal
 	nemcToName := mappingIn.NEMCToName
 	LegacyBlocks = make([]*LegacyBlock, len(Blocks))
-	for rid, _ := range Blocks {
-		LegacyBlocks[rid] = &LegacyBlock{Name: "", Val: 0}
-	}
+	// for rid, _ := range Blocks {
+	// 	LegacyBlocks[rid] = &LegacyBlock{Name: "", Val: 0}
+	// }
 	for nemcRid, Rid := range nemcToMCRIDMapping {
-		if LegacyBlocks[Rid].Name != "" {
+		if LegacyBlocks[Rid] != nil && LegacyBlocks[Rid].Name != "" {
 			continue
 		}
 		val := nemcToVal[nemcRid]
 		if nemcRid == int(NEMCAirRID) {
 			continue
 		}
-		LegacyBlocks[Rid].Val = uint16(val)
-		LegacyBlocks[Rid].Name = nemcToName[nemcRid]
+		LegacyBlocks[Rid] = &LegacyBlock{Name: nemcToName[nemcRid], Val: uint16(val)}
 	}
-	for rid, _ := range Blocks {
-		if LegacyBlocks[rid].Name == "" {
-			LegacyBlocks[rid].Name = "air"
-		}
-	}
+	// for rid, _ := range Blocks {
+	// 	if LegacyBlocks[rid].Name == "" {
+	// 		LegacyBlocks[rid].Name = "air"
+	// 	}
+	// }
 	LegacyBlocks[AirRID].Name = "air"
 	LegacyBlocks[AirRID].Val = 0
+	LegacyAirBlock = LegacyBlocks[AirRID]
 	for rid, block := range LegacyBlocks {
-		LegacyRuntimeIDs[LegacyBlockHash{name: block.Name, data: block.Val}] = uint32(rid)
+		if block != nil {
+			LegacyRuntimeIDs[LegacyBlockHash{name: block.Name, data: block.Val}] = uint32(rid)
+		}
 	}
 	LegacyRuntimeIDs[LegacyBlockHash{name: "air", data: 0}] = AirRID
 	LegacyBlockToRuntimeID = func(name string, data uint16) (runtimeID uint32, found bool) {
@@ -548,16 +576,50 @@ func InitMapping(mappingInData []byte) {
 			return rtid, true
 		}
 	}
-	for _, blkName := range SchematicBlockMapping {
-		if blkName == "null" {
-			continue
+
+	{
+		SchematicBlockToRuntimeIDStaticMapping = make([]uint32, 256*256)
+		for _, blkName := range SchematicBlockNames {
+			if blkName == "null" {
+				continue
+			}
+			if _, found := LegacyBlockToRuntimeID(blkName, 0); !found {
+				// TODO: fix schematic block mapping
+				//fmt.Printf("Warning schematic block %v not found\n", blkName)
+			}
 		}
-		if _, found := LegacyBlockToRuntimeID(blkName, 0); !found {
-			//fmt.Printf("Warning schematic block %v not found\n", blkName)
+		notFound := ^uint32(0)
+		var name string
+		for block := byte(0); block < 255; block++ {
+			for data := byte(0); data < 255; data++ {
+				index := uint16(block)<<4 | uint16(data)
+				name = SchematicBlockNames[block]
+				rtidU32, found := LegacyBlockToRuntimeID(name, (uint16(data)))
+				if !found {
+					rtidU32, found = LegacyBlockToRuntimeID(name, 0)
+					if !found {
+						rtidU32 = notFound
+					}
+				}
+				SchematicBlockToRuntimeIDStaticMapping[index] = rtidU32
+			}
+		}
+		SchematicBlockToRuntimeID = func(block, data byte) (runtimeID uint32, found bool) {
+			index := uint16(block)<<4 | uint16(data)
+			if rtid := SchematicBlockToRuntimeIDStaticMapping[index]; rtid == notFound {
+				return AirRID, false
+			} else {
+				return rtid, true
+			}
 		}
 	}
-	RuntimeIDToLegacyBlock = func(runtimeID uint32) (legacyBlock *LegacyBlock) {
-		return LegacyBlocks[runtimeID]
+
+	RuntimeIDToLegacyBlock = func(runtimeID uint32) (legacyBlock *LegacyBlock, found bool) {
+		if blk := LegacyBlocks[runtimeID]; blk == nil {
+			return LegacyAirBlock, false
+		} else {
+			return blk, true
+		}
 	}
 	numberRegex := regexp.MustCompile(`\d+`)
 	legacyBlockNameRegex := regexp.MustCompile(`name=.+,`)
@@ -605,7 +667,7 @@ func InitMapping(mappingInData []byte) {
 		if javaBlockStr, hasK := RuntimeIDToJavaStrMapping[runtimeID]; hasK {
 			return javaBlockStr, true
 		} else {
-			return "minecraft:air", false
+			return JavaAirBlock, false
 		}
 	}
 
