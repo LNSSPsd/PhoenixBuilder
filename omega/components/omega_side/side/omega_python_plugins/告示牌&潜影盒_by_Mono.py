@@ -12,8 +12,8 @@ class version_packet_IDBlockActorData:
     version    =    "2.0 for omegaside"
 
 
-if not os.path.isdir("data/物品放置日志"):
-    os.mkdir("data/物品放置日志")
+if not os.path.isdir(os.path.join('data','物品放置日志')):
+    os.mkdir(os.path.join('data','物品放置日志'))
 
 
 def MonoMenu_plugin_getblockdata(api:API):
