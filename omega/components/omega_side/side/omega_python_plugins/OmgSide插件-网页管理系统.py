@@ -1,14 +1,20 @@
-# 插件: 开
+# 插件: 关
 
+import os,sys
+if "Windows" in sys.platform:
+    os.system("cd omega_storage/side/interpreters/python/bin/ && python.exe -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple")
+else:
+    os.system("cd omega_storage/side/interpreters/python/bin/ && python -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple")
+install_lib("flask",mirror_site = "https://pypi.tuna.tsinghua.edu.cn/simple");install_lib("requests",mirror_site = "https://pypi.tuna.tsinghua.edu.cn/simple")
 from omega_side.python3_omega_sync import API
 from omega_side.python3_omega_sync import frame as omega
 from omega_side.python3_omega_sync.bootstrap import install_lib
 from omega_side.python3_omega_sync.protocol import *
-import json,requests,os
+import json,requests
 from flask import Flask,render_template
 
+
 def plugin_main(api:API):
-    os.system("cd omega_storage/side/interpreters/python/bin/ && python.exe -m pip install flask")
     def plugin_web():
         def plugin_list_启用():
             list = []
@@ -82,4 +88,3 @@ def plugin_main(api:API):
         app.run(host='127.0.0.1',port=5000)
     plugin_web()
 omega.add_plugin(plugin=plugin_main)
-# 17695905
