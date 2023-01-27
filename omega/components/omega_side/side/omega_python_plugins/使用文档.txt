@@ -1,0 +1,5 @@
+OmgSide插件-网页管理系统
+食用指南
+将OmgSide插件-网页管理系统.py文件放入omage目录下的\omega_storage\side\omega_python_plugins
+然后把templates放入omage目录下的\omega_storage\side
+打开OmgSide插件-网页管理系统.py将第41行双引号内的token修改即可食用
