@@ -7,16 +7,18 @@ from omega_side.python3_omega_sync.protocol import *
 
 # install_lib("numpy")
 # import numpy as np
+# <- SuperScript ->
 
 class Super_AFKGobangBasic:
     """
-    SuperGobang v SuperScropt|SuperAFK
+    SuperGobang v SuperScript|SuperAFK
     TM AND LICENSED BY DOYEN STUDIO(1991-2023).Inc.
     """
     rooms = {}
     waitingCache = {}
     cacheUID = 0
     DESCRIPTION = __doc__
+    __version__ = "0.0.1"
     class Room:
         def __init__(this, _1P: str, _2P: str):
             this.playerA = _1P
