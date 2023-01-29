@@ -1,4 +1,4 @@
-package nbttranslatinginterface
+package nbtTranslatingInterface
 
 import (
 	"fmt"
@@ -49,7 +49,7 @@ func GetData(input interface{}) (string, error) {
 					if err {
 						ans = append(ans, fmt.Sprintf("%vb", int(got)))
 					} else {
-						return "", fmt.Errorf("GetData: Failed")
+						return "", fmt.Errorf("GetData: Failed in %#v", i)
 					}
 				}
 				return fmt.Sprintf("[B; %v]", strings.Join(ans, ", ")), nil
@@ -63,7 +63,7 @@ func GetData(input interface{}) (string, error) {
 					if err {
 						ans = append(ans, fmt.Sprintf("%v", got))
 					} else {
-						return "", fmt.Errorf("GetData: Failed")
+						return "", fmt.Errorf("GetData: Failed in %#v", i)
 					}
 				}
 				return fmt.Sprintf("[I; %v]", strings.Join(ans, ", ")), nil
@@ -77,7 +77,7 @@ func GetData(input interface{}) (string, error) {
 					if err {
 						ans = append(ans, fmt.Sprintf("%v", got))
 					} else {
-						return "", fmt.Errorf("GetData: Failed")
+						return "", fmt.Errorf("GetData: Failed in %#v", i)
 					}
 				}
 				return fmt.Sprintf("[L; %v]", strings.Join(ans, ", ")), nil
@@ -86,7 +86,7 @@ func GetData(input interface{}) (string, error) {
 		}
 		got, err := List(value)
 		if err != nil {
-			return "", fmt.Errorf("GetData: Failed")
+			return "", fmt.Errorf("GetData: Failed in %#v", value)
 		} else {
 			return got, nil
 		}
@@ -102,24 +102,24 @@ func GetData(input interface{}) (string, error) {
 	if result {
 		compound, err := Compound(value8, false)
 		if err != nil {
-			return "", fmt.Errorf("GetData: Failed")
+			return "", fmt.Errorf("GetData: Failed in %#v", value8)
 		} else {
 			return compound, nil
 		}
 	}
 	// compound
-	return "", fmt.Errorf("GetData: Failed")
+	return "", fmt.Errorf("GetData: Failed because of unknown type of the target data, occured in %#v", input)
 }
 
 func Compound(input map[string]interface{}, outputBlockStatesMode bool) (string, error) {
 	ans := make([]string, 0)
 	for key, value := range input {
 		if value == nil {
-			return "", fmt.Errorf("Compound: Crashed in input[\"%v\"]", key)
+			return "", fmt.Errorf("Compound: Crashed in input[\"%v\"]; errorLogs = value is nil; input = %#v", key, input)
 		}
 		got, err := GetData(value)
 		if err != nil {
-			return "", fmt.Errorf("Compound: Crashed in input[\"%v\"]", key)
+			return "", fmt.Errorf("Compound: Crashed in input[\"%v\"]; errorLogs = %v; input = %#v", key, err, input)
 		} else {
 			if got[len(got)-1] == "b"[0] && outputBlockStatesMode {
 				if got == "0b" {
@@ -127,7 +127,7 @@ func Compound(input map[string]interface{}, outputBlockStatesMode bool) (string,
 				} else if got == "1b" {
 					got = "true"
 				} else {
-					return "", fmt.Errorf("Compound: Crashed in input[\"%v\"]", key)
+					return "", fmt.Errorf("Compound: Crashed in input[\"%v\"]; errorLogs = outputBlockStatesModeError; input = %#v", key, input)
 				}
 			}
 			ans = append(ans, fmt.Sprintf("\"%v\": %v", key, got))
@@ -143,11 +143,11 @@ func List(input []interface{}) (string, error) {
 	ans := make([]string, 0)
 	for key, value := range input {
 		if value == nil {
-			return "", fmt.Errorf("List: Crashed in input[\"%v\"]", key)
+			return "", fmt.Errorf("List: Crashed in input[\"%v\"]; errorLogs = value is nil; input = %#v", key, input)
 		}
 		got, err := GetData(value)
 		if err != nil {
-			return "", fmt.Errorf("List: Crashed in input[\"%v\"]", key)
+			return "", fmt.Errorf("List: Crashed in input[\"%v\"]; errorLogs = %v; input = %#v", key, err, input)
 		} else {
 			ans = append(ans, got)
 		}

@@ -3,8 +3,8 @@ package mcstructure
 import (
 	"fmt"
 	"math"
+	"phoenixbuilder/fastbuilder/mcstructure/nbtTranslatingInterface"
 	"phoenixbuilder/fastbuilder/types"
-	"phoenixbuilder/fastbuilder/mcstructure/nbttranslatinginterface"
 	"strconv"
 	"strings"
 )
@@ -62,17 +62,17 @@ func SplitArea(
 	if endPos[0] < beginPos[0] {
 		tmp := beginPos[0]
 		beginPos[0] = endPos[0]
-		endPos[0]=tmp
+		endPos[0] = tmp
 	}
 	if endPos[1] < beginPos[1] {
-		tmp:=beginPos[1]
-		beginPos[1]=endPos[1]
-		endPos[1]=tmp
+		tmp := beginPos[1]
+		beginPos[1] = endPos[1]
+		endPos[1] = tmp
 	}
 	if endPos[2] < beginPos[2] {
-		tmp:=beginPos[2]
-		beginPos[2]=endPos[2]
-		endPos[2]=tmp
+		tmp := beginPos[2]
+		beginPos[2] = endPos[2]
+		endPos[2] = tmp
 	}
 	// 考虑一些特殊的情况，此举是为了更高的兼容性
 	sizeX := endPos[0] - beginPos[0] + 1
@@ -198,7 +198,7 @@ func GetMCStructureData(area Area, structure map[string]interface{}) (Mcstructur
 		if !normal {
 			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"states\"]", key)
 		}
-		blockStates, err := nbttranslatinginterface.Compound(value_states, true)
+		blockStates, err := nbtTranslatingInterface.Compound(value_states, true)
 		if err != nil {
 			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"states\"]", key)
 		}
@@ -324,9 +324,9 @@ func DumpBlocks(
 	allChunks, _, chunkPosIndicator := SplitArea(
 		BlockPos{currentExport.BeginX, currentExport.BeginY, currentExport.BeginZ},
 		BlockPos{
-			currentExport.BeginX+currentExport.SizeX-1,
-			currentExport.BeginY+currentExport.SizeY-1,
-			currentExport.BeginZ+currentExport.SizeZ-1,
+			currentExport.BeginX + currentExport.SizeX - 1,
+			currentExport.BeginY + currentExport.SizeY - 1,
+			currentExport.BeginZ + currentExport.SizeZ - 1,
 		},
 		16, 16, true,
 	)
@@ -344,9 +344,9 @@ func DumpBlocks(
 		i, _, _ := SplitArea(
 			BlockPos{value.BeginX, value.BeginY, value.BeginZ},
 			BlockPos{
-				value.BeginX+value.SizeX-1,
-				value.BeginY+value.SizeY-1,
-				value.BeginZ+value.SizeZ-1,
+				value.BeginX + value.SizeX - 1,
+				value.BeginY + value.SizeY - 1,
+				value.BeginZ + value.SizeZ - 1,
 			},
 			1, 1, true,
 		)
@@ -417,7 +417,7 @@ func DumpBlocks(
 							return []*types.Module{}, fmt.Errorf("ExportBaseOnChunk: Crashed by invalid \"block_entity_data\"")
 						}
 						// 拿一下这个方块的方块实体数据
-						containerData, err = nbttranslatinginterface.GetContainerDataRun(block_entity_data, foreground_blockName)
+						containerData, err = nbtTranslatingInterface.GetContainerDataRun(block_entity_data, foreground_blockName)
 						if fmt.Sprintf("%v", err) != "GetContainerDataRun: Not a container" && err != nil {
 							return []*types.Module{}, fmt.Errorf("%v", err)
 						}
@@ -448,7 +448,7 @@ func DumpBlocks(
 						}
 						// 容器
 						if foreground_blockName == "command_block" || foreground_blockName == "repeating_command_block" || foreground_blockName == "chain_command_block" {
-							commandBlockData, err = nbttranslatinginterface.GetCommandBlockData(block_entity_data, foreground_blockName)
+							commandBlockData, err = nbtTranslatingInterface.GetCommandBlockData(block_entity_data, foreground_blockName)
 							if err != nil {
 								return []*types.Module{}, fmt.Errorf("GetCommandBlockData(Started by ExportBaseOnChunk): %v", err)
 							}
@@ -456,7 +456,7 @@ func DumpBlocks(
 						}
 						// 命令方块
 						hasNBT = true
-						string_nbt, err = nbttranslatinginterface.Compound(block_entity_data, false)
+						string_nbt, err = nbtTranslatingInterface.Compound(block_entity_data, false)
 						if err != nil {
 							return []*types.Module{}, fmt.Errorf("%v", err)
 						}
