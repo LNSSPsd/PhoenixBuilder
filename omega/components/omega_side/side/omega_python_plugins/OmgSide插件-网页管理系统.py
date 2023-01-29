@@ -43,7 +43,7 @@ def plugin_main(api:API):
                     return list
             except:
                 pass
-        app = Flask(__name__)
+        app = Flask(__name__template_folder="./omega_python_plugins/OmgSide插件-网页管理系统)
         token = "xEF5GZvAlhToXo6WM91pe8K8WYVG9GwvYIZs5VmIMsM5D8vZa1"
         # 默认令牌 xEF5GZvAlhToXo6WM91pe8K8WYVG9GwvYIZs5VmIMsM5D8vZa1
         # 解决浏览器输出乱码问题
