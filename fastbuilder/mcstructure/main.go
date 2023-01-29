@@ -198,7 +198,7 @@ func GetMCStructureData(area Area, structure map[string]interface{}) (Mcstructur
 		if !normal {
 			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"states\"]", key)
 		}
-		blockStates, err := nbtTranslatingInterface.Compound(value_states, true)
+		blockStates, err := nbtTranslatingInterface.ConvertCompoundToString(value_states, true)
 		if err != nil {
 			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"states\"]", key)
 		}
@@ -456,7 +456,7 @@ func DumpBlocks(
 						}
 						// 命令方块
 						hasNBT = true
-						string_nbt, err = nbtTranslatingInterface.Compound(block_entity_data, false)
+						string_nbt, err = nbtTranslatingInterface.ConvertCompoundToString(block_entity_data, false)
 						if err != nil {
 							return []*types.Module{}, fmt.Errorf("%v", err)
 						}

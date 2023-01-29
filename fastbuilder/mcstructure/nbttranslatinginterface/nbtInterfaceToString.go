@@ -8,7 +8,7 @@ import (
 )
 
 // 判断 nbt 中 value 的数据类型
-func GetData(input interface{}) (string, error) {
+func getData(input interface{}) (string, error) {
 	switch reflect.TypeOf(input).Kind() {
 	case reflect.Uint8:
 		return fmt.Sprintf("%vb", int(input.(byte))), nil
@@ -58,34 +58,34 @@ func GetData(input interface{}) (string, error) {
 		// string
 	case reflect.Slice:
 		value := input.([]interface{})
-		list, err := List(value)
+		list, err := ConvertListToString(value)
 		if err != nil {
-			return "", fmt.Errorf("GetData: Failed in %#v", value)
+			return "", fmt.Errorf("getData: Failed in %#v", value)
 		}
 		return list, nil
 		// list
 	case reflect.Map:
 		value := input.(map[string]interface{})
-		compound, err := Compound(value, false)
+		compound, err := ConvertCompoundToString(value, false)
 		if err != nil {
-			return "", fmt.Errorf("GetData: Failed in %#v", value)
+			return "", fmt.Errorf("getData: Failed in %#v", value)
 		}
 		return compound, nil
 		// compound
 	}
-	return "", fmt.Errorf("GetData: Failed because of unknown type of the target data, occurred in %#v", input)
+	return "", fmt.Errorf("getData: Failed because of unknown type of the target data, occurred in %#v", input)
 }
 
-func Compound(input map[string]interface{}, outputBlockStatesMode bool) (string, error) {
+func ConvertCompoundToString(input map[string]interface{}, outputBlockStatesMode bool) (string, error) {
 	ans := make([]string, 0)
 	for key, value := range input {
 		key = strings.Replace(key, "\"", "\\\"", -1)
 		if value == nil {
-			return "", fmt.Errorf("Compound: Crashed in input[\"%v\"]; errorLogs = value is nil; input = %#v", key, input)
+			return "", fmt.Errorf("ConvertCompoundToString: Crashed in input[\"%v\"]; errorLogs = value is nil; input = %#v", key, input)
 		}
-		got, err := GetData(value)
+		got, err := getData(value)
 		if err != nil {
-			return "", fmt.Errorf("Compound: Crashed in input[\"%v\"]; errorLogs = %v; input = %#v", key, err, input)
+			return "", fmt.Errorf("ConvertCompoundToString: Crashed in input[\"%v\"]; errorLogs = %v; input = %#v", key, err, input)
 		}
 		if got[len(got)-1] == "b"[0] && outputBlockStatesMode {
 			if got == "0b" {
@@ -93,7 +93,7 @@ func Compound(input map[string]interface{}, outputBlockStatesMode bool) (string,
 			} else if got == "1b" {
 				got = "true"
 			} else {
-				return "", fmt.Errorf("Compound: Crashed in input[\"%v\"]; errorLogs = outputBlockStatesModeError; input = %#v", key, input)
+				return "", fmt.Errorf("ConvertCompoundToString: Crashed in input[\"%v\"]; errorLogs = outputBlockStatesModeError; input = %#v", key, input)
 			}
 		}
 		ans = append(ans, fmt.Sprintf("\"%v\": %v", key, got))
@@ -104,15 +104,15 @@ func Compound(input map[string]interface{}, outputBlockStatesMode bool) (string,
 	return fmt.Sprintf("{%v}", strings.Join(ans, ", ")), nil
 }
 
-func List(input []interface{}) (string, error) {
+func ConvertListToString(input []interface{}) (string, error) {
 	ans := make([]string, 0)
 	for key, value := range input {
 		if value == nil {
-			return "", fmt.Errorf("List: Crashed in input[\"%v\"]; errorLogs = value is nil; input = %#v", key, input)
+			return "", fmt.Errorf("ConvertListToString: Crashed in input[\"%v\"]; errorLogs = value is nil; input = %#v", key, input)
 		}
-		got, err := GetData(value)
+		got, err := getData(value)
 		if err != nil {
-			return "", fmt.Errorf("List: Crashed in input[\"%v\"]; errorLogs = %v; input = %#v", key, err, input)
+			return "", fmt.Errorf("ConvertListToString: Crashed in input[\"%v\"]; errorLogs = %v; input = %#v", key, err, input)
 		}
 		ans = append(ans, got)
 	}
