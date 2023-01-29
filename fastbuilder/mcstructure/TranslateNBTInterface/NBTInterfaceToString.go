@@ -1,4 +1,4 @@
-package nbtTranslatingInterface
+package TranslateNBTInterface
 
 import (
 	"fmt"

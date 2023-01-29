@@ -3,7 +3,7 @@ package mcstructure
 import (
 	"fmt"
 	"math"
-	"phoenixbuilder/fastbuilder/mcstructure/nbtTranslatingInterface"
+	"phoenixbuilder/fastbuilder/mcstructure/TranslateNBTInterface"
 	"phoenixbuilder/fastbuilder/types"
 	"strconv"
 	"strings"
@@ -24,7 +24,6 @@ type BlockPos [3]int32
 
 /*
 用于存放一个 MCBE 的结构；这里面的数据稍微作了一些处理，只保留了需要的部分
-
 如果后期要给这个结构体添加别的东西，请参见本文件中的 GetMCStructureData 函数
 */
 type Mcstructure struct {
@@ -39,11 +38,8 @@ type Mcstructure struct {
 
 /*
 用于拆分一个大区域为若干个小区域；当 useSpecialSplitWay 为真时，将蛇形拆分区域
-
 返回值 []Area 代表一个已经排好顺序的若干个小区域
-
 返回值 map[AreaLocation]int 代表可以通过 区域坐标(AreaLocation) 来访问 []Area 的对应项
-
 因此，返回值 map[int]AreaLocation 是返回值 map[AreaLocation]int 的逆过程
 */
 func SplitArea(
@@ -198,7 +194,7 @@ func GetMCStructureData(area Area, structure map[string]interface{}) (Mcstructur
 		if !normal {
 			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"states\"]", key)
 		}
-		blockStates, err := nbtTranslatingInterface.ConvertCompoundToString(value_states, true)
+		blockStates, err := TranslateNBTInterface.ConvertCompoundToString(value_states, true)
 		if err != nil {
 			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"states\"]", key)
 		}
@@ -307,11 +303,8 @@ func SearchForBlock(structureInfo Area, pos BlockPos) (int, error) {
 
 /*
 基于区块的大小对整个待导出区域进行重排，并写入对应的方块、NBT数据
-
 allAreas 对整个待导出区域按 64*64 大小拆分，且蛇形拆分(使用SplitArea拆分)，然后再获取拆分得到的各个小区域的 mcstructure 数据，然后处理后制成此 allAreas 表
-
 allAreasFindUse 通过 区域坐标 来查这个区域在 allAreas 表的位置
-
 currentExport 当前 Task 指定的导出区域，也就是根据 set(get) 和 setend(get end) 制成的 Area
 */
 func DumpBlocks(
@@ -417,7 +410,7 @@ func DumpBlocks(
 							return []*types.Module{}, fmt.Errorf("ExportBaseOnChunk: Crashed by invalid \"block_entity_data\"")
 						}
 						// 拿一下这个方块的方块实体数据
-						containerData, err = nbtTranslatingInterface.GetContainerDataRun(block_entity_data, foreground_blockName)
+						containerData, err = GetContainerDataRun(block_entity_data, foreground_blockName)
 						if fmt.Sprintf("%v", err) != "GetContainerDataRun: Not a container" && err != nil {
 							return []*types.Module{}, fmt.Errorf("%v", err)
 						}
@@ -448,7 +441,7 @@ func DumpBlocks(
 						}
 						// 容器
 						if foreground_blockName == "command_block" || foreground_blockName == "repeating_command_block" || foreground_blockName == "chain_command_block" {
-							commandBlockData, err = nbtTranslatingInterface.GetCommandBlockData(block_entity_data, foreground_blockName)
+							commandBlockData, err = GetCommandBlockData(block_entity_data, foreground_blockName)
 							if err != nil {
 								return []*types.Module{}, fmt.Errorf("GetCommandBlockData(Started by ExportBaseOnChunk): %v", err)
 							}
@@ -456,7 +449,7 @@ func DumpBlocks(
 						}
 						// 命令方块
 						hasNBT = true
-						string_nbt, err = nbtTranslatingInterface.ConvertCompoundToString(block_entity_data, false)
+						string_nbt, err = TranslateNBTInterface.ConvertCompoundToString(block_entity_data, false)
 						if err != nil {
 							return []*types.Module{}, fmt.Errorf("%v", err)
 						}
