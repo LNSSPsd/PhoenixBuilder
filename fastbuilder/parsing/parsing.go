@@ -71,6 +71,8 @@ func Parse(Message string, defaultConfig *types.MainConfig) (*types.MainConfig, 
 	//Length,  Width and Height
 	FlagSet.BoolVar(&Config.ExcludeCommands,"excludecommands",defaultConfig.ExcludeCommands,"Exclude commands in command blocks")
 	FlagSet.BoolVar(&Config.InvalidateCommands,"invalidatecommands",defaultConfig.InvalidateCommands,"Invalidate commands in command blocks")
+	FlagSet.BoolVar(&Config.UpgradeExecuteCommand, "upgradeexecutecommands", defaultConfig.UpgradeExecuteCommand, "Upgrade commands in command blocks")
+	FlagSet.BoolVar(&Config.UpgradeExecuteCommand, "U", defaultConfig.UpgradeExecuteCommand, "Upgrade commands in command blocks")
 	FlagSet.BoolVar(&Config.Strict,"strict",defaultConfig.Strict,"Break if the file isn't signed")
 	FlagSet.BoolVar(&Config.Strict,"S",defaultConfig.Strict,"Break if the file isn't signed")
 	

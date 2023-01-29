@@ -1,9 +1,12 @@
+//go:build is_tweak
 // +build is_tweak
 
 package commands
 
 import (
+	"fmt"
 	"github.com/google/uuid"
+	"phoenixbuilder/minecraft/protocol/packet"
 	"sync"
 )
 
@@ -25,7 +28,7 @@ func (sender *CommandSender) GetUUIDMap() *sync.Map {
 }
 
 func (sender *CommandSender) ClearUUIDMap() {
-	sender.UUIDMap=sync.Map{}
+	sender.UUIDMap = sync.Map{}
 }
 
 func (sender *CommandSender) SendCommand(command string, UUID uuid.UUID) error {
@@ -45,6 +48,19 @@ func (sender *CommandSender) SendSizukanaCommand(command string) error {
 
 func (sender *CommandSender) SendDimensionalCommand(command string) error {
 	return sender.SendSizukanaCommand(command)
+}
+
+func (sender *CommandSender) SendWSCommandWithResponce(command string) (*packet.CommandOutput, error) {
+	u_d, _ := uuid.NewUUID()
+	chann := make(chan *packet.CommandOutput)
+	(sender.GetUUIDMap()).Store(u_d.String(), chann)
+	sender.SendWSCommand(command, u_d)
+	resp := <-chann
+	close(chann)
+	if resp != nil {
+		return resp, nil
+	}
+	return &packet.CommandOutput{}, fmt.Errorf("SendWSCommandWithResponce: unknown error occurred")
 }
 
 func (sender *CommandSender) SendChat(content string) error {

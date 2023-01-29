@@ -82,6 +82,7 @@ var I18nDict_zh_HK map[uint16]string = map[uint16]string{
 	Menu_GetEndPos:                      "獲取終點座標",
 	Menu_GetPos:                         "獲取座標",
 	Menu_InvalidateCommandsOption:       "指令無效化",
+	Menu_UpgradeExecuteCommand:          "升級Execute指令",
 	Menu_Quit:                           "退出應用程式",
 	Menu_StrictModeOption:               "嚴格模式",
 	NotAnACMEFile:                       "所提供的文檔不是ACME結構文檔",

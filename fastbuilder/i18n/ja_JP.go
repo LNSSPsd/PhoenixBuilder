@@ -82,6 +82,7 @@ var I18nDict_ja_JP map[uint16]string = map[uint16]string{
 	Menu_GetEndPos:                      "getEndPos",
 	Menu_GetPos:                         "getPos",
 	Menu_InvalidateCommandsOption:       "Invalidate Commands",
+	Menu_UpgradeExecuteCommand:          "Executeコマンドをアップグレードします",
 	Menu_Quit:                           "Quit Program",
 	Menu_StrictModeOption:               "Strict Mode",
 	NotAnACMEFile:                       "このファイルは ACME ストラクチャーファイルではありませんでした。",

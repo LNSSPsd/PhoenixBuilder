@@ -282,6 +282,7 @@ char *fb_command_generator(const char *text, int state) {
 const char *flags_pool[]={
 	"--excludecommands","-excludecommands",
 	"--invalidatecommands","-invalidatecommands",
+	"--upgradeexecutecommands","-upgradeexecutecommands","-U"
 	"--strict","-strict","-S",
 	"--length","-l","-length",
 	"--width","-width","-w",

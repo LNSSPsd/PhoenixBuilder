@@ -82,6 +82,7 @@ var I18nDict_en_UK map[uint16]string = map[uint16]string{
 	Menu_GetEndPos:                      "getEndPos",
 	Menu_GetPos:                         "getPos",
 	Menu_InvalidateCommandsOption:       "Invalidate Commands",
+	Menu_UpgradeExecuteCommand:          "Upgrade execute commands",
 	Menu_Quit:                           "Quit Programme",
 	Menu_StrictModeOption:               "Strict Mode",
 	NotAnACMEFile:                       "Invalid file, not an ACME structure.",

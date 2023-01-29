@@ -106,6 +106,7 @@ const (
 	Menu_GetEndPos
 	Menu_GetPos
 	Menu_InvalidateCommandsOption
+	Menu_UpgradeExecuteCommand
 	Menu_Quit
 	Menu_StrictModeOption
 	NotAnACMEFile

@@ -82,6 +82,7 @@ var I18nDict_zh_CN map[uint16]string = map[uint16]string{
 	Menu_GetEndPos:                      "获取终点坐标",
 	Menu_GetPos:                         "获取坐标",
 	Menu_InvalidateCommandsOption:       "命令无效化",
+	Menu_UpgradeExecuteCommand:          "升级Execute命令",
 	Menu_Quit:                           "退出程序",
 	Menu_StrictModeOption:               "严格模式",
 	NotAnACMEFile:                       "所提供的文件不是ACME建筑文件",

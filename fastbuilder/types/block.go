@@ -32,16 +32,19 @@ type CommandBlockData struct {
 	ExecuteOnFirstTick bool //byte
 	TrackOutput        bool //byte
 	Conditional        bool
-	NeedsRedstone       bool
+	NeedsRedstone      bool
 }
 
 type ChestData []ChestSlot
 
 type ChestSlot struct {
-	Name   string
-	Count  uint8
-	Damage uint16
-	Slot   uint8
+	Name       string
+	Count      uint8
+	Damage     uint16
+	Slot       uint8
+	CanPlaceOn []string
+	CanDestroy []string
+	ItemNBT    map[string]interface{}
 }
 
 type ConstBlock struct {
@@ -75,7 +78,7 @@ func (req *ConstBlock) Take() *Block {
 	}
 	if len(takenBlocks) > takenBlocksMaxSize {
 		i := 0
-		for k, _ := range takenBlocks {
+		for k := range takenBlocks {
 			delete(takenBlocks, k)
 			i++
 			if i >= takenBlocksDeleteCount {
