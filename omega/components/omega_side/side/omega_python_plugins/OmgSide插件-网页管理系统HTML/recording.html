@@ -11,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>omega管理面板</title>
 </head>
-<body onload="load()">
+<body onload="load();">
     <div id="dataid" d="{{token}}" style="display:none"></div>
     <script>
         function load(){
@@ -22,9 +22,6 @@
             {
                 window.location.href = './login';
             }
-        }
-        function et(){
-            sessionStorage.removeItem('token')
         }
     </script>
 <nav class="navbar navbar-default" role="navigation">
@@ -43,7 +40,7 @@
         <ul class="nav navbar-nav">
             <li><a href="command">远程执行</a></li>
             <li><a href="playerlist">玩家列表</a></li>
-            <li><a href="recording">进服记录</a></li>
+            <li class="active"><a href="recording">进服记录</a></li>
             <li><a href="exit">退出登录</a></li>
             </li>
         </ul>
@@ -53,44 +50,25 @@
 <div class="page-header">
     <h1>OmgSide插件-网页管理系统
         <small>by xingchen</small>
-        <small>CPU使用率{{CPU}}</small>
-        <small>内存使用率{{NC}}</small>
     </h1>
 </div>
-<div class="list-group">
-    <a class="list-group-item active">
-        <h4 class="list-group-item-heading">
-            已启用插件列表
-        </h4>
-    </a>
-{% for i in plugin1 %}
-    <a class="list-group-item">
-        <h4 class="list-group-item-heading">
-            {{i}}
-        </h4>
-        <p class="list-group-item-text">
-            OmgSide插件
-        </p>
-    </a>
-</div>
-{% endfor %}
-<div class="list-group">
-    <a class="list-group-item active">
-        <h4 class="list-group-item-heading">
-            已禁用插件列表
-        </h4>
-    </a>
-{% for i in plugin2 %}
-    <a class="list-group-item">
-        <h4 class="list-group-item-heading">
-            {{i}}
-        </h4>
-        <p class="list-group-item-text">
-            OmgSide插件
-        </p>
-        <!-- <button type="submit" class="btn btn-success" onclick="startplugin()">启用</button> -->
-    </a>
-</div>
-{% endfor %}		
+
+
+<table class="table">
+    <thead>
+        <tr>
+          <th>玩家名称</th>
+      </thead>
+{% for i in recording %}
+<thead>
+    <tr class="active">
+        <td>{{i}}</td>
+{% endfor %}	 
+</thead>	
+</table>
+
+
+
+
 </body>
 </html>
