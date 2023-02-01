@@ -387,7 +387,7 @@ func DumpBlocks(
 				var commandBlockDataMark bool = false
 				var commandBlockData types.CommandBlockData = types.CommandBlockData{}
 				// var string_nbt string = ""
-				var err error = fmt.Errorf("DumpBlocks: Initialization error")
+				var err error = nil
 				// 变量初始化
 				// 危险！变量初始化这里不要动，不然可能会出现一些意想不到的 Bug
 				got, ok := targetArea.blockNBT[int(val)]
@@ -411,7 +411,7 @@ func DumpBlocks(
 						}
 						// 拿一下这个方块的方块实体数据
 						containerData, err = GetContainerDataRun(block_entity_data, foreground_blockName)
-						if fmt.Sprintf("%v", err) != "GetContainerDataRun: Not a supported container" && err != nil {
+						if err != ErrNotASupportContainer && err != nil {
 							return []*types.Module{}, fmt.Errorf("%v", err)
 						}
 						// 检查一下这个 NBT 方块是不是容器，如果不是会返回一个叫做 "GetContainerDataRun: Not a supported container" 的错误
