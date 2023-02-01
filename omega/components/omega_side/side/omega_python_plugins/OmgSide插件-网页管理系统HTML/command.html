@@ -9,7 +9,13 @@
     <!-- Bootstrap 核心 JavaScript 文件 -->
     <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>omage管理面板</title>
+    
+    <link rel="stylesheet" href="//unpkg.com/layui@2.6.8/dist/css/layui.css">
+    <script> src="//unpkg.com/layui@2.6.8/dist/layui.js"</script>
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/footer.css') }}">
+    <script src="{{ url_for('static',filename='js/layer.js') }}"></script>
+    <script src="{{ url_for('static',filename='js/main.js') }}"></script>
+    <title>omega管理面板</title>
 </head>
 <body onload="load();">
     <div id="dataid" d="{{token}}" style="display:none"></div>
@@ -25,8 +31,9 @@
         }
         function commandstart(){
             var command = document.getElementById('command').value;
+            var tk = document.getElementById('dataid').getAttribute('d');
             var httpRequest = new XMLHttpRequest();
-            httpRequest.open('GET', 'http://127.0.0.1:5000/omage/api/commandstart/'+command, true);
+            httpRequest.open('GET', 'http://127.0.0.1:5000/omega/api/commandstart/'+command+"/"+tk, true);
             httpRequest.send();
             httpRequest.onreadystatechange = function () {
             if (httpRequest.readyState == 4 && httpRequest.status == 200) {
@@ -47,20 +54,15 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="#">网页管理系统</a>
+        <a class="navbar-brand active" href="main">网页管理系统</a>
     </div>
     <div class="collapse navbar-collapse" id="example-navbar-collapse">
         <ul class="nav navbar-nav">
-            <li><a href="main">主页</a></li>
-            <li class="active"><a href="command">指令</a></li>
-            <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                    功能 <b class="caret"></b>
-                </a>
-                <ul class="dropdown-menu">
-                    <li><a href="exit">退出登录</a></li>
-  
-                </ul>
+            <li class="active"><a href="command">远程执行</a></li>
+            <li><a href="playerlist">玩家列表</a></li>
+            <li><a href="recording">进服记录</a></li>
+            <li><a href="msg">服内消息</a></li>
+            <li><a href="exit">退出登录</a></li>
             </li>
         </ul>
     </div>
@@ -90,7 +92,139 @@
     
 </div>
 </div>
+<div class="usercm" style="left: 199px; top: 5px; display: none;">
+    <ul>
+      <li><a href="/"><i class="iconfont icon-home"></i><span>首页</span></a></li>
+      <li><a href="javascript:void(0);" onclick="getSelect();"><i class="iconfont icon-copy"></i><span>复制</span></a></li>
+      <li><a href="javascript:void(0);" onclick="baiduSearch();"><i class="iconfont icon-Search"></i><span>搜索</span></a></li>
+      <li><a href="javascript:history.go(1);"><i class="iconfont icon-qianjin"></i><span>前进</span></a></li>
+      <li><a href="javascript:history.go(-1);"><i class="iconfont icon-houtui"></i><span>后退</span></a></li>
+      <li style="border-bottom:1px solid gray"><a href="javascript:window.location.reload();"><i class="iconfont icon-lx-refresh"></i><span>刷新</span></a></li>
+      <li><a href="https://uc.fastbuilder.pro/" target="_blank"><i class="iconfont icon-links"></i><span> FB</span></a></li>
+    </ul>
+  </div>
 
+
+  <script>
+    (function (a) {
+    a.extend({
+        mouseMoveShow: function (b) {
+            var d = 0,
+                c = 0,
+                h = 0,
+                k = 0,
+                e = 0,
+                f = 0;
+            a(window).mousemove(function (g) {
+                d = a(window).width();
+                c = a(window).height();
+                h = g.clientX;
+                k = g.clientY;
+                e = g.pageX;
+                f = g.pageY;
+                h + a(b).width() >= d && (e = e - a(b).width() - 5);
+                k + a(b).height() >= c && (f = f - a(b).height() - 5);
+                a("html").on({
+                    contextmenu: function (c) {
+                        3 == c.which && a(b).css({
+                            left: e,
+                            top: f
+                        }).show()
+                    },
+                    click: function () {
+                        a(b).hide()
+                    }
+                })
+            })
+        },
+        disabledContextMenu: function () {
+            window.oncontextmenu = function () {
+                return !1
+            }
+        }
+    })
+})(jQuery);
+; (function ($) {
+    for (var a = navigator.userAgent, b = "Android;iPhone;SymbianOS;Windows Phone;iPad;iPod".split(";"), d = !0, c = 0; c < b.length; c++) if (0 < a.indexOf(b[c])) {
+        d = !1;
+        break;
+    }
+    d && ($.mouseMoveShow(".usercm"), $.disabledContextMenu())
+})(jQuery);
+
+function getSelect() {
+    "" == (window.getSelection ? window.getSelection() : document.selection.createRange().text) ? toastr.info("啊噢...你没还没选择文字呢！", "复制提示") : document.execCommand("Copy")
+}
+/*复制提示*/
+$(document).ready(function () {
+    $("body").bind('copy', function (e) {
+        if ((window.getSelection ? window.getSelection() : document.selection.createRange().text) != '') {
+            toastr.success("撰文不易，请保留出处，谢谢！", "复制成功！");
+        } else {
+            toastr.info("啊噢...你没还没选择文字呢！", "复制提示");
+        }
+    })
+});
+function baiduSearch() {
+    var a = window.getSelection ? window.getSelection() : document.selection.createRange().text;
+    "" == a ? toastr.info("啊噢...你没还没选择文字呢！", "搜索提示") : window.open("https://www.baidu.com/s?wd=" + a)
+}
+  </script>     
+
+
+<script>
+//注意：导航 依赖 element 模块，否则无法进行功能性操作
+layui.use('element', function(){
+  var element = layui.element;
+  
+  //…
+});
+</script>
+<script>
+    (function () {
+        var a_idx = 0;
+        window.onclick = function (event) {
+            var a = new Array("omega", "awa");
+
+            var heart = document.createElement("b"); //创建b元素
+            heart.onselectstart = new Function('event.returnValue=false'); //防止拖动
+
+            document.body.appendChild(heart).innerHTML = a[a_idx]; //将b元素添加到页面上
+            a_idx = (a_idx + 1) % a.length;
+            heart.style.cssText = "position: fixed;left:-100%;"; //给p元素设置样式
+
+            var f = 16, // 字体大小
+                x = event.clientX - f / 2, // 横坐标
+                y = event.clientY - f, // 纵坐标
+                c = randomColor(), // 随机颜色
+                a = 1, // 透明度
+                s = 1.2; // 放大缩小
+
+            var timer = setInterval(function () { //添加定时器
+                if (a <= 0) {
+                    document.body.removeChild(heart);
+                    clearInterval(timer);
+                } else {
+                    heart.style.cssText = "font-size:16px;cursor: default;position: fixed;color:" +
+                        c + ";left:" + x + "px;top:" + y + "px;opacity:" + a + ";transform:scale(" +
+                        s + ");";
+
+                    y--;
+                    a -= 0.016;
+                    s += 0.002;
+                }
+            }, 15)
+
+        }
+        // 随机颜色
+        function randomColor() {
+
+            return "rgb(" + (~~(Math.random() * 255)) + "," + (~~(Math.random() * 255)) + "," + (~~(Math
+            .random() * 255)) + ")";
+
+        }
+    }());
+</script>  
 
 </body>
 </html>
