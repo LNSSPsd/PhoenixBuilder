@@ -113,7 +113,7 @@ func (o *SeverToServerChatRoom) Init(cfg *defines.ComponentConfig) {
 			"允许互通的计分板及计分板提示词": map[string]map[string]interface{}{
 				"示例_money": {
 					"服务端分数记录为负仍然允许上传分数": false,
-					"符合条件才可以上传":         "@a[scores={money=-999999..},tag=!ban]",
+					"符合条件才可以上传":         "@a[scores={示例_money=-999999..},tag=!ban]",
 					"成功存入分数提示":          "§a成功存入了[count]积分， 余额为[left]积分",
 					"成功提取分数提示":          "§a成功提取了[count]积分， 余额为[left]积分",
 					"在租赁服计分板不存在或分数不足":   "§c你的积分不足哦， 或者你在这个计分板上没有分数，无法上传",
@@ -121,7 +121,7 @@ func (o *SeverToServerChatRoom) Init(cfg *defines.ComponentConfig) {
 					"服务端计分板不存在":         "服务端该计分板不存在!",
 					"不符合分数上传条件":         "被ban的玩家不能上传哦",
 				},
-				"示例_super": {
+				"示例二_super": {
 					"服务端分数记录为负仍然允许上传分数": false,
 					"符合条件才可以上传":         "@a[tag=amazing_tag]",
 					"成功存入分数提示":          "§a成功捉走了[count]只super， 你还可以再抓[left]只喔",
