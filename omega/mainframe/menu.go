@@ -37,7 +37,7 @@ type Menu struct {
 	MenuCloseText                  string            `json:"关闭菜单时的提示"`
 	ErrorText                      string            `json:"输入有误时提示"`
 	SelectText                     string            `json:"等待输入时提示"`
-	HasNotMenuItemText             string            `json:"没有菜单项时提示"`
+	HasNotMenuOptionText           string            `json:"没有菜单项时提示"`
 	OpenMenuOnUnknownCmd           bool              `json:"在遇到未知指令时打开菜单" yaml:"在遇到未知指令时打开菜单"`
 	ContinueAsking                 bool              `json:"菜单打开后是否继续询问操作"`
 	MenuStructure                  interface{}       `json:"目录结构"`
@@ -147,7 +147,7 @@ func (m *Menu) popGameMenu(chat *defines.GameChat, node *MenuRenderNode) bool {
 	currentI := 0
 	available := []string{}
 	actions := []func(ctrl *defines.GameChat) bool{}
-	hasMenuItem := false
+	hasMenuOption := false
 	for _, e := range node.RealComponentEntry {
 		// 隐藏菜单项
 		if isInHideList := func() bool {
@@ -205,7 +205,7 @@ func (m *Menu) popGameMenu(chat *defines.GameChat, node *MenuRenderNode) bool {
 		})
 		//fmt.Println(entry)
 		pk.Say(m.replaceFn(entry))
-		hasMenuItem = true
+		hasMenuOption = true
 		actions = append(actions, e.OptionalOnTriggerFn)
 		available = append(available, e.Triggers[0])
 	}
@@ -218,20 +218,20 @@ func (m *Menu) popGameMenu(chat *defines.GameChat, node *MenuRenderNode) bool {
 			"[defaultTrigger]": sm.Trigger,
 		})
 		pk.Say(m.replaceFn(entry))
-		hasMenuItem = true
+		hasMenuOption = true
 		cn := sm.ChildNode
 		actions = append(actions, func(newChat *defines.GameChat) bool {
 			return m.popGameMenu(newChat, cn)
 		})
 		available = append(available, sm.Trigger)
 	}
-	if !hasMenuItem {
-		pk.Say(m.replaceFn(m.HasNotMenuItemText))
+	if !hasMenuOption {
+		pk.Say(m.replaceFn(m.HasNotMenuOptionText))
 	}
 	pk.Say(m.replaceFn(m.WisperHint))
 	pk.Say(m.replaceFn(m.MenuTail))
 	// fmt.Println(chat)
-	if m.ContinueAsking && hasMenuItem {
+	if m.ContinueAsking && hasMenuOption {
 		if player := m.mainFrame.GetGameControl().GetPlayerKit(chat.Name); player != nil {
 			hint, resolver := m.GenStringListHintResolverWithIndex(available)
 			if player.SetOnParamMsg(func(chat *defines.GameChat) (catch bool) {
