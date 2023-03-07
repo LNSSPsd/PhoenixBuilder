@@ -288,9 +288,12 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			blkscounter++
 			if curblock.NBTMap != nil {
 				err := blockNBT.PlaceBlockWithNBTDataRun(&blockNBT_API.GlobalAPI{
-					WritePacket: env.Connection.(*minecraft.Conn).WritePacket,
-					BotName:     env.Connection.(*minecraft.Conn).IdentityData().DisplayName,
-					BotIdentity: env.Connection.(*minecraft.Conn).IdentityData().Identity,
+					WritePacket:        env.Connection.(*minecraft.Conn).WritePacket,
+					BotName:            env.Connection.(*minecraft.Conn).IdentityData().DisplayName,
+					BotIdentity:        env.Connection.(*minecraft.Conn).IdentityData().Identity,
+					BotRunTimeID:       env.Connection.(*minecraft.Conn).GameData().EntityRuntimeID,
+					BotUniqueID:        env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
+					PacketHandleResult: env.UQHolderNew.(*blockNBT_API.PacketHandleResult),
 				},
 					curblock,
 					&blockNBT_global.Datas{
@@ -306,9 +309,12 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				newStruct := blockNBT_CommandBlock.CommandBlock{
 					BlockEntityDatas: &blockNBT_global.BlockEntityDatas{
 						API: &blockNBT_API.GlobalAPI{
-							WritePacket: env.Connection.(*minecraft.Conn).WritePacket,
-							BotName:     env.Connection.(*minecraft.Conn).IdentityData().DisplayName,
-							BotIdentity: env.Connection.(*minecraft.Conn).IdentityData().Identity,
+							WritePacket:        env.Connection.(*minecraft.Conn).WritePacket,
+							BotName:            env.Connection.(*minecraft.Conn).IdentityData().DisplayName,
+							BotIdentity:        env.Connection.(*minecraft.Conn).IdentityData().Identity,
+							BotRunTimeID:       env.Connection.(*minecraft.Conn).GameData().EntityRuntimeID,
+							BotUniqueID:        env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
+							PacketHandleResult: env.UQHolderNew.(*blockNBT_API.PacketHandleResult),
 						},
 						Datas: &blockNBT_global.Datas{
 							Position: [3]int32{int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z)},
