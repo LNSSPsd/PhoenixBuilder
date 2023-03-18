@@ -48,7 +48,6 @@ func (g *GlobalAPI) UseItemOnBlocks(
 			Actions:            []protocol.InventoryAction(nil),
 			ActionType:         protocol.UseItemActionClickBlock,
 			BlockPosition:      pos,
-			BlockFace:          0,
 			HotBarSlot:         int32(hotBarSlotID),
 			HeldItem:           datas,
 			BlockRuntimeID:     blockRuntimeID,
@@ -57,7 +56,16 @@ func (g *GlobalAPI) UseItemOnBlocks(
 	if err != nil {
 		return fmt.Errorf("UseItemOnBlocks: %v", err)
 	}
-	// write packet
+	// 发送这个数据包的必须的
+	err = g.WritePacket(&packet.PlayerAction{
+		EntityRuntimeID: g.BotRunTimeID,
+		ActionType:      protocol.PlayerActionStartBuildingBlock,
+		BlockPosition:   pos,
+	})
+	if err != nil {
+		return fmt.Errorf("UseItemOnBlocks: %v", err)
+	}
+	// 这个数据包可能不是必须发送的，但是对于铁砧来说，打开铁砧必须同时发送此包
 	if needWaiting {
 		_, err = g.SendWSCommandWithResponce("list")
 		if err != nil {

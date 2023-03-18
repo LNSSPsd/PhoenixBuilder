@@ -11,7 +11,7 @@ func (g *GlobalAPI) ChangeSelectedHotbarSlot(hotBarSlotID uint8, needWaiting boo
 	var got protocol.ItemInstance = protocol.ItemInstance{}
 	// init var
 	datas, err := g.PacketHandleResult.Inventory.GetItemStackInfo(0, 0)
-	// get item contents of window 0
+	// get item contents of window 0(inventory)
 	if err != nil {
 		got = protocol.ItemInstance{
 			StackNetworkID: 0,
