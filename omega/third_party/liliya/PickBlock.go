@@ -75,30 +75,19 @@ func (o *PickBlock) throwItem() bool {
 	}
 	// 取得快捷栏 0 的物品数据
 	if datas.Stack.Count > 0 {
-		ans, err := o.apis.SendItemStackRequestWithResponce(&packet.ItemStackRequest{
-			Requests: []protocol.ItemStackRequest{
-				{
-					Actions: []protocol.StackRequestAction{
-						&protocol.DropStackRequestAction{
-							Count: byte(datas.Stack.Count),
-							Source: protocol.StackRequestSlotInfo{
-								ContainerID:    28,
-								Slot:           0,
-								StackNetworkID: datas.StackNetworkID,
-							},
-							Randomly: false,
-						},
-					},
-				},
+		successStates, err := o.apis.DropItemAll(
+			protocol.StackRequestSlotInfo{
+				ContainerID:    28,
+				Slot:           0,
+				StackNetworkID: datas.StackNetworkID,
 			},
-		})
+			0,
+		)
 		if err != nil {
 			return false
 		}
 		// 发送数据包
-		if ans[0].Status == 0 {
-			return true
-		}
+		return successStates
 		// 返回值
 	}
 	// 尝试丢出物品

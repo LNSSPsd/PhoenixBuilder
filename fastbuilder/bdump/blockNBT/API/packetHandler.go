@@ -21,7 +21,7 @@ func (o *PacketHandleResult) HandlePacket(pk *packet.Packet) {
 	case *packet.InventoryContent:
 		for key, value := range p.Content {
 			if value.Stack.ItemType.NetworkID != -1 {
-				o.Inventory.writeItemStackInfo(p.WindowID, uint8(key), value)
+				o.Inventory.WriteItemStackInfo(p.WindowID, uint8(key), value)
 			}
 		}
 		// inventory contents(global)
@@ -30,7 +30,7 @@ func (o *PacketHandleResult) HandlePacket(pk *packet.Packet) {
 			if value.SourceType == protocol.InventoryActionSourceCreative {
 				continue
 			}
-			o.Inventory.writeItemStackInfo(uint32(value.WindowID), uint8(value.InventorySlot), value.NewItem)
+			o.Inventory.WriteItemStackInfo(uint32(value.WindowID), uint8(value.InventorySlot), value.NewItem)
 		}
 		// inventory contents(for enchant command...)
 	case *packet.ItemStackResponse:

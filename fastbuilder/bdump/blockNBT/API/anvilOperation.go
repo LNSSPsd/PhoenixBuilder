@@ -3,6 +3,7 @@ package blockNBT_API
 import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/mcstructure"
+	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
@@ -24,6 +25,8 @@ func (g *GlobalAPI) ChangeItemNameByUsingAnvil(
 	request []AnvilChangeItemName,
 	needToDestroyAnvil bool,
 ) ([]bool, error) {
+	var containerResourcesHasOccupy = false
+	var containerHasOpen bool = false
 	ans := []bool{}
 	// 初始化
 	err := g.SendSettingsCommand("gamemode 1", true)
@@ -42,6 +45,7 @@ func (g *GlobalAPI) ChangeItemNameByUsingAnvil(
 	}
 	// 传送机器人到铁砧处
 	_, lockDown := g.PacketHandleResult.ContainerResources.Occupy(false)
+	containerResourcesHasOccupy = true
 	// 获取容器资源
 	got, err := mcstructure.ParseStringNBT(blockStates, true)
 	if err != nil {
@@ -61,6 +65,7 @@ func (g *GlobalAPI) ChangeItemNameByUsingAnvil(
 	if err != nil {
 		return []bool{}, fmt.Errorf("ChangeItemNameByUsingAnvil: %v", err)
 	}
+	containerHasOpen = true
 	// 打开铁砧
 	for _, value := range request {
 		datas, err := g.PacketHandleResult.Inventory.GetItemStackInfo(0, value.Slot)
@@ -71,7 +76,7 @@ func (g *GlobalAPI) ChangeItemNameByUsingAnvil(
 			continue
 		}
 		// 获取被改物品的相关信息
-		resp, err := g.MoveItem(
+		resp, err := g.moveItem(
 			MoveItemDatas{
 				WindowID:    0,
 				ContainerID: 12,
@@ -91,7 +96,26 @@ func (g *GlobalAPI) ChangeItemNameByUsingAnvil(
 		if resp[0].Status != 0 {
 			return []bool{}, fmt.Errorf("ChangeItemNameByUsingAnvil: Operation %v have been canceled by error code %v; inventorySlot = %v, containerSlot = 1, moveCount = %v", resp[0].RequestID, resp[0].Status, value.Slot, datas.Stack.Count)
 		}
-		// 移动物品到铁砧
+		g.PacketHandleResult.Inventory.WriteItemStackInfo(
+			0,
+			value.Slot,
+			protocol.ItemInstance{
+				StackNetworkID: 0,
+				Stack: protocol.ItemStack{
+					ItemType: protocol.ItemType{
+						NetworkID:     0,
+						MetadataValue: 0,
+					},
+					BlockRuntimeID: 0,
+					Count:          0,
+					NBTData:        map[string]interface{}(nil),
+					CanBePlacedOn:  []string(nil),
+					CanBreak:       []string(nil),
+					HasNetworkID:   false,
+				},
+			},
+		)
+		// 移动物品到铁砧并更新本地库存数据
 		err = g.WritePacket(&packet.AnvilDamage{
 			Damage:        0,
 			AnvilPosition: pos,
@@ -100,20 +124,25 @@ func (g *GlobalAPI) ChangeItemNameByUsingAnvil(
 			return []bool{}, fmt.Errorf("ChangeItemNameByUsingAnvil: %v", err)
 		}
 		// 请求损坏当前铁砧
-		successStates, err := g.ChangeItemName(resp[0], value.Name, value.Slot)
+		successStates, err := g.ChangeItemName(resp[0], value.Name, value.Slot, datas)
 		if err != nil {
 			return []bool{}, fmt.Errorf("ChangeItemNameByUsingAnvil: %v", err)
 		}
 		ans = append(ans, successStates)
 		// 发送改名请求
 	}
-	err = g.CloseContainer()
-	if err != nil {
-		return []bool{}, fmt.Errorf("ChangeItemNameByUsingAnvil: %v", err)
-	}
-	// 关闭铁砧
-	lockDown.Unlock()
-	// 释放容器公用资源
+	// 修改请求中涉及的每个物品
+	defer func() {
+		if containerHasOpen {
+			g.CloseContainer()
+		}
+		// 关闭铁砧
+		if containerResourcesHasOccupy {
+			lockDown.Unlock()
+		}
+		// 释放容器公用资源
+	}()
+	// 关闭铁砧并释放容器公用资源
 	if needToDestroyAnvil {
 		_, err := g.SendWSCommandWithResponce(fmt.Sprintf("setblock %d %d %d air", correctPos[0], correctPos[1], correctPos[2]))
 		if err != nil {

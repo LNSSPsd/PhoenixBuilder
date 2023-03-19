@@ -8,7 +8,6 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
-	"strings"
 
 	"github.com/pterm/pterm"
 )
@@ -61,8 +60,11 @@ func (o *ChangeItemNameByUseAnvil) ChangeItemName(chat *defines.GameChat) bool {
 			pterm.Error.Printf("修改物品名称: %v\n", err)
 			return
 		}
+		if len(datas) <= 0 {
+			o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("§bomega_storage/data/%v §c处的文件没有填写物品名称§f，§c可能这个文件是个空文件§f，§c也可能是文件本身不存在", o.FilePath))
+			return
+		}
 		itemName := string(datas)
-		itemName = strings.Replace(itemName, `\n`, "\n", -1)
 		// 获取物品的新名称
 		itemDatas, err := o.apis.PacketHandleResult.Inventory.GetItemStackInfo(0, 0)
 		if err != nil {
@@ -106,10 +108,8 @@ func (o *ChangeItemNameByUseAnvil) ChangeItemName(chat *defines.GameChat) bool {
 			true,
 		)
 		if err != nil {
-			panic(fmt.Sprintf("修改物品名称: %v", err))
-		}
-		if len(successStates) <= 0 {
-			o.Frame.GetGameControl().SayTo(chat.Name, "§c请确保机器人在快捷栏 §b0 §c有一个物品")
+			o.Frame.GetGameControl().SayTo(chat.Name, "§c物品名称修改失败\n详细日志已发送到控制台")
+			pterm.Error.Printf("修改物品名称: %v\n", err)
 			return
 		}
 		if successStates[0] == false {
@@ -124,29 +124,20 @@ func (o *ChangeItemNameByUseAnvil) ChangeItemName(chat *defines.GameChat) bool {
 			return
 		}
 		// 读取新物品的数据
-		dropResp, err := o.apis.SendItemStackRequestWithResponce(&packet.ItemStackRequest{
-			Requests: []protocol.ItemStackRequest{
-				{
-					Actions: []protocol.StackRequestAction{
-						&protocol.DropStackRequestAction{
-							Count: byte(newItemDatas.Stack.Count),
-							Source: protocol.StackRequestSlotInfo{
-								ContainerID:    28,
-								Slot:           0,
-								StackNetworkID: newItemDatas.StackNetworkID,
-							},
-							Randomly: false,
-						},
-					},
-				},
+		dropResp, err := o.apis.DropItemAll(
+			protocol.StackRequestSlotInfo{
+				ContainerID:    28,
+				Slot:           0,
+				StackNetworkID: newItemDatas.StackNetworkID,
 			},
-		})
+			0,
+		)
 		if err != nil {
 			o.Frame.GetGameControl().SayTo(chat.Name, "§c尝试丢出新物品时失败\n详细日志已发送到控制台")
 			pterm.Error.Printf("修改物品名称: %v\n", err)
 			return
 		}
-		if dropResp[0].Status != 0 {
+		if !dropResp {
 			o.Frame.GetGameControl().SayTo(chat.Name, "§c尝试丢出新物品时失败\n详细日志已发送到控制台")
 			pterm.Error.Printf("修改物品名称: dropResp = %#v\n", dropResp)
 			return

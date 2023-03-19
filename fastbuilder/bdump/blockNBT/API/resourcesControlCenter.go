@@ -196,8 +196,8 @@ func (i *inventoryContents) GetItemStackInfo(windowID uint32, slotLocation uint8
 	// return
 }
 
-// 修改 windowID 库存中 slotLocation 槽位的物品数据，属于私有实现
-func (i *inventoryContents) writeItemStackInfo(windowID uint32, slotLocation uint8, itemStackInfo protocol.ItemInstance) {
+// 修改 windowID 库存中 slotLocation 槽位的物品数据
+func (i *inventoryContents) WriteItemStackInfo(windowID uint32, slotLocation uint8, itemStackInfo protocol.ItemInstance) {
 	i.lockDown.Lock()
 	defer i.lockDown.Unlock()
 	// init
