@@ -376,24 +376,24 @@ report_error() {
 printf "Getting latest version of FastBuilder...\n"
 FB_VERSION_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}/version"
 if [[ ${PB_USE_GH_REPO} == "1" ]]; then
-  FB_VERSION_LINK="${GH_DOMAIN}/${GH_USER}/${GH_REPO}/raw/main/version"
+  FB_VERSION_LINK="https://api.github.com/repos/${GH_USER}/${GH_REPO}/releases/latest"
 fi
 ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/version ${FB_VERSION_LINK}
 DL_RET=$?
 if [ ${DL_RET} == 0 ]; then
-  FB_VER=$(cat "${PREFIX}"/./fastbuilder-temp/version | sed -n -e 'H;${x;s/\n//g;p;}')
-  printf "${FB_VER}\n"
+  FB_TAG=$(grep -oP '"tag_name": "\K(.*)(?=")' "${PREFIX}"/./fastbuilder-temp/version)
+  printf "${FB_TAG}\n"
 else
   report_error ${DL_RET}
 fi
-
+FB_VER=$(echo "$FB_TAG" | sed 's/[^0-9[:punct:]]//g')
 if [[ ${BINARY_INSTALL} == "1" ]]; then
   printf "Downloading FastBuilder binary...\n"
   # Repeat FB_LINK
   FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}${FILE_ARCH}${FILE_TYPE}"
   if [[ ${PB_USE_GH_REPO} == "1" ]]; then
     printf "\033[32mOriginal download link: ${FB_LINK}\033[0m\n"
-    FB_LINK="${GH_LINK}v${FB_VER}/${FB_PREFIX}${FILE_ARCH}${FILE_TYPE}"
+    FB_LINK="${GH_LINK}${FB_TAG}/${FB_PREFIX}${FILE_ARCH}${FILE_TYPE}"
     printf "\033[32mGithub download link: ${FB_LINK}\033[0m\n"
   fi
   printf "\033[33mIf the official storage does not work for you, you can try to assign environment variable \"PB_USE_GH_REPO=1\" for the script to download stuff from Github.\033[0m\n"
@@ -423,10 +423,10 @@ if [[ ${BINARY_INSTALL} == "1" ]]; then
 else
   printf "Downloading FastBuilder package...\n"
   # Repeat FB_LINK
-  FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}"
+  FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}_${FB_TAG}_${FILE_ARCH}${FILE_TYPE}"
   if [[ ${PB_USE_GH_REPO} == "1" ]]; then
     printf "\033[32mOriginal download link: ${FB_LINK}\033[0m\n"
-    FB_LINK="${GH_LINK}v${FB_VER}/${FB_PREFIX}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}"
+    FB_LINK="${GH_LINK}${FB_TAG}/${FB_PREFIX}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}"
     printf "\033[32mGithub download link: ${FB_LINK}\033[0m\n"
   else
     printf "\033[33mIf the official storage does not work for you, you can try to assign environment variable \"PB_USE_GH_REPO=1\" for the script to download stuff from Github.\033[0m\n"
