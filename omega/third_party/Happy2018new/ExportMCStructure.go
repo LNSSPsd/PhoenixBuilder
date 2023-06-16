@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	GlobalAPI "phoenixbuilder/Interaction"
+	"phoenixbuilder/GameControl/GlobalAPI"
 	"phoenixbuilder/minecraft/nbt"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"

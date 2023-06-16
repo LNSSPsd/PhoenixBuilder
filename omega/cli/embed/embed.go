@@ -3,8 +3,8 @@ package embed
 import (
 	"crypto/md5"
 	"fmt"
-	GlobalAPI "phoenixbuilder/Interaction"
-	"phoenixbuilder/ResourcesControlCenter"
+	"phoenixbuilder/GameControl/GlobalAPI"
+	"phoenixbuilder/GameControl/ResourcesControlCenter"
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/function"
 	"phoenixbuilder/fastbuilder/uqHolder"

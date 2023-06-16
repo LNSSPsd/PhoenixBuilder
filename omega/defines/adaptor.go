@@ -1,7 +1,7 @@
 package defines
 
 import (
-	GlobalAPI "phoenixbuilder/Interaction"
+	"phoenixbuilder/GameControl/GlobalAPI"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror"

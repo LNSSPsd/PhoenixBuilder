@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	GlobalAPI "phoenixbuilder/Interaction"
+	"phoenixbuilder/GameControl/GlobalAPI"
 	"phoenixbuilder/fastbuilder/mcstructure"
 	"phoenixbuilder/minecraft/nbt"
 	"phoenixbuilder/minecraft/protocol"

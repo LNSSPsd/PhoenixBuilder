@@ -2,9 +2,9 @@ package task
 
 import (
 	"fmt"
-	GlobalAPI "phoenixbuilder/Interaction"
-	"phoenixbuilder/ResourcesControlCenter"
-	"phoenixbuilder/blockNBT"
+	"phoenixbuilder/GameControl/GlobalAPI"
+	"phoenixbuilder/GameControl/ResourcesControlCenter"
+	"phoenixbuilder/fastbuilder/bdump/blockNBT"
 	"phoenixbuilder/fastbuilder/builder"
 	"phoenixbuilder/fastbuilder/commands_generator"
 	"phoenixbuilder/fastbuilder/configuration"

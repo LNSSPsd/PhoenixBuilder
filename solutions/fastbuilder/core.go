@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"phoenixbuilder/ResourcesControlCenter"
+	"phoenixbuilder/GameControl/ResourcesControlCenter"
 	"phoenixbuilder/fastbuilder/args"
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/core"

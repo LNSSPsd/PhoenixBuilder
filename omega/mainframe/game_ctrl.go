@@ -3,7 +3,7 @@ package mainframe
 import (
 	"encoding/json"
 	"fmt"
-	GlobalAPI "phoenixbuilder/Interaction"
+	"phoenixbuilder/GameControl/GlobalAPI"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"

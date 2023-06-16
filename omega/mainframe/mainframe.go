@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"phoenixbuilder/ResourcesControlCenter"
+	"phoenixbuilder/GameControl/ResourcesControlCenter"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
