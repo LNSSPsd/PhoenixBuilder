@@ -58,13 +58,11 @@ func (g *GlobalAPI) SendWSCommandWithResponce(command string) (packet.CommandOut
 		return packet.CommandOutput{}, fmt.Errorf("SendWSCommandWithResponce: %v", err)
 	}
 	// 发送命令
-	g.Resources.Command.AwaitResponce(uniqueId)
-	// 等待租赁服响应命令请求
 	ans, err := g.Resources.Command.LoadResponceAndDelete(uniqueId)
 	if err != nil {
 		return packet.CommandOutput{}, fmt.Errorf("SendWSCommandWithResponce: %v", err)
 	}
-	// 取得命令请求的返回值
+	// 等待租赁服响应命令请求并取得命令请求的返回值
 	return ans, nil
 	// 返回值
 }

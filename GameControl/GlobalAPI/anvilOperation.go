@@ -2,10 +2,19 @@ package GlobalAPI
 
 import (
 	"fmt"
-	"phoenixbuilder/ResourcesControlCenter"
+	"phoenixbuilder/GameControl/ResourcesControlCenter"
 	"phoenixbuilder/fastbuilder/mcstructure"
 	"phoenixbuilder/minecraft/protocol"
 )
+
+// 描述铁砧操作的操作结果
+type AnvilOperationResponce struct {
+	// 指代操作结果，为真时代表成功，否则反之
+	SuccessStates bool
+	// 指代被操作物品的最终位置，可能不存在。
+	// 如果不存在，则代表物品已被丢出
+	Destination *ItemLocation
+}
 
 // 使用铁砧修改物品名称时会被使用的结构体
 type AnvilChangeItemName struct {

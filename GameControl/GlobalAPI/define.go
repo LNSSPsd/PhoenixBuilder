@@ -1,7 +1,7 @@
 package GlobalAPI
 
 import (
-	"phoenixbuilder/ResourcesControlCenter"
+	"phoenixbuilder/GameControl/ResourcesControlCenter"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 

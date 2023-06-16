@@ -6,7 +6,8 @@ import (
 	"sort"
 )
 
-// 列出所有可访问库存的窗口 ID ，即 WindowID
+// 列出所有可访问库存的窗口 ID ，即 WindowID 。
+// 返回的切片内的数字信息是无序的
 func (i *inventoryContents) ListWindowID() []uint32 {
 	i.lockDown.RLock()
 	defer i.lockDown.RUnlock()
@@ -21,6 +22,7 @@ func (i *inventoryContents) ListWindowID() []uint32 {
 }
 
 // 列出指定窗口 ID 所对应库存中的所有已记录槽位。
+// 返回的切片内的数字信息将以升序排序。
 //
 // filter 是一个可选的过滤器，在其生效时，
 // 将只返回满足条件的物品栏。
@@ -36,6 +38,11 @@ func (i *inventoryContents) ListSlot(
 	i.lockDown.RLock()
 	defer i.lockDown.RUnlock()
 	// lock down resources
+	got, ok := i.datas[windowID]
+	if !ok {
+		return []uint8{}, fmt.Errorf("ListSlot: %v is not recorded in i.datas; i.datas = %#v", windowID, i.datas)
+	}
+	// if windowsID is not exist
 	newFilter := map[int32]interface{}{}
 	if filter != nil {
 		for _, value := range *filter {
@@ -43,11 +50,6 @@ func (i *inventoryContents) ListSlot(
 		}
 	}
 	// init map for filter
-	got, ok := i.datas[windowID]
-	if !ok {
-		return []uint8{}, fmt.Errorf("ListSlot: %v is not recorded in i.datas; i.datas = %#v", windowID, i.datas)
-	}
-	// if windowsID is not exist
 	tmp := []int{}
 	for key, value := range got {
 		if filter == nil || newFilter[value.Stack.ItemType.NetworkID] != nil {

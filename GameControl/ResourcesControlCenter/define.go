@@ -4,8 +4,6 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"sync"
-
-	"github.com/google/uuid"
 )
 
 // ------------------------- Resources -------------------------
@@ -36,22 +34,9 @@ type Resources struct {
 
 // 存放命令请求及结果
 type commandRequestWithResponce struct {
-	// 命令请求队列
-	commandRequest struct {
-		// 防止并发读写而设置的读写锁
-		lockDown sync.RWMutex
-		// 存放命令请求的等待队列。
-		// 每次写入请求后将会自动为此请求上锁以便于阻塞
-		datas map[uuid.UUID]*sync.Mutex
-	}
-	// 命令请求的返回值
-	commandResponce struct {
-		// 防止并发读写而设置的读写锁
-		lockDown sync.RWMutex
-		// 存放命令返回值。
-		// 每次写入返回值后将会自动为对应等待队列中的读写锁解锁
-		datas map[uuid.UUID]packet.CommandOutput
-	}
+	// 存放命令请求及返回值队列。
+	// 数据类型为 map[uuid.UUID](chan packet.CommandOutput)
+	requestWithResponce sync.Map
 }
 
 // ------------------------- inventoryContents -------------------------
@@ -76,22 +61,9 @@ type inventoryContents struct {
 因此，为了绝对的安全，如果尝试绕过相关实现而直接发送物品操作数据包，则会造成程序惊慌。
 */
 type itemStackReuqestWithResponce struct {
-	// 物品操作请求队列
-	itemStackRequest struct {
-		// 防止并发读写而设置的读写锁
-		lockDown sync.RWMutex
-		// 存放物品操作请求的等待队列。
-		// 每次写入请求后将会自动为此请求上锁以便于阻塞
-		datas map[int32]singleItemStackRequest
-	}
-	// 物品操作的结果
-	itemStackResponce struct {
-		// 防止并发读写而设置的读写锁
-		lockDown sync.RWMutex
-		// 存放物品操作的结果。
-		// 每次写入返回值后将会自动为对应等待队列中的读写锁解锁。
-		datas map[int32]protocol.ItemStackResponse
-	}
+	// 存放物品操作的请求队列。
+	// 数据类型为 map[int32]singleItemStackRequestWithResponce
+	requestWithResponce sync.Map
 	/*
 		记录已累计的 RequestID 。
 
@@ -110,19 +82,14 @@ type itemStackReuqestWithResponce struct {
 	currentRequestID int32
 }
 
-// ------------------------- container -------------------------
-
-// 描述一个容器 ID
-type ContainerID uint8
-
 // 每个物品操作请求都会使用这样一个结构体，它用于描述单个的物品操作请求
-type singleItemStackRequest struct {
-	// 每个物品操作请求在发送前都应该上锁它以便于后续等待返回值时的阻塞
-	lockDown *sync.Mutex
+type singleItemStackRequestWithResponce struct {
+	// 描述物品操作请求的返回值
+	resp chan protocol.ItemStackResponse
 	// 描述多个库存(容器)中物品的变动结果。
 	// 租赁服不会在返回 ItemStackResponce 时返回完整的物品数据，因此需要您提供对应
 	// 槽位的更改结果以便于我们依此更新本地存储的库存数据
-	datas map[ContainerID]StackRequestContainerInfo
+	howToChange map[ContainerID]StackRequestContainerInfo
 }
 
 // 描述单个库存(容器)中物品的变动结果
@@ -134,6 +101,11 @@ type StackRequestContainerInfo struct {
 	// 这些数据会在租赁服发回 ItemStackResponce 后被重新设置
 	ChangeResult map[uint8]protocol.ItemInstance
 }
+
+// ------------------------- container -------------------------
+
+// 描述一个容器 ID
+type ContainerID uint8
 
 /*
 存储容器的 打开/关闭 状态，同时存储容器资源的占用状态。

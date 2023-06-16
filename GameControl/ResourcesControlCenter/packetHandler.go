@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+
+	"github.com/pterm/pterm"
 )
 
 // 根据收到的数据包更新客户端的资源数据
 func (r *Resources) handlePacket(pk *packet.Packet) {
 	switch p := (*pk).(type) {
 	case *packet.CommandOutput:
-		uniqueId := p.CommandOrigin.UUID
-		ok := r.Command.TestRequest(uniqueId)
-		if !ok {
-			return
+		err := r.Command.tryToWriteResponce(p.CommandOrigin.UUID, *p)
+		if err != nil {
+			pterm.Error.Printf("handlePacket: %v\n", err)
 		}
-		r.Command.writeResponce(uniqueId, *p)
 		// send ws command with responce
 	case *packet.InventoryContent:
 		for key, value := range p.Content {
@@ -38,10 +38,7 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 				r.ItemStackOperation.updateItemData(value, &r.Inventory)
 			}
 			// update local inventory datas
-			err := r.ItemStackOperation.writeResponce(value.RequestID, value)
-			if err != nil {
-				panic("handlePacket: Attempt to send packet.ItemStackRequest without using ResourcesControlCenter")
-			}
+			r.ItemStackOperation.tryToWriteResponce(value.RequestID, value)
 			// write responce
 		}
 		// item stack request

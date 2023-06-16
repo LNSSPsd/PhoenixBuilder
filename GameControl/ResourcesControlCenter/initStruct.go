@@ -4,8 +4,6 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"sync"
-
-	"github.com/google/uuid"
 )
 
 // Resources 最多只能被初始化一次，因为资源在 PhoenixBuilder 中是唯一的
@@ -27,20 +25,7 @@ func (r *Resources) Init() func(pk *packet.Packet) {
 	r.verified = true
 	// verified
 	r.Command = commandRequestWithResponce{
-		commandRequest: struct {
-			lockDown sync.RWMutex
-			datas    map[uuid.UUID]*sync.Mutex
-		}{
-			lockDown: sync.RWMutex{},
-			datas:    make(map[uuid.UUID]*sync.Mutex),
-		},
-		commandResponce: struct {
-			lockDown sync.RWMutex
-			datas    map[uuid.UUID]packet.CommandOutput
-		}{
-			lockDown: sync.RWMutex{},
-			datas:    make(map[uuid.UUID]packet.CommandOutput),
-		},
+		requestWithResponce: sync.Map{},
 	}
 	// Command
 	r.Inventory = inventoryContents{
@@ -49,21 +34,8 @@ func (r *Resources) Init() func(pk *packet.Packet) {
 	}
 	// Inventory
 	r.ItemStackOperation = itemStackReuqestWithResponce{
-		itemStackRequest: struct {
-			lockDown sync.RWMutex
-			datas    map[int32]singleItemStackRequest
-		}{
-			lockDown: sync.RWMutex{},
-			datas:    make(map[int32]singleItemStackRequest),
-		},
-		itemStackResponce: struct {
-			lockDown sync.RWMutex
-			datas    map[int32]protocol.ItemStackResponse
-		}{
-			lockDown: sync.RWMutex{},
-			datas:    make(map[int32]protocol.ItemStackResponse),
-		},
-		currentRequestID: 1,
+		requestWithResponce: sync.Map{},
+		currentRequestID:    1,
 	}
 	// ItemStackOperation
 	r.Container = container{
