@@ -2,6 +2,17 @@ package luaComponent
 
 import "time"
 
+const (
+	//主要是描述执行命令 比如重载插件之类的
+	COMMANDTYPE = "commmandpackage"
+	//绑定包的时候用
+	RESOURCETYPE = "resourcepackage"
+	//行为包 玩家行为之类的
+	BEHAVIORTYPE = "behaviorpackage"
+	//游戏指令包 主要是给游戏发送指令
+	GAMETYPE = "gamecommandpackage"
+)
+
 //lua程序与交互器之间的包规范
 type ConnectPackage struct {
 	//包名
@@ -15,16 +26,17 @@ type ConnectPackage struct {
 //包的主体
 type PackageBody struct {
 }
+type GameBody struct {
+}
 
-//封装游戏内包
-func NewGamePackage(packageId string, bodyString string) ConnectPackage {
+func NewGamePackage(packageId string, bodystring string) ConnectPackage {
 	//
 	//to do 将packageid与bodystring组装成json进入Body
 	//
 
 	gamePackage := ConnectPackage{
 		TypeName: "GamePackage",
-		Body:     bodyString,
+		Body:     bodystring,
 		Date:     time.Now().Unix(),
 	}
 	return gamePackage

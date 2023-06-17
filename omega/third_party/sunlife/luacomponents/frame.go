@@ -36,10 +36,7 @@ func (b *Test) Inject(frame defines.MainFrame) {
 	b.BasicComponent.Inject(frame)
 	b.Monitor = &Monitor{}
 	b.Monitor.Start()
-	//初始化调控器
-	b.Center = &ControlCenter{}
-	//开始寻求连接
-	b.Center.GetConnect()
+
 }
 
 // 启动交互器
