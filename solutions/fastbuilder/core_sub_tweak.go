@@ -8,7 +8,7 @@ import (
 )
 
 func SubFunc(sender *commands.CommandSender, resp *packet.CommandOutput) {
-	pr, ok := commandSender.UUIDMap.LoadAndDelete(resp.CommandOrigin.UUID.String())
+	pr, ok := sender.UUIDMap.LoadAndDelete(resp.CommandOrigin.UUID.String())
 	if ok {
 		pu := pr.(chan *packet.CommandOutput)
 		pu <- resp
