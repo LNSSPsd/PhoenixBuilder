@@ -1,10 +1,23 @@
 package luaComponent
 
 import (
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 
+	"github.com/pterm/pterm"
 	lua "github.com/yuin/gopher-lua"
+)
+
+const (
+	COMPONENT_INIT_FN   = "init"
+	COMPONENT_ACTIVE_FN = "active"
+	COMPONENT__SAVE_FN  = "save"
+	OMGPATH             = "omega_storage" + SEPA + "data"
+	SEPA                = string(filepath.Separator)
 )
 
 type Monitor struct {
@@ -38,65 +51,96 @@ type LuaCommpoentConfig struct {
 
 // 开始加载程序 返回通讯通道
 func (m *Monitor) Start() {
-	//
-
-	/*
-		b.ComponentPoll = startLuaCompoent()
-
-		m.running = false
-		// 创建一个新的 Lua 虚拟机实例
-		L := lua.NewState()
-		defer L.Close()
-
-		// 为 Lua 虚拟机提供一个安全的环境
-		L.PreloadModule("communicator", m.registerCommunicatorModule)
-
-		// 加载 Lua 脚本文件
-		err := L.DoFile("lua/center.lua")
-		if err != nil {
-			fmt.Println("Error loading script:", err)
-			return
-		}
-		//获取对象
-		pterm.Info.Println("成功启动lua交互器")
-		m.L = L
-		m.running = true
-	*/
-	fmt.Println(os.Getwd())
-	os.Getwd()
+	m.ComponentPoll = m.RegistrationPlugins()
+	println(m.ComponentPoll)
 
 }
 
-// 读取运行并且返回运行插件列表
-func (m *Monitor) startLuaCompoent() map[string]*LuaComponent {
-	names := m.getComponentName()
+// 读取 并且检查插件 返回插件列表
+func (m *Monitor) RegistrationPlugins() map[string]*LuaComponent {
+	paths := m.getComponentPath()
 	pool := make(map[string]*LuaComponent)
-	for i := 0; i < len(names); i++ {
-		path := m.getPathByCompentName(names[i])
+	for i := 0; i < len(paths); i++ {
+		path := paths[i]
 		L := lua.NewState()
-		// 为 Lua 虚拟机提供一个安全的环境
+		// 为 Lua 虚拟机提供一个安全的环境 提供基础的方法
 		L.PreloadModule("communicator", m.registerCommunicatorModule)
 		// 加载 Lua 脚本文件
-		err := L.DoFile(path)
+
+		_, err := L.LoadFile(path)
 		if err != nil {
-			fmt.Println("Error loading script:", err, "插件:", names[i])
+			fmt.Println("Error loading script:", err, "插件:", path)
 		}
-		pool[names[i]] = &LuaComponent{
-			L:       L,
-			Msg:     make(map[string]string),
-			Running: false,
-			Config:  LuaCommpoentConfig{},
+		if err := m.checkCompoent(L); err != nil {
+			pool[path] = &LuaComponent{
+				L:       L,
+				Msg:     make(map[string]string),
+				Running: false,
+				Config:  LuaCommpoentConfig{},
+			}
+		} else {
+			m.printInfo("插件不符合规范")
 		}
+
 	}
 	return pool
 }
 
-// 获取正确的位置
-func (m *Monitor) getPathByCompentName(name string) string {
-	return "/lua" + name
+// 打印指定消息
+func (m *Monitor) printInfo(str string) {
+	pterm.Info.Printfln("[lua插件] %d", str)
 }
-func (m *Monitor) getComponentName() []string {
-	return []string{}
+
+// 检查插件是否符合规范
+func (m *Monitor) checkCompoent(l *lua.LState) error {
+	// 检查函数是否存在Init函数 active函数 以及选填的[save函数] [getData函数]
+	ComponentFn := []string{
+		COMPONENT_INIT_FN,
+		COMPONENT_ACTIVE_FN,
+	}
+	for _, v := range ComponentFn {
+		if l.GetGlobal(v) == lua.LNil {
+			return errors.New("错误 该插件不含有" + v + "函数")
+		}
+	}
+	return nil
+
+	//errors.New("错误")
+}
+
+// 读取运行并且返回运行插件列表
+func (m *Monitor) startLuaCompoent() {
+
+}
+
+// 获取插件路径 文件名字/插件名字
+func (m *Monitor) getComponentPath() []string {
+	nameList := []string{}
+	dirPath := OMGPATH + SEPA + "lua"
+	fileExt := ".lua"
+	// 读取目录下的所有文件
+	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+		// 如果目录不存在，则创建它
+		err := os.MkdirAll(dirPath, os.ModePerm)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Directory created:", dirPath)
+	}
+	files, err := ioutil.ReadDir(dirPath)
+	if err != nil {
+		panic(err)
+	}
+
+	// 遍历目录下的所有文件名
+	for _, file := range files {
+		// 如果文件后缀名为 .lua，则打印文件名（去掉后缀名）
+		if strings.HasSuffix(file.Name(), fileExt) {
+			nameList = append(nameList, file.Name())
+		}
+
+	}
+	return nameList
 }
 
 // lua插件状况
