@@ -7,8 +7,6 @@ import (
 
 type Test struct {
 	*defines.BasicComponent
-	//资源调控中心
-	Center *ControlCenter
 	//通讯用通道
 	ConnectChan chan ConnectPackage
 	Monitor     *Monitor
@@ -35,6 +33,7 @@ func (b *Test) Inject(frame defines.MainFrame) {
 	//初始化lua程序并且返回通讯通道
 	b.BasicComponent.Inject(frame)
 	b.Monitor = &Monitor{}
+
 	b.Monitor.Start()
 
 }

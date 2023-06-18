@@ -5,10 +5,10 @@ communicator.send_message("Hello, Go!")
 num = 0
 -- 从 Go 获取消息
 while true do
-  function center()
-    num =num +1
-  --local message = communicator.get_message()
-  communicator.send_message(num)
-  --print( message)
-end
+    function center()
+        num = num + 1
+        --local message = communicator.get_message()
+        communicator.send_message(num)
+        --print( message)
+    end
 end

@@ -1,14 +1,12 @@
 package luaComponent
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"github.com/pterm/pterm"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -39,108 +37,60 @@ type LuaComponent struct {
 	Config LuaCommpoentConfig
 }
 
-// 描述了一个lua插件该有的东西
-type LuaCommpoentConfig struct {
-	Name     string                 `json:"插件名字"`
-	Usage    string                 `json:"插件用途"`
-	Disabled bool                   `json:"是否禁用"`
-	Version  string                 `json:"版本号"`
-	Author   string                 `json:"作者"`
-	Config   map[string]interface{} `json:"配置"`
-}
-
 // 开始加载程序 返回通讯通道
 func (m *Monitor) Start() {
-	m.ComponentPoll = m.RegistrationPlugins()
-	println(m.ComponentPoll)
+	//检查lua插件所需要的所有目录结构
+	checkFilePath()
+	err := m.RegistrationPlugins()
 
+	if err != nil {
+		printInfo(newPrintMsg("警告", err))
+	}
+	println(m.ComponentPoll)
+}
+
+// 单独加载某个插件
+func (m *Monitor) Load(name string) error {
+	bindingMap := getBindingJson().Map
+	path := bindingMap[name]
+	//检查是否已经存在
+	if m.ComponentPoll == nil {
+		m.ComponentPoll = make(map[string]*LuaComponent)
+	}
+	if _, ok := m.ComponentPoll[name]; ok {
+		m.ComponentPoll[name].L.Close()
+		delete(m.ComponentPoll, name)
+	}
+	L := lua.NewState()
+	// 为 Lua 虚拟机提供一个安全的环境 提供基础的方法
+	L.PreloadModule("communicator", m.registerCommunicatorModule)
+	// 加载 Lua 脚本文件
+
+	_, err := L.LoadFile(path)
+	if err != nil {
+		fmt.Println("Error loading script:", err, "插件:", path)
+	}
+	if err := checkCompoent(L); err != nil {
+		m.ComponentPoll[name] = &LuaComponent{
+			L:       L,
+			Msg:     make(map[string]string),
+			Running: false,
+			Config:  LuaCommpoentConfig{},
+		}
+	} else {
+
+		printInfo(newPrintMsg("警告", "插件不符合规范"+err.Error()))
+	}
+	return nil
 }
 
 // 读取 并且检查插件 返回插件列表
-func (m *Monitor) RegistrationPlugins() map[string]*LuaComponent {
-	paths := m.getComponentPath()
-	pool := make(map[string]*LuaComponent)
-	for i := 0; i < len(paths); i++ {
-		path := paths[i]
-		L := lua.NewState()
-		// 为 Lua 虚拟机提供一个安全的环境 提供基础的方法
-		L.PreloadModule("communicator", m.registerCommunicatorModule)
-		// 加载 Lua 脚本文件
-
-		_, err := L.LoadFile(path)
-		if err != nil {
-			fmt.Println("Error loading script:", err, "插件:", path)
-		}
-		if err := m.checkCompoent(L); err != nil {
-			pool[path] = &LuaComponent{
-				L:       L,
-				Msg:     make(map[string]string),
-				Running: false,
-				Config:  LuaCommpoentConfig{},
-			}
-		} else {
-			m.printInfo("插件不符合规范")
-		}
-
-	}
-	return pool
-}
-
-// 打印指定消息
-func (m *Monitor) printInfo(str string) {
-	pterm.Info.Printfln("[lua插件] %d", str)
-}
-
-// 检查插件是否符合规范
-func (m *Monitor) checkCompoent(l *lua.LState) error {
-	// 检查函数是否存在Init函数 active函数 以及选填的[save函数] [getData函数]
-	ComponentFn := []string{
-		COMPONENT_INIT_FN,
-		COMPONENT_ACTIVE_FN,
-	}
-	for _, v := range ComponentFn {
-		if l.GetGlobal(v) == lua.LNil {
-			return errors.New("错误 该插件不含有" + v + "函数")
-		}
+func (m *Monitor) RegistrationPlugins() error {
+	names := getBindingJson().Map
+	for k, _ := range names {
+		m.Load(k)
 	}
 	return nil
-
-	//errors.New("错误")
-}
-
-// 读取运行并且返回运行插件列表
-func (m *Monitor) startLuaCompoent() {
-
-}
-
-// 获取插件路径 文件名字/插件名字
-func (m *Monitor) getComponentPath() []string {
-	nameList := []string{}
-	dirPath := OMGPATH + SEPA + "lua"
-	fileExt := ".lua"
-	// 读取目录下的所有文件
-	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		// 如果目录不存在，则创建它
-		err := os.MkdirAll(dirPath, os.ModePerm)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println("Directory created:", dirPath)
-	}
-	files, err := ioutil.ReadDir(dirPath)
-	if err != nil {
-		panic(err)
-	}
-
-	// 遍历目录下的所有文件名
-	for _, file := range files {
-		// 如果文件后缀名为 .lua，则打印文件名（去掉后缀名）
-		if strings.HasSuffix(file.Name(), fileExt) {
-			nameList = append(nameList, file.Name())
-		}
-
-	}
-	return nameList
 }
 
 // lua插件状况
@@ -169,6 +119,7 @@ func (m *Monitor) registerCommunicatorModule(L *lua.LState) int {
 //SetOnParamMsg(name ,fnName)绑定玩家与对应处理函数
 //CustomResourcePack(packageid,fnName)绑定自定义包
 //SendCmdAndInvokeOnResponse(cmd,fnName)发送指令并且绑定处理函数
+//getNewMsg(fn)
 
 // sendMessage 是一个 Go 函数，用于从 Lua 脚本发送消息
 // 每次lua发送消息后便移交给信息中心处理
@@ -189,5 +140,188 @@ func getMessage(L *lua.LState) int {
 
 // 传入json信息 并且将消息分类后 按照类别分别移交给插件注册中心 包绑定中心 行为逻辑中心
 func (m *Monitor) HandleMsg(msg string) {
+	cmdmsg := formateCmd(msg)
+	if !cmdmsg.isCmd {
 
+	}
+}
+
+// 接受指令处理并且执行
+func (m *Monitor) CmdCenter(msg string) error {
+	CmdMsg := formateCmd(msg)
+	if !CmdMsg.isCmd {
+		errors.New(fmt.Sprintf("很显然%d并不是指令的任何一种 请输入lua luas help寻求帮助"))
+	}
+	switch CmdMsg.Head {
+	case HEADLUA:
+		//lua指令
+		if err := m.luaCmdHandler(&CmdMsg); err != nil {
+			printInfo(newPrintMsg("警告", err))
+		}
+	case HEADRELOAD:
+		if err := m.Reload(&CmdMsg); err != nil {
+			printInfo(newPrintMsg("警告", err))
+		}
+	case HEADSTART:
+		if err := m.StartCmdHandler(&CmdMsg); err != nil {
+			printInfo(newPrintMsg("警告", err))
+		}
+	}
+	return nil
+}
+
+// 插件行为 重加载某个插件 如果参数为all则全部插件重加载 记住reload和startComponent是有区别的
+// reload是再次扫描对应的插件然后默认不开启 而startCompent是直接在插件池子里面开启插件
+func (m *Monitor) Reload(cmdmsg *CmdMsg) error {
+	switch cmdmsg.Behavior {
+	case "component":
+		args := cmdmsg.args
+		if len(args) != 1 {
+			return errors.New("lua reload compoent指令后面应该有且仅有一个参数")
+		}
+		componentName := args[0]
+		if args[0] == "all" {
+			//关闭插件
+			for _, v := range m.ComponentPoll {
+				v.L.Close()
+			}
+			//读取新的插件
+			for _, v := range getComponentPath() {
+				if err := m.Load(v); err != nil {
+					printInfo(newPrintMsg("警告", err))
+				}
+			}
+		}
+		if err := m.Load(componentName); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (m *Monitor) StartCmdHandler(CmdMsg *CmdMsg) error {
+	args := CmdMsg.args
+	switch CmdMsg.Behavior {
+	case "component":
+		if len(args) != 1 {
+			return errors.New("lua start compoent指令后面应该有且仅有一个参数")
+		}
+		componentName := args[0]
+		m.Run(componentName)
+
+	}
+	return nil
+}
+
+// 启动已有插件
+func (m *Monitor) Run(name string) error {
+	if _, ok := m.ComponentPoll[name]; !ok {
+		return errors.New("我们并没有在当前的插件池中找到该名字的插件 请你确定有该插件 或者说请尝试重加载一次插件:lua reload component all")
+	}
+	// 调用 Lua 函数
+	go m.ComponentPoll[name].L.Call(0, 0)
+	m.ComponentPoll[name].Running = true
+	printInfo(newPrintMsg("启动", fmt.Sprintf("%d插件启动成功 ", name)))
+	return nil
+}
+
+// lua指令类执行
+func (m *Monitor) luaCmdHandler(CmdMsg *CmdMsg) error {
+	args := CmdMsg.args
+	switch CmdMsg.Behavior {
+	case "help":
+		warning := []string{
+			"lua luas help 寻求指令帮助\n",
+			"lua reload component [重加载的插件名字] 加载/重加载指定插件 如果参数是all就是全部插件重载\n",
+			"lua start component [需要开启的插件名字] 开启插件 参数为all则开启所有插件",
+			"lua luas new [新插件名字] [描述]创建一个自定义空白插件[描述为选填]",
+			"lua luas delect [插件名字]",
+		}
+		printInfo(newPrintMsg("提示", warning))
+	case "new":
+		//to do
+		if len(args) != 1 || len(args) != 2 {
+			return errors.New("lua luas new后面应该加上[插件名字]或者说[插件名字] [用途]")
+		}
+		componentName := args[0]
+		componentUsage := ""
+		if len(args) == 2 {
+			componentUsage = args[1]
+		}
+		//检查是否重合
+		BindingMaps := getBindingJson().Map
+		if _, ok := BindingMaps[componentName]; ok {
+			return errors.New("已经存在同样名字的插件了 请重新命名 或者说删除原有的插件lua luas delect [插件名字]")
+		}
+		if err := m.newComponent(componentName, componentUsage); err != nil {
+			printInfo(newPrintMsg("警告", err))
+		}
+
+	case "delect":
+		if len(args) != 1 {
+			return errors.New("lua luas delect指令后面应该加上需要删除的插件名字")
+		}
+		delectCompoent(args[0])
+	default:
+		return errors.New("未知指令 请输入lua luas help寻求帮助")
+	}
+	return nil
+}
+
+// 创建一个插件
+func (m *Monitor) newComponent(componentName string, componentUsage string) error {
+	//to do
+	//开始创建config
+	luaConfig := LuaCommpoentConfig{
+		Name:     componentName,
+		Usage:    componentUsage,
+		Disabled: true,
+		Version:  "0.0.1",
+		Author:   "author",
+		Config:   make(map[string]interface{}),
+	}
+
+	// 将结构体转换为 JSON 格式
+	jsonData, err := json.MarshalIndent(luaConfig, "", "  ")
+	if err != nil {
+		fmt.Println("Error marshaling JSON:", err)
+		return err
+	}
+
+	// 将 JSON 数据写入文件
+	file, err := os.Create(getConfigPath() + SEPA + componentName + ".json")
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.Write(jsonData)
+	if err != nil {
+		fmt.Println("Error writing JSON to file:", err)
+		return err
+	}
+
+	fmt.Println("JSON data written to file")
+	//创建逻辑区域
+	// 指定目录和文件名
+	dir := OMGPATH + SEPA + "lua" + SEPA
+	filename := componentName + ".lua"
+
+	// 创建文件的完整路径
+	filepath := filepath.Join(dir, filename)
+
+	// 创建文件
+	file, errs := os.Create(filepath)
+	if errs != nil {
+		fmt.Println("Error creating file:", err)
+		return err
+	}
+	defer file.Close()
+
+	fmt.Printf("File %s created in %s\n", filename, dir)
+	//绑定写入
+	writeBindingJson(componentName, filepath)
+
+	printInfo(newPrintMsg("提示", "创建完成 请重加载组件"))
+	return nil
 }
