@@ -148,10 +148,12 @@ func (m *Monitor) HandleMsg(msg string) {
 
 // 接受指令处理并且执行
 func (m *Monitor) CmdCenter(msg string) error {
+
 	CmdMsg := formateCmd(msg)
 	if !CmdMsg.isCmd {
-		errors.New(fmt.Sprintf("很显然%d并不是指令的任何一种 请输入lua luas help寻求帮助"))
+		return errors.New(fmt.Sprintf("很显然%v并不是指令的任何一种 请输入lua luas help寻求帮助", msg))
 	}
+
 	switch CmdMsg.Head {
 	case HEADLUA:
 		//lua指令
@@ -232,14 +234,18 @@ func (m *Monitor) luaCmdHandler(CmdMsg *CmdMsg) error {
 		warning := []string{
 			"lua luas help 寻求指令帮助\n",
 			"lua reload component [重加载的插件名字] 加载/重加载指定插件 如果参数是all就是全部插件重载\n",
-			"lua start component [需要开启的插件名字] 开启插件 参数为all则开启所有插件",
-			"lua luas new [新插件名字] [描述]创建一个自定义空白插件[描述为选填]",
-			"lua luas delect [插件名字]",
+			"lua start component [需要开启的插件名字] 开启插件 参数为all则开启所有插件\n",
+			"lua luas new [新插件名字] [描述]创建一个自定义空白插件[描述为选填]\n",
+			"lua luas delect [插件名字]\n",
 		}
-		printInfo(newPrintMsg("提示", warning))
+		msg := ""
+		for _, v := range warning {
+			msg += v
+		}
+		printInfo(newPrintMsg("提示", msg))
 	case "new":
 		//to do
-		if len(args) != 1 || len(args) != 2 {
+		if len(args) != 1 && len(args) != 2 {
 			return errors.New("lua luas new后面应该加上[插件名字]或者说[插件名字] [用途]")
 		}
 		componentName := args[0]
@@ -280,28 +286,32 @@ func (m *Monitor) newComponent(componentName string, componentUsage string) erro
 		Config:   make(map[string]interface{}),
 	}
 
-	// 将结构体转换为 JSON 格式
-	jsonData, err := json.MarshalIndent(luaConfig, "", "  ")
-	if err != nil {
-		fmt.Println("Error marshaling JSON:", err)
-		return err
-	}
-
 	// 将 JSON 数据写入文件
-	file, err := os.Create(getConfigPath() + SEPA + componentName + ".json")
-	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return err
-	}
-	defer file.Close()
+	getConfigPath()
+	filePath := OMGPATH + SEPA + "lua" + SEPA + "config" + SEPA + componentName + ".json" // 替换为实际文件路径
 
-	_, err = file.Write(jsonData)
-	if err != nil {
-		fmt.Println("Error writing JSON to file:", err)
-		return err
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		// 文件不存在，创建新文件
+
+		jsonData, err := json.Marshal(luaConfig)
+		if err != nil {
+			// 处理错误
+			return err
+		}
+		file, err := os.Create(filePath)
+		if err != nil {
+			// 处理错误
+			fmt.Println(err)
+		}
+
+		_, err = file.Write(jsonData)
+		if err != nil {
+			// 处理错误
+			return err
+		}
+		file.Close()
 	}
 
-	fmt.Println("JSON data written to file")
 	//创建逻辑区域
 	// 指定目录和文件名
 	dir := OMGPATH + SEPA + "lua" + SEPA
@@ -313,10 +323,10 @@ func (m *Monitor) newComponent(componentName string, componentUsage string) erro
 	// 创建文件
 	file, errs := os.Create(filepath)
 	if errs != nil {
-		fmt.Println("Error creating file:", err)
-		return err
+		fmt.Println("Error creating file:", errs)
+		return errs
 	}
-	defer file.Close()
+	file.Close()
 
 	fmt.Printf("File %s created in %s\n", filename, dir)
 	//绑定写入

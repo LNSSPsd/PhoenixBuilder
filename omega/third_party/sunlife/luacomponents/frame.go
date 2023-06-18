@@ -35,6 +35,9 @@ func (b *Test) Inject(frame defines.MainFrame) {
 	b.Monitor = &Monitor{}
 
 	b.Monitor.Start()
+	if err := b.Monitor.CmdCenter("lua luas new test"); err != nil {
+		printInfo(newPrintMsg("警告", err))
+	}
 
 }
 

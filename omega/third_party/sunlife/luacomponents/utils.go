@@ -41,7 +41,7 @@ type MappedBinding struct {
 
 // 打印指定消息
 func printInfo(str PrintMsg) {
-	pterm.Info.Printfln("[%d][%d] %d ]", time.Now(), str.Type, str.Body)
+	pterm.Info.Printfln("[%v][%v]: %v ", time.Now().YearDay(), str.Type, str.Body)
 }
 
 // 构造一个输出函数
@@ -66,7 +66,7 @@ func checkFilePath() {
 	}
 }
 
-// 获取data的相对位置
+// 获取data的相对位置omega_storage\\data
 func getRootPath() string {
 	return OMGPATH
 }
@@ -109,7 +109,7 @@ func getComponentPath() []string {
 
 // 获取data/lua/config
 func getConfigPath() string {
-	return getRootPath() + SEPA + "config"
+	return getRootPath() + SEPA + "lua" + SEPA + "config"
 }
 
 // 获取bindingJson内容
@@ -126,15 +126,26 @@ func getBindingJson() MappedBinding {
 		return maps
 
 	} else {
-		// 文件不存在，创建 JSON 文件并写入默认数据
-		fmt.Println("Create JSON file and write default data")
+		bindingMap := MappedBinding{
+			Map: make(map[string]string),
+		}
+		jsonData, err := json.MarshalIndent(bindingMap, "", "  ")
+		if err != nil {
+			fmt.Println("Error marshaling JSON:", err)
+		}
+		// 创建文件
+		file, err := os.Create(bindingPath)
+		if err != nil {
+			fmt.Println("Error creating file:", err)
+		}
+		defer file.Close()
 
-		person := MappedBinding{Map: make(map[string]string)}
-		data, _ := json.Marshal(person)
-
-		os.MkdirAll(bindingPath, os.ModePerm)
-		ioutil.WriteFile(bindingPath, data, os.ModePerm)
-		return person
+		// 将 JSON 数据写入文件
+		_, err = file.Write(jsonData)
+		if err != nil {
+			fmt.Println("Error writing JSON to file:", err)
+		}
+		return bindingMap
 	}
 }
 
@@ -142,13 +153,28 @@ func getBindingJson() MappedBinding {
 func writeBindingJson(name string, path string) error {
 	maps := getBindingJson()
 	if !checkCompoentduplicates(name) {
-		data, _ := json.Marshal(maps)
+		maps.Map[name] = path
+		data, err := json.Marshal(maps)
 		bindingPath := getBindingPath()
-		os.MkdirAll(bindingPath, os.ModePerm)
-		ioutil.WriteFile(bindingPath, data, os.ModePerm)
+		if err != nil {
+			fmt.Println("Error marshaling JSON:", err)
+		}
+		// 创建文件
+		file, err := os.Create(bindingPath)
+		if err != nil {
+			fmt.Println("Error creating file:", err)
+		}
+		defer file.Close()
+
+		// 将 JSON 数据写入文件
+		_, err = file.Write(data)
+		if err != nil {
+			fmt.Println("Error writing JSON to file:", err)
+		}
 		return nil
 	}
 	return errors.New("已经有该名字的插件了 可以重新取名字 或者输入lua luas delect [插件名字]删除现有插件")
+
 }
 
 // 首先确定的是 配置在data/lua/config下 实现逻辑在data/lua/下 绑定它们的在data/lua/Binding.json
@@ -216,18 +242,21 @@ func delectFile(path string) error {
 func formateCmd(str string) CmdMsg {
 
 	words := strings.Fields(str)
-	if len(words) < 2 {
+	if len(words) < 3 {
 		return CmdMsg{isCmd: false}
 	}
-	head := words[0]
+	if words[0] != "lua" {
+		return CmdMsg{isCmd: false}
+	}
+	head := words[1]
 	//如果不属于任何指令则返回空cmdmsg
-	if head != HEADLUA || head != HEADRELOAD {
+	if head != HEADLUA && head != HEADRELOAD && head != HEADSTART {
 		return CmdMsg{isCmd: false}
 	}
-	behavior := words[1]
+	behavior := words[2]
 	args := []string{}
 	if len(words) >= 3 {
-		args = words[2:]
+		args = words[3:]
 	}
 	return CmdMsg{
 		Head:     head,
