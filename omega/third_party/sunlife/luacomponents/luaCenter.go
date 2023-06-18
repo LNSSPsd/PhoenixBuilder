@@ -219,8 +219,9 @@ func (m *Monitor) Run(name string) error {
 	if _, ok := m.ComponentPoll[name]; !ok {
 		return errors.New("我们并没有在当前的插件池中找到该名字的插件 请你确定有该插件 或者说请尝试重加载一次插件:lua reload component all")
 	}
+	maps := getBindingJson().Map
 	// 调用 Lua 函数
-	go m.ComponentPoll[name].L.Call(0, 0)
+	go m.ComponentPoll[name].L.DoFile(maps[name])
 	m.ComponentPoll[name].Running = true
 	printInfo(newPrintMsg("启动", fmt.Sprintf("%d插件启动成功 ", name)))
 	return nil

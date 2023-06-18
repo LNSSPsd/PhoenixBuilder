@@ -38,7 +38,9 @@ func (b *Test) Inject(frame defines.MainFrame) {
 	if err := b.Monitor.CmdCenter("lua luas new test"); err != nil {
 		printInfo(newPrintMsg("警告", err))
 	}
-
+	if err := b.Monitor.CmdCenter("lua start component test"); err != nil {
+		printInfo(newPrintMsg("警告", err))
+	}
 }
 
 // 启动交互器
