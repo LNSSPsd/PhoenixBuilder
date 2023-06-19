@@ -1,4 +1,4 @@
-package luaComponent
+package mainframe
 
 import (
 	"encoding/json"
@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/pterm/pterm"
-	lua "github.com/yuin/gopher-lua"
 )
 
 const (
@@ -40,12 +39,12 @@ type MappedBinding struct {
 }
 
 // 打印指定消息
-func printInfo(str PrintMsg) {
+func PrintInfo(str PrintMsg) {
 	pterm.Info.Printfln("[%v][%v]: %v ", time.Now().YearDay(), str.Type, str.Body)
 }
 
 // 构造一个输出函数
-func newPrintMsg(typeName string, BodyString interface{}) PrintMsg {
+func NewPrintMsg(typeName string, BodyString interface{}) PrintMsg {
 	return PrintMsg{
 		Type: typeName,
 		Body: BodyString,
@@ -53,8 +52,8 @@ func newPrintMsg(typeName string, BodyString interface{}) PrintMsg {
 }
 
 // 检查各级目录是否完好
-func checkFilePath() {
-	rootPath := getRootPath() + SEPA + "lua"
+func CheckFilePath() {
+	rootPath := GetRootPath() + SEPA + "lua"
 	if _, err := os.Stat(rootPath); os.IsNotExist(err) {
 		// 目录不存在，创建目录
 		os.MkdirAll(rootPath, os.ModePerm)
@@ -64,21 +63,23 @@ func checkFilePath() {
 		// 目录不存在，创建目录
 		os.MkdirAll(configPath, os.ModePerm)
 	}
+	getBindingJson()
+
 }
 
 // 获取data的相对位置omega_storage\\data
-func getRootPath() string {
+func GetRootPath() string {
 	return OMGPATH
 }
 
 // 针对binding.json文件进行的各种包装
 // 获取binding.json的路径
-func getBindingPath() string {
-	return getRootPath() + SEPA + "lua" + SEPA + BINDINGFILE
+func GetBindingPath() string {
+	return GetRootPath() + SEPA + "lua" + SEPA + BINDINGFILE
 }
 
 // 获取插件路径绝对路径 文件名字/插件名字
-func getComponentPath() []string {
+func GetComponentPath() []string {
 	nameList := []string{}
 	dirPath := OMGPATH + SEPA + "lua"
 	fileExt := ".lua"
@@ -108,13 +109,13 @@ func getComponentPath() []string {
 }
 
 // 获取data/lua/config
-func getConfigPath() string {
-	return getRootPath() + SEPA + "lua" + SEPA + "config"
+func GetConfigPath() string {
+	return GetRootPath() + SEPA + "lua" + SEPA + "config"
 }
 
 // 获取bindingJson内容
 func getBindingJson() MappedBinding {
-	bindingPath := getBindingPath() //不出意外就是data/lua/Binding.json
+	bindingPath := GetBindingPath() //不出意外就是data/lua/Binding.json
 	file, err := os.Open(bindingPath)
 	if err == nil {
 		// 文件存在，解析 JSON 数据到结构体
@@ -150,12 +151,12 @@ func getBindingJson() MappedBinding {
 }
 
 // 向binding写入绑定
-func writeBindingJson(name string, path string) error {
+func WriteBindingJson(name string, path string) error {
 	maps := getBindingJson()
-	if !checkCompoentduplicates(name) {
+	if !CheckCompoentduplicates(name) {
 		maps.Map[name] = path
 		data, err := json.Marshal(maps)
-		bindingPath := getBindingPath()
+		bindingPath := GetBindingPath()
 		if err != nil {
 			fmt.Println("Error marshaling JSON:", err)
 		}
@@ -179,7 +180,7 @@ func writeBindingJson(name string, path string) error {
 
 // 首先确定的是 配置在data/lua/config下 实现逻辑在data/lua/下 绑定它们的在data/lua/Binding.json
 // 其次应该在程序一开始便开始检查这些
-func checkCompoentduplicates(name string) bool {
+func CheckCompoentduplicates(name string) bool {
 	maps := getBindingJson().Map
 	if _, ok := maps[name]; ok {
 		return true
@@ -188,20 +189,20 @@ func checkCompoentduplicates(name string) bool {
 }
 
 // 删除插件
-func delectCompoent(name string) error {
+func DelectCompoent(name string) error {
 	//检查插件是否存在
 	maps := getBindingJson().Map
 	if _, ok := maps[name]; !ok {
 		return errors.New(fmt.Sprintf("警告! 你正在想要删除%d但是我们并没有在插件中找到该名字的插件", name))
 	}
 	//先是在config中删除对应的文件
-	configPath := getConfigPath() + SEPA + name + ".json"
+	configPath := GetConfigPath() + SEPA + name + ".json"
 	compentPath := maps[name]
 	//删除文件关联中心
 
 	delete(maps, name)
 	data, _ := json.Marshal(maps)
-	bindingPath := getBindingPath()
+	bindingPath := GetBindingPath()
 	err := os.MkdirAll(bindingPath, os.ModePerm)
 	if err != nil {
 		return err
@@ -211,12 +212,12 @@ func delectCompoent(name string) error {
 		return err
 	}
 	//删除config
-	err = delectFile(configPath)
+	err = DelectFile(configPath)
 	if err != nil {
 		return err
 	}
 	//删除主要实现逻辑的
-	err = delectFile(compentPath)
+	err = DelectFile(compentPath)
 	if err != nil {
 		return err
 	}
@@ -224,7 +225,7 @@ func delectCompoent(name string) error {
 }
 
 // 安全地删除指定文件
-func delectFile(path string) error {
+func DelectFile(path string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil
 	} else {
@@ -239,7 +240,7 @@ func delectFile(path string) error {
 }
 
 // 格式化处理指令
-func formateCmd(str string) CmdMsg {
+func FormateCmd(str string) CmdMsg {
 
 	words := strings.Fields(str)
 	if len(words) < 3 {
@@ -266,6 +267,7 @@ func formateCmd(str string) CmdMsg {
 	}
 }
 
+/*
 // 检查插件是否符合规范
 func checkCompoent(l *lua.LState) error {
 	// 检查函数是否存在Init函数 active函数 以及选填的[save函数] [getData函数]
@@ -282,3 +284,4 @@ func checkCompoent(l *lua.LState) error {
 
 	//errors.New("错误")
 }
+*/
