@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"phoenixbuilder/omega/defines"
+	"time"
 
 	lua "github.com/yuin/gopher-lua"
 )
@@ -27,7 +28,8 @@ type Monitor struct {
 	//区别点在于lua的优势导致 这个插件能够热重载以及能够修改其中的主要逻辑
 	ComponentPoll map[string]*LuaComponent
 	//omg框架
-	OmgFrame *defines.MainFrame
+	OmgFrame    *defines.MainFrame
+	FileControl *FileCenter
 }
 
 // 插件
@@ -44,12 +46,14 @@ type LuaComponent struct {
 // 开始加载程序 返回通讯通道 返回加载插件数量
 func (m *Monitor) Start() int {
 	//检查lua插件所需要的所有目录结构
-	CheckFilePath()
+	m.FileControl = &FileCenter{}
+	m.FileControl.CheckFilePath()
 	err := m.RegistrationPlugins()
 
 	if err != nil {
 		PrintInfo(NewPrintMsg("警告", err))
 	}
+
 	return len(m.ComponentPoll)
 }
 
@@ -69,14 +73,17 @@ func (m *Monitor) LoadFn(luaFrame BuiltlnFn) error {
 
 // 单独加载某个插件
 func (m *Monitor) Load(name string) error {
-	bindingMap := getBindingJson().Map
+	bindingMap := m.FileControl.GetBindingJson().Map
 	path := bindingMap[name]
 	//检查是否已经存在
 	if m.ComponentPoll == nil {
 		m.ComponentPoll = make(map[string]*LuaComponent)
 	}
 	if _, ok := m.ComponentPoll[name]; ok {
-		m.ComponentPoll[name].L.Close()
+		if err := m.ComponentPoll[name].L.DoString("print(\"\")"); err != nil {
+			m.ComponentPoll[name].L.Close()
+		}
+
 		delete(m.ComponentPoll, name)
 	}
 	L := lua.NewState()
@@ -104,7 +111,8 @@ func (m *Monitor) Load(name string) error {
 
 // 读取 并且检查插件 返回插件列表
 func (m *Monitor) RegistrationPlugins() error {
-	names := getBindingJson().Map
+
+	names := m.FileControl.GetBindingJson().Map
 	for k, _ := range names {
 		m.Load(k)
 	}
@@ -171,13 +179,19 @@ func (m *Monitor) CmdCenter(msg string) error {
 			PrintInfo(NewPrintMsg("警告", err))
 		}
 	case HEADRELOAD:
-		if err := m.Reload(&CmdMsg); err != nil {
-			PrintInfo(NewPrintMsg("警告", err))
-		}
+		go func() {
+			if err := m.Reload(&CmdMsg); err != nil {
+				PrintInfo(NewPrintMsg("警告", err))
+			}
+		}()
+
 	case HEADSTART:
-		if err := m.StartCmdHandler(&CmdMsg); err != nil {
-			PrintInfo(NewPrintMsg("警告", err))
-		}
+		go func() {
+			if err := m.StartCmdHandler(&CmdMsg); err != nil {
+				PrintInfo(NewPrintMsg("警告", err))
+			}
+		}()
+
 	}
 	return nil
 }
@@ -185,6 +199,7 @@ func (m *Monitor) CmdCenter(msg string) error {
 // 插件行为 重加载某个插件 如果参数为all则全部插件重加载 记住reload和startComponent是有区别的
 // reload是再次扫描对应的插件然后默认不开启 而startCompent是直接在插件池子里面开启插件
 func (m *Monitor) Reload(cmdmsg *CmdMsg) error {
+
 	switch cmdmsg.Behavior {
 	case "component":
 		args := cmdmsg.args
@@ -193,20 +208,20 @@ func (m *Monitor) Reload(cmdmsg *CmdMsg) error {
 		}
 		componentName := args[0]
 		if args[0] == "all" {
-			//关闭插件
-			for _, v := range m.ComponentPoll {
-				v.L.Close()
-			}
 			//读取新的插件
-			for _, v := range GetComponentPath() {
-				if err := m.Load(v); err != nil {
+			for k, _ := range m.FileControl.GetBindingJson().Map {
+				time.Sleep(time.Second * 1)
+				if err := m.Load(k); err != nil {
 					PrintInfo(NewPrintMsg("警告", err))
 				}
 			}
+			PrintInfo(NewPrintMsg("提示", "所有插件已经重新加载"))
+			return nil
 		}
 		if err := m.Load(componentName); err != nil {
 			return err
 		}
+		PrintInfo(NewPrintMsg("提示", fmt.Sprintf("%v已经重新加载", componentName)))
 	}
 	return nil
 }
@@ -219,9 +234,22 @@ func (m *Monitor) StartCmdHandler(CmdMsg *CmdMsg) error {
 		if len(args) != 1 {
 			return errors.New("lua start compoent指令后面应该有且仅有一个参数")
 		}
+		if args[0] == "all" {
+			for k, _ := range m.ComponentPoll {
+
+				if err := m.Run(k); err != nil {
+					return err
+				}
+				time.Sleep(time.Second * 1)
+			}
+			PrintInfo(NewPrintMsg("提示", fmt.Sprintf("全部插件已经开启")))
+			return nil
+		}
 		componentName := args[0]
 		m.Run(componentName)
-
+		PrintInfo(NewPrintMsg("提示", fmt.Sprintf("%v插件已经开启", componentName)))
+	default:
+		PrintInfo(NewPrintMsg("警告", "这不是一个合理的指令"))
 	}
 	return nil
 }
@@ -231,11 +259,12 @@ func (m *Monitor) Run(name string) error {
 	if _, ok := m.ComponentPoll[name]; !ok {
 		return errors.New("我们并没有在当前的插件池中找到该名字的插件 请你确定有该插件 或者说请尝试重加载一次插件:lua reload component all")
 	}
-	maps := getBindingJson().Map
+
+	maps := m.FileControl.GetBindingJson().Map
 	// 调用 Lua 函数
 	go m.ComponentPoll[name].L.DoFile(maps[name])
 	m.ComponentPoll[name].Running = true
-	PrintInfo(NewPrintMsg("启动", fmt.Sprintf("%d插件启动成功 ", name)))
+	PrintInfo(NewPrintMsg("启动", fmt.Sprintf("%v插件启动成功 ", name)))
 	return nil
 }
 
@@ -267,7 +296,8 @@ func (m *Monitor) luaCmdHandler(CmdMsg *CmdMsg) error {
 			componentUsage = args[1]
 		}
 		//检查是否重合
-		BindingMaps := getBindingJson().Map
+
+		BindingMaps := m.FileControl.GetBindingJson().Map
 		if _, ok := BindingMaps[componentName]; ok {
 			return errors.New("已经存在同样名字的插件了 请重新命名 或者说删除原有的插件lua luas delect [插件名字]")
 		}
@@ -279,7 +309,7 @@ func (m *Monitor) luaCmdHandler(CmdMsg *CmdMsg) error {
 		if len(args) != 1 {
 			return errors.New("lua luas delect指令后面应该加上需要删除的插件名字")
 		}
-		DelectCompoent(args[0])
+		m.FileControl.DelectCompoent(args[0]) //DelectCompoent(args[0])
 	default:
 		return errors.New("未知指令 请输入lua luas help寻求帮助")
 	}
@@ -300,7 +330,6 @@ func (m *Monitor) newComponent(componentName string, componentUsage string) erro
 	}
 
 	// 将 JSON 数据写入文件
-	GetConfigPath()
 	filePath := OMGPATH + SEPA + "lua" + SEPA + "config" + SEPA + componentName + ".json" // 替换为实际文件路径
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
@@ -314,12 +343,14 @@ func (m *Monitor) newComponent(componentName string, componentUsage string) erro
 		file, err := os.Create(filePath)
 		if err != nil {
 			// 处理错误
+			file.Close()
 			fmt.Println(err)
 		}
 
 		_, err = file.Write(jsonData)
 		if err != nil {
 			// 处理错误
+			file.Close()
 			return err
 		}
 		file.Close()
@@ -343,7 +374,7 @@ func (m *Monitor) newComponent(componentName string, componentUsage string) erro
 
 	fmt.Printf("File %s created in %s\n", filename, dir)
 	//绑定写入
-	WriteBindingJson(componentName, filepath)
+	m.FileControl.WriteBindingJson(componentName, filepath)
 
 	PrintInfo(NewPrintMsg("提示", "创建完成 请重加载组件"))
 	return nil
