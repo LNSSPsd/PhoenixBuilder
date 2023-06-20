@@ -29,7 +29,7 @@ type Monitor struct {
 	ComponentPoll map[string]*LuaComponent
 	//omg框架
 	OmgFrame    *defines.MainFrame
-	FileControl *FileCenter
+	FileControl *FileControl
 }
 
 // 插件
@@ -46,7 +46,9 @@ type LuaComponent struct {
 // 开始加载程序 返回通讯通道 返回加载插件数量
 func (m *Monitor) Start() int {
 	//检查lua插件所需要的所有目录结构
-	m.FileControl = &FileCenter{}
+	m.FileControl = &FileControl{
+		FileLock: &FileLock{},
+	}
 	m.FileControl.CheckFilePath()
 	err := m.RegistrationPlugins()
 
@@ -246,8 +248,12 @@ func (m *Monitor) StartCmdHandler(CmdMsg *CmdMsg) error {
 			return nil
 		}
 		componentName := args[0]
-		m.Run(componentName)
-		PrintInfo(NewPrintMsg("提示", fmt.Sprintf("%v插件已经开启", componentName)))
+		if err := m.Run(componentName); err != nil {
+			PrintInfo(NewPrintMsg("提示", fmt.Sprintf("%v插件已经开启", componentName)))
+		} else {
+			PrintInfo(NewPrintMsg("警告", err))
+		}
+
 	default:
 		PrintInfo(NewPrintMsg("警告", "这不是一个合理的指令"))
 	}
@@ -298,6 +304,7 @@ func (m *Monitor) luaCmdHandler(CmdMsg *CmdMsg) error {
 		//检查是否重合
 
 		BindingMaps := m.FileControl.GetBindingJson().Map
+
 		if _, ok := BindingMaps[componentName]; ok {
 			return errors.New("已经存在同样名字的插件了 请重新命名 或者说删除原有的插件lua luas delect [插件名字]")
 		}
@@ -320,6 +327,7 @@ func (m *Monitor) luaCmdHandler(CmdMsg *CmdMsg) error {
 func (m *Monitor) newComponent(componentName string, componentUsage string) error {
 	//to do
 	//开始创建config
+
 	luaConfig := LuaCommpoentConfig{
 		Name:     componentName,
 		Usage:    componentUsage,
@@ -340,20 +348,10 @@ func (m *Monitor) newComponent(componentName string, componentUsage string) erro
 			// 处理错误
 			return err
 		}
-		file, err := os.Create(filePath)
+		err = m.FileControl.Write(filePath, jsonData)
 		if err != nil {
-			// 处理错误
-			file.Close()
-			fmt.Println(err)
-		}
-
-		_, err = file.Write(jsonData)
-		if err != nil {
-			// 处理错误
-			file.Close()
 			return err
 		}
-		file.Close()
 	}
 
 	//创建逻辑区域

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -39,70 +38,74 @@ type PrintMsg struct {
 type MappedBinding struct {
 	Map map[string]string `json:"绑定"`
 }
-
-// file 结构体表示一个文件，包括文件名、文件内容和一个互斥锁（mutex），用于防止同时操作一个文件
-type file struct {
-	name    string
-	content string
-	mutex   sync.Mutex // 用于防止同时操作一个文件
+type FileControl struct {
+	//文件锁
+	FileLock *FileLock
 }
 
-// fileCenter 结构体表示文件处理中心，包括所有文件的集合和一个互斥锁，用于防止同时操作文件集合
-type FileCenter struct {
-	files sync.Map // 所有文件的集合，使用 sync.Map 来实现并发安全
+// 文件锁类型
+type FileLock struct {
+	mu sync.RWMutex
 }
 
-// getFile 方法用于申请文件操作请求，参数包括文件名和回调函数。该方法首先获取或创建一个 file 对象，然后对该对象加锁，防止其他操作同时修改该文件。接着调用回调函数，将文件内容作为参数传入，获取回调函数的返回值。最后返回回调函数的返回值。
-func (fc *FileCenter) GetFile(name string, callback func(io.Reader) (interface{}, error)) (interface{}, error) {
-	value, _ := fc.files.LoadOrStore(name, &file{name: name, mutex: sync.Mutex{}}) // 获取或创建文件对象
-
-	fileObj := value.(*file) // 将 sync.Map 中的对象转换为 file 类型
-
-	fileObj.mutex.Lock() // 保证同一时间只有一个请求可以修改该文件
-	defer fileObj.mutex.Unlock()
-	reader := strings.NewReader(fileObj.content)
-
-	return callback(reader) // 调用回调函数，将文件内容作为参数传入，获取回调函数的返回值，并返回该值
+// 获取文件锁
+func (lock *FileLock) Lock() {
+	lock.mu.Lock()
 }
 
-// writeFile 方法用于申请文件写入操作请求，参数包括文件名、待写入的内容和回调函数。该方法首先获取或创建一个 file 对象，然后对该对象加锁，防止其他操作同时修改该文件。接着调用回调函数，将文件作为参数传入，获取回调函数的返回值，并将待写入的内容作为参数传入 file 的 write 方法。最后返回回调函数的返回值。
-func (fc *FileCenter) WriteFile(name string, content string) error {
-	value, _ := fc.files.LoadOrStore(name, &file{name: name, mutex: sync.Mutex{}}) // 获取或创建文件对象
-
-	fileObj := value.(*file) // 将 sync.Map 中的对象转换为 file 类型
-
-	fileObj.mutex.Lock() // 保证同一时间只有一个请求可以修改该文件
-	defer fileObj.mutex.Unlock()
-
-	fileObj.write(content) // 安全地写入文件内容
-
-	return nil // 调用回调函数，将文件作为参数传入，获取回调函数的返回值，并返回该值
+// 释放文件锁
+func (lock *FileLock) Unlock() {
+	lock.mu.Unlock()
 }
 
-// write 方法用于安全地写入文件内容，参数为待写入的内容。该方法使用互斥锁保证同一时间只有一个请求可以修改该文件。
-func (f *file) write(content string) error {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
+// 获取文件读锁
+func (lock *FileLock) RLock() {
+	lock.mu.RLock()
+}
 
-	file, err := os.Create(f.name)
-	if err != nil {
-		fmt.Printf("打开文件 %s 失败： %v\n", f.name, err)
-		return err
-	}
-	defer file.Close()
+// 释放文件读锁
+func (lock *FileLock) RUnlock() {
+	lock.mu.RUnlock()
+}
 
-	_, err = file.WriteString(content)
-	if err != nil {
-		fmt.Printf("写入文件 %s 失败： %v\n", f.name, err)
+// 创建一个新的文件锁
+func NewFileLock() *FileLock {
+	return &FileLock{}
+}
+
+// 安全写入文件
+func (f *FileControl) Write(filename string, data []byte) error {
+	// 获取写锁
+	lock := f.FileLock
+	lock.Lock()
+	defer lock.Unlock()
+
+	// 写入数据
+	if err := ioutil.WriteFile(filename, data, 0644); err != nil {
 		return err
 	}
 
-	f.content = content
 	return nil
 }
 
+// 安全读取文件
+func (f *FileControl) Read(filename string) ([]byte, error) {
+	// 获取读锁
+	lock := f.FileLock
+	lock.RLock()
+	defer lock.RUnlock()
+
+	// 读取数据
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
 // 获取插件路径绝对路径 文件名字/插件名字
-func (f *FileCenter) GetComponentPath() []string {
+func GetComponentPath() []string {
 	nameList := []string{}
 	dirPath := OMGPATH + SEPA + "lua"
 	fileExt := ".lua"
@@ -133,7 +136,7 @@ func (f *FileCenter) GetComponentPath() []string {
 }
 
 // 检查各级目录是否完好
-func (f *FileCenter) CheckFilePath() {
+func (f *FileControl) CheckFilePath() {
 	rootPath := GetRootPath() + SEPA + "lua"
 	if _, err := os.Stat(rootPath); os.IsNotExist(err) {
 		// 目录不存在，创建目录
@@ -178,7 +181,7 @@ func GetConfigPath() string {
 }
 
 // 获取bindingJson内容
-func (f *FileCenter) GetBindingJson() MappedBinding {
+func (f *FileControl) GetBindingJson() MappedBinding {
 	bindingPath := GetBindingPath() //不出意外就是data/lua/Binding.json
 	_, err := os.Stat(bindingPath)
 	if err != nil {
@@ -203,25 +206,19 @@ func (f *FileCenter) GetBindingJson() MappedBinding {
 		}
 		return bindingMap
 	}
-	maps, err := f.GetFile(bindingPath, func(filer io.Reader) (interface{}, error) {
-		data, _ := ioutil.ReadAll(filer)
-		var maps MappedBinding
-		json.Unmarshal(data, &maps)
-		return maps, nil
-	})
+	data, err := f.Read(bindingPath)
 	if err != nil {
 		PrintInfo(NewPrintMsg("警告", err))
 		return MappedBinding{}
 	}
-	if k, v := maps.(MappedBinding); v {
-		return k
-	}
-	return MappedBinding{}
+	var maps MappedBinding
+	json.Unmarshal(data, &maps)
+	return maps
 
 }
 
 // 向binding写入绑定
-func (f *FileCenter) WriteBindingJson(name string, path string) error {
+func (f *FileControl) WriteBindingJson(name string, path string) error {
 	maps := f.GetBindingJson()
 	if !f.CheckCompoentduplicates(name) {
 		maps.Map[name] = path
@@ -230,8 +227,8 @@ func (f *FileCenter) WriteBindingJson(name string, path string) error {
 		if err != nil {
 			fmt.Println("Error marshaling JSON:", err)
 		}
-
-		f.WriteFile(bindingPath, string(data))
+		//写入json
+		f.Write(bindingPath, data)
 
 		return nil
 	}
@@ -241,7 +238,7 @@ func (f *FileCenter) WriteBindingJson(name string, path string) error {
 
 // 首先确定的是 配置在data/lua/config下 实现逻辑在data/lua/下 绑定它们的在data/lua/Binding.json
 // 其次应该在程序一开始便开始检查这些
-func (f *FileCenter) CheckCompoentduplicates(name string) bool {
+func (f *FileControl) CheckCompoentduplicates(name string) bool {
 	maps := f.GetBindingJson().Map
 	if _, ok := maps[name]; ok {
 		return true
@@ -250,9 +247,10 @@ func (f *FileCenter) CheckCompoentduplicates(name string) bool {
 }
 
 // 删除插件
-func (f *FileCenter) DelectCompoent(name string) error {
+func (f *FileControl) DelectCompoent(name string) error {
 	//检查插件是否存在
 	maps := f.GetBindingJson().Map
+	PrintInfo(NewPrintMsg("数据", maps))
 	if _, ok := maps[name]; !ok {
 		return errors.New(fmt.Sprintf("警告! 你正在想要删除%d但是我们并没有在插件中找到该名字的插件", name))
 	}
