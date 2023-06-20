@@ -82,8 +82,9 @@ func (m *Monitor) Load(name string) error {
 		m.ComponentPoll = make(map[string]*LuaComponent)
 	}
 	if _, ok := m.ComponentPoll[name]; ok {
-		if err := m.ComponentPoll[name].L.DoString("print(\"\")"); err != nil {
+		if err := m.ComponentPoll[name].L.DoString("print(\"\")"); err == nil {
 			m.ComponentPoll[name].L.Close()
+			PrintInfo(NewPrintMsg("提示", fmt.Sprintf("关闭组件%v", name)))
 		}
 
 		delete(m.ComponentPoll, name)
@@ -249,9 +250,10 @@ func (m *Monitor) StartCmdHandler(CmdMsg *CmdMsg) error {
 		}
 		componentName := args[0]
 		if err := m.Run(componentName); err != nil {
-			PrintInfo(NewPrintMsg("提示", fmt.Sprintf("%v插件已经开启", componentName)))
-		} else {
 			PrintInfo(NewPrintMsg("警告", err))
+		} else {
+			PrintInfo(NewPrintMsg("提示", fmt.Sprintf("%v插件已经开启", componentName)))
+
 		}
 
 	default:
@@ -268,7 +270,12 @@ func (m *Monitor) Run(name string) error {
 
 	maps := m.FileControl.GetBindingJson().Map
 	// 调用 Lua 函数
-	go m.ComponentPoll[name].L.DoFile(maps[name])
+	go func() {
+		if err := m.ComponentPoll[name].L.DoFile(maps[name]); err != nil {
+			PrintInfo(NewPrintMsg("lua报错", err))
+		}
+	}()
+
 	m.ComponentPoll[name].Running = true
 	PrintInfo(NewPrintMsg("启动", fmt.Sprintf("%v插件启动成功 ", name)))
 	return nil
@@ -285,6 +292,8 @@ func (m *Monitor) luaCmdHandler(CmdMsg *CmdMsg) error {
 			"lua start component [需要开启的插件名字] 开启插件 参数为all则开启所有插件\n",
 			"lua luas new [新插件名字] [描述]创建一个自定义空白插件[描述为选填]\n",
 			"lua luas delect [插件名字]\n",
+			"lua luas list 列出当前正在运行的插件\n",
+			"lua luas stop [插件名字] 暂停插件运行 参数为all则暂停所有插件运行",
 		}
 		msg := ""
 		for _, v := range warning {
@@ -317,6 +326,36 @@ func (m *Monitor) luaCmdHandler(CmdMsg *CmdMsg) error {
 			return errors.New("lua luas delect指令后面应该加上需要删除的插件名字")
 		}
 		m.FileControl.DelectCompoent(args[0]) //DelectCompoent(args[0])
+	case "list":
+		msg := ""
+		for k, v := range m.ComponentPoll {
+			if v.Running {
+				msg += fmt.Sprintf("[%v]", k)
+			}
+		}
+		PrintInfo(NewPrintMsg("信息", msg+"处于开启状态"))
+	case "stop":
+		if len(args) != 1 {
+			return errors.New("lua luas stop指令后面应该加上需要删除的插件名字")
+		}
+		name := args[0]
+		if name == "all" {
+			for k, v := range m.ComponentPoll {
+				err := v.L.DoString("print(\"\")")
+				if err == nil {
+					v.L.Close()
+				}
+				PrintInfo(NewPrintMsg("提示", fmt.Sprintf("%v插件关闭成功", k)))
+			}
+		}
+		if _, ok := m.ComponentPoll[name]; !ok {
+			return errors.New(fmt.Sprintf("我们并没有在加载的插件池子中找到%v", name))
+		}
+		if err := m.ComponentPoll[name].L.DoString("print(\"\")"); err == nil {
+			m.ComponentPoll[name].L.Close()
+		}
+		PrintInfo(NewPrintMsg("提示", fmt.Sprintf("%v插件关闭成功", name)))
+
 	default:
 		return errors.New("未知指令 请输入lua luas help寻求帮助")
 	}

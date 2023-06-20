@@ -209,7 +209,9 @@ func (f *FileControl) GetBindingJson() MappedBinding {
 	data, err := f.Read(bindingPath)
 	if err != nil {
 		PrintInfo(NewPrintMsg("警告", err))
-		return MappedBinding{}
+		return MappedBinding{
+			Map: make(map[string]string),
+		}
 	}
 	var maps MappedBinding
 	json.Unmarshal(data, &maps)
@@ -220,6 +222,9 @@ func (f *FileControl) GetBindingJson() MappedBinding {
 // 向binding写入绑定
 func (f *FileControl) WriteBindingJson(name string, path string) error {
 	maps := f.GetBindingJson()
+	if maps.Map == nil {
+		maps.Map = make(map[string]string)
+	}
 	if !f.CheckCompoentduplicates(name) {
 		maps.Map[name] = path
 		data, err := json.Marshal(maps)

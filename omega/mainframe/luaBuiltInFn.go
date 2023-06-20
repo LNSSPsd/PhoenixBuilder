@@ -33,7 +33,6 @@ func (b *BuiltlnFn) LoadFn(L *lua.LState) error {
 	L.SetField(skynet, "GetControl", L.NewFunction(b.GetControl))
 	// 将table命名为ComplexStruct，并将其设为全局变量
 	L.SetGlobal("skynet", skynet)
-
 	return nil
 }
 
@@ -41,7 +40,7 @@ func (b *BuiltlnFn) GetListener(L *lua.LState) int {
 	listener := L.NewTable()
 	//listener的方法 listen("可变参数") 获取参数  listenPackage(Id)
 
-	L.SetField(listener, "listen", L.NewFunction(func(l *lua.LState) int {
+	L.SetField(listener, "listenMsg", L.NewFunction(func(l *lua.LState) int {
 
 		return 1
 	}))
@@ -62,6 +61,7 @@ func (b *BuiltlnFn) GetControl(L *lua.LState) int {
 			b.OmgFrame.mainFrame.GetGameControl().SendCmdAndInvokeOnResponse(args, func(output *packet.CommandOutput) {
 				fmt.Println("测试", output.OutputMessages)
 			})
+
 		}
 		return 1
 	}))
