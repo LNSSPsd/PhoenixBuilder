@@ -29,6 +29,7 @@ type MainConfig struct {
 	MapX, MapZ, MapY      int
 	Method, OldMethod     string
 	Facing, Path, Shape   string
+	AssignNBTData         bool
 	ExcludeCommands       bool
 	InvalidateCommands    bool
 	Strict                bool

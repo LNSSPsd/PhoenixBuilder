@@ -61,6 +61,7 @@ func Parse(Message string, defaultConfig *types.MainConfig) (*types.MainConfig, 
 		Height:             0,
 		Method:             "replace",
 		OldMethod:          "keep",
+		AssignNBTData:      false,
 		ExcludeCommands:    false,
 		InvalidateCommands: false,
 	}
@@ -69,6 +70,8 @@ func Parse(Message string, defaultConfig *types.MainConfig) (*types.MainConfig, 
 	var tempBlockData int
 	var tempOldBlockData int
 	//Length,  Width and Height
+	FlagSet.BoolVar(&Config.AssignNBTData, "assignnbtdata", defaultConfig.AssignNBTData, "Assign NBT data to blocks by lawful means while importing")
+	FlagSet.BoolVar(&Config.AssignNBTData, "nbt", defaultConfig.AssignNBTData, "Assign NBT data to blocks by lawful means while importing")
 	FlagSet.BoolVar(&Config.ExcludeCommands, "excludecommands", defaultConfig.ExcludeCommands, "Exclude commands in command blocks")
 	FlagSet.BoolVar(&Config.InvalidateCommands, "invalidatecommands", defaultConfig.InvalidateCommands, "Invalidate commands in command blocks")
 	FlagSet.BoolVar(&Config.Strict, "strict", defaultConfig.Strict, "Break if the file isn't signed")
