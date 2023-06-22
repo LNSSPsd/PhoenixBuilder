@@ -6,22 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// 描述各个维度可放置方块的最高高度
-const (
-	OverWorld_MaxPosy = int32(319) // 主世界
-	Nether_MaxPosy    = int32(127) // 下界
-	End_MaxPosy       = int32(255) // 末地
-)
-
-// 描述各个维度可放置方块的最低高度
-const (
-	OverWorld_MinPosy = int32(-64) // 主世界
-	Nether_MinPosy    = int32(0)   // 下界
-	End_MinPosy                    // 末地
-)
-
-const BlockUnderAnvil string = "glass" // 用作铁砧的承重方块
-
 /*
 在 pos 处尝试放置一个方块状态为 blockStates 的铁砧并附带承重方块。
 考虑到给定的 pos 可能已经超出了客户端所在维度的高度限制，因此此函数将会进行自适应处理，

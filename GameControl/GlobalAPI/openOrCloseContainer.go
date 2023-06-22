@@ -62,9 +62,6 @@ func (g *GlobalAPI) OpenInventory() (bool, error) {
 	// return
 }
 
-// 用于关闭容器时检测到容器从未被打开时的报错信息
-var ErrContainerNerverOpened error = fmt.Errorf("CloseContainer: Container have been nerver opened")
-
 /*
 关闭已经打开的容器，且只有当容器被关闭后才会返回值。
 您应该确保容器被关闭后，对应的容器公用资源被释放。

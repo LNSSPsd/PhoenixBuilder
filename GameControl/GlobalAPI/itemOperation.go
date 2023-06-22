@@ -7,23 +7,6 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
-// 描述一个空气物品
-var AirItem protocol.ItemInstance = protocol.ItemInstance{
-	StackNetworkID: 0,
-	Stack: protocol.ItemStack{
-		ItemType: protocol.ItemType{
-			NetworkID:     0,
-			MetadataValue: 0,
-		},
-		BlockRuntimeID: 0,
-		Count:          0,
-		NBTData:        map[string]interface{}(nil),
-		CanBePlacedOn:  []string(nil),
-		CanBreak:       []string(nil),
-		HasNetworkID:   false,
-	},
-}
-
 // 描述单个物品所在的位置
 type ItemLocation struct {
 	WindowID    int16 // 物品所在库存的窗口 ID
@@ -130,4 +113,24 @@ func (g *GlobalAPI) DropItemAll(
 	// 发送物品丢掷请求
 	return true, nil
 	// 返回值
+}
+
+// 切换客户端的手持物品栏为 hotBarSlotID 。
+// 若提供的 hotBarSlotID 大于 8 ，则会重定向为 0
+func (g *GlobalAPI) ChangeSelectedHotbarSlot(hotbarSlotID uint8) error {
+	if hotbarSlotID > 8 {
+		hotbarSlotID = 0
+	}
+	// init var
+	err := g.WritePacket(&packet.PlayerHotBar{
+		SelectedHotBarSlot: uint32(hotbarSlotID),
+		WindowID:           0,
+		SelectHotBarSlot:   true,
+	})
+	if err != nil {
+		return fmt.Errorf("ChangeSelectedHotbarSlot: %v", err)
+	}
+	// change selected hotbar slot
+	return nil
+	// return
 }
