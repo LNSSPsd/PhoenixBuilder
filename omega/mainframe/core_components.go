@@ -670,7 +670,6 @@ func (b *LuaComponenter) MsgDistributionCenter(chat *defines.GameChat) bool {
 	})
 	return false
 }
-
 func getCoreComponentsPool() map[string]func() defines.CoreComponent {
 	return map[string]func() defines.CoreComponent{
 		"菜单显示":      func() defines.CoreComponent { return &Menu{BaseCoreComponent: &BaseCoreComponent{}} },

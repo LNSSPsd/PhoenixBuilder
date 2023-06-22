@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -38,6 +39,126 @@ type PrintMsg struct {
 type MappedBinding struct {
 	Map map[string]string `json:"绑定"`
 }
+
+// 获取插件路径绝对路径 文件名字/插件名字
+func GetComponentPath() []string {
+	nameList := []string{}
+	dirPath := OMGPATH + SEPA + "lua"
+	fileExt := ".lua"
+	// 读取目录下的所有文件
+	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+		// 如果目录不存在，则创建它
+		err := os.MkdirAll(dirPath, os.ModePerm)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Directory created:", dirPath)
+
+	}
+	files, err := ioutil.ReadDir(dirPath)
+	if err != nil {
+		panic(err)
+	}
+
+	// 遍历目录下的所有文件名
+	for _, file := range files {
+		// 如果文件后缀名为 .lua，则打印文件名（去掉后缀名）
+		if strings.HasSuffix(file.Name(), fileExt) {
+			nameList = append(nameList, file.Name())
+		}
+
+	}
+	return nameList
+}
+
+// 打印指定消息
+func PrintInfo(str PrintMsg) {
+	pterm.Info.Printfln("[%v][%v]: %v ", time.Now().YearDay(), str.Type, str.Body)
+}
+
+// 构造一个输出函数
+func NewPrintMsg(typeName string, BodyString interface{}) PrintMsg {
+	return PrintMsg{
+		Type: typeName,
+		Body: BodyString,
+	}
+}
+
+// 获取data的相对位置omega_storage\\data
+func GetRootPath() string {
+	return OMGDATAPATH
+}
+
+// 获取"omega_storage\\data"
+func GetDataPath() string {
+	return OMGDATAPATH
+}
+
+// "omega_storage\\配置"
+func GetOmgConfigPath() string {
+	return OMGCONFIGPATH
+}
+
+// 针对binding.json文件进行的各种包装
+// 获取binding.json的路径
+func GetBindingPath() string {
+	return GetRootPath() + SEPA + "lua" + SEPA + BINDINGFILE
+}
+
+// 获取data/lua/config
+func GetConfigPath() string {
+	return GetRootPath() + SEPA + "lua" + SEPA + "config"
+}
+
+// 安全地删除指定文件
+func DelectFile(path string) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil
+	} else {
+		// 文件存在，删除文件
+		err := os.Remove(path)
+		if err != nil {
+			return err
+		} else {
+			return nil
+		}
+	}
+}
+
+// 格式化处理指令
+func FormateCmd(str string) CmdMsg {
+
+	words := strings.Fields(str)
+	if len(words) < 3 {
+		return CmdMsg{isCmd: false}
+	}
+	if words[0] != "lua" {
+		return CmdMsg{isCmd: false}
+	}
+	head := words[1]
+	//如果不属于任何指令则返回空cmdmsg
+	if head != HEADLUA && head != HEADRELOAD && head != HEADSTART {
+		return CmdMsg{isCmd: false}
+	}
+	behavior := words[2]
+	args := []string{}
+	if len(words) >= 3 {
+		args = words[3:]
+	}
+	return CmdMsg{
+		Head:     head,
+		Behavior: behavior,
+		args:     args,
+		isCmd:    true,
+	}
+}
+
+/*
+
+文件管理系统
+
+*/
+
 type FileControl struct {
 	//文件锁
 	FileLock *FileLock
@@ -90,259 +211,165 @@ func (f *FileControl) Write(filename string, data []byte) error {
 
 // 安全读取文件
 func (f *FileControl) Read(filename string) ([]byte, error) {
-	// 获取读锁
-	lock := f.FileLock
-	lock.RLock()
-	defer lock.RUnlock()
+	// 使用 os.Open 打开文件。
+	file, err := os.Open(filename)
+	if err != nil {
+		return []byte{}, err
+	}
+	defer file.Close()
 
-	// 读取数据
-	data, err := ioutil.ReadFile(filename)
+	// 获取文件信息，以确定要读取的字节数。
+	_, err = file.Stat()
+	if err != nil {
+		return []byte{}, err
+	}
+
+	// 使用 ioutil.ReadAll 从文件中读取内容。
+	content, err := ioutil.ReadAll(file)
+	if err != nil {
+		return content, err
+	}
+	return content, nil
+}
+
+// 读取并返回结构体
+func (f *FileControl) ReadConfig(path string) (LuaCommpoentConfig, error) {
+	newConfig := LuaCommpoentConfig{
+		Disabled: true, //默认关闭
+	}
+	data, err := f.Read(path)
+	if err != nil {
+		return newConfig, err
+	}
+
+	err = json.Unmarshal(data, &newConfig)
+	if err != nil {
+		return newConfig, err
+	}
+
+	return newConfig, nil
+}
+
+// 删除插件
+func (f *FileControl) DelectCompoentFile(name string) error {
+	f.DeleteSubDir(name)
+	//关闭相关内容
+	PrintInfo(NewPrintMsg("提示", fmt.Sprintf("%v已经删除 干净了", name)))
+
+	return nil
+}
+
+// deleteSubDir 函数接受一个父目录路径和一个子目录名称作为参数，
+// 并安全地删除指定的子目录及其所有子文件。
+func (f *FileControl) DeleteSubDir(subDirName string) error {
+	parentDir := OMGCONFIGPATH
+	subDir := filepath.Join(parentDir, subDirName)
+
+	// 检查子目录是否存在。
+	if !f.fileExists(subDir) {
+		return nil
+	}
+
+	// 删除子目录及其所有子文件。
+	err := os.RemoveAll(subDir)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Result 结构体用于存储 JSON 文件和 Lua 文件的路径。
+type Result struct {
+	JsonFile string
+	LuaFile  string
+}
+
+// GetLuaComponentPath返回一个包含同名字 JSON 文件和 Lua 文件路径的字典。
+func (f *FileControl) GetLuaComponentPath() (map[string]Result, error) {
+	dir := OMGCONFIGPATH
+	results := make(map[string]Result)
+
+	// 使用 filepath.Walk 遍历指定目录及其子目录。
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// 如果当前路径是一个目录，则检查是否存在与目录名同名的 JSON 和 Lua 文件。
+		if info.IsDir() {
+			dirName := info.Name()
+
+			jsonFile := filepath.Join(path, dirName+".json")
+			luaFile := filepath.Join(path, dirName+".lua")
+
+			// 如果找到 JSON 和 Lua 文件，将它们的路径添加到结果字典中。
+			if f.fileExists(jsonFile) && f.fileExists(luaFile) {
+				results[dirName] = Result{
+					JsonFile: jsonFile,
+					LuaFile:  luaFile,
+				}
+			}
+		}
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	return data, nil
+	return results, nil
 }
 
-// 获取插件路径绝对路径 文件名字/插件名字
-func GetComponentPath() []string {
-	nameList := []string{}
-	dirPath := OMGPATH + SEPA + "lua"
-	fileExt := ".lua"
-	// 读取目录下的所有文件
-	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		// 如果目录不存在，则创建它
-		err := os.MkdirAll(dirPath, os.ModePerm)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println("Directory created:", dirPath)
-
-	}
-	files, err := ioutil.ReadDir(dirPath)
-	if err != nil {
-		panic(err)
-	}
-
-	// 遍历目录下的所有文件名
-	for _, file := range files {
-		// 如果文件后缀名为 .lua，则打印文件名（去掉后缀名）
-		if strings.HasSuffix(file.Name(), fileExt) {
-			nameList = append(nameList, file.Name())
-		}
-
-	}
-	return nameList
+// fileExists 函数接受一个文件路径作为参数，如果文件存在则返回 true，否则返回 false。
+func (f *FileControl) fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return !os.IsNotExist(err)
 }
 
-// 检查各级目录是否完好
-func (f *FileControl) CheckFilePath() {
-	rootPath := GetRootPath() + SEPA + "lua"
-	if _, err := os.Stat(rootPath); os.IsNotExist(err) {
-		// 目录不存在，创建目录
-		os.MkdirAll(rootPath, os.ModePerm)
+// createDirAndFiles 函数接受一个目录路径、一个子目录名称、一个结构体和一个字符串作为参数，
+// 在指定目录下创建具有指定名称的子目录，并在子目录中创建同名的 JSON 和 Lua 文件。
+func (f *FileControl) CreateDirAndFiles(name string) error {
+	// 创建子目录。
+	dir := GetOmgConfigPath()
+	data := LuaCommpoentConfig{
+		Name:     name,
+		Usage:    "",
+		Version:  "0.0.1",
+		Source:   "Lua-Component",
+		Disabled: true,
+		Author:   "",
+		Config:   make(map[string]interface{}),
 	}
-	configPath := rootPath + SEPA + "config"
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		// 目录不存在，创建目录
-		os.MkdirAll(configPath, os.ModePerm)
+	luaCode := ""
+
+	subDir := filepath.Join(dir, name)
+	// 检查目录是否已经存在，如果存在则返回错误。
+	if _, err := os.Stat(subDir); !os.IsNotExist(err) {
+		return errors.New("该名字的lua组件已经存在")
 	}
-	f.GetBindingJson()
-
-}
-
-// 打印指定消息
-func PrintInfo(str PrintMsg) {
-	pterm.Info.Printfln("[%v][%v]: %v ", time.Now().YearDay(), str.Type, str.Body)
-}
-
-// 构造一个输出函数
-func NewPrintMsg(typeName string, BodyString interface{}) PrintMsg {
-	return PrintMsg{
-		Type: typeName,
-		Body: BodyString,
-	}
-}
-
-// 获取data的相对位置omega_storage\\data
-func GetRootPath() string {
-	return OMGPATH
-}
-
-// 针对binding.json文件进行的各种包装
-// 获取binding.json的路径
-func GetBindingPath() string {
-	return GetRootPath() + SEPA + "lua" + SEPA + BINDINGFILE
-}
-
-// 获取data/lua/config
-func GetConfigPath() string {
-	return GetRootPath() + SEPA + "lua" + SEPA + "config"
-}
-
-// 获取bindingJson内容
-func (f *FileControl) GetBindingJson() MappedBinding {
-	bindingPath := GetBindingPath() //不出意外就是data/lua/Binding.json
-	_, err := os.Stat(bindingPath)
-	if err != nil {
-		bindingMap := MappedBinding{
-			Map: make(map[string]string),
-		}
-		jsonData, err := json.MarshalIndent(bindingMap, "", "  ")
-		if err != nil {
-			fmt.Println("Error marshaling JSON:", err)
-		}
-		// 创建文件
-		file, err := os.Create(bindingPath)
-		if err != nil {
-			fmt.Println("Error creating file:", err)
-		}
-		defer file.Close()
-
-		// 将 JSON 数据写入文件
-		_, err = file.Write(jsonData)
-		if err != nil {
-			fmt.Println("Error writing JSON to file:", err)
-		}
-		return bindingMap
-	}
-	data, err := f.Read(bindingPath)
-	if err != nil {
-		PrintInfo(NewPrintMsg("警告", err))
-		return MappedBinding{
-			Map: make(map[string]string),
-		}
-	}
-	var maps MappedBinding
-	json.Unmarshal(data, &maps)
-	return maps
-
-}
-
-// 向binding写入绑定
-func (f *FileControl) WriteBindingJson(name string, path string) error {
-	maps := f.GetBindingJson()
-	if maps.Map == nil {
-		maps.Map = make(map[string]string)
-	}
-	if !f.CheckCompoentduplicates(name) {
-		maps.Map[name] = path
-		data, err := json.Marshal(maps)
-		bindingPath := GetBindingPath()
-		if err != nil {
-			fmt.Println("Error marshaling JSON:", err)
-		}
-		//写入json
-		f.Write(bindingPath, data)
-
-		return nil
-	}
-	return errors.New("已经有该名字的插件了 可以重新取名字 或者输入lua luas delect [插件名字]删除现有插件")
-
-}
-
-// 首先确定的是 配置在data/lua/config下 实现逻辑在data/lua/下 绑定它们的在data/lua/Binding.json
-// 其次应该在程序一开始便开始检查这些
-func (f *FileControl) CheckCompoentduplicates(name string) bool {
-	maps := f.GetBindingJson().Map
-	if _, ok := maps[name]; ok {
-		return true
-	}
-	return false
-}
-
-// 删除插件
-func (f *FileControl) DelectCompoent(name string) error {
-	//检查插件是否存在
-	maps := f.GetBindingJson().Map
-	PrintInfo(NewPrintMsg("数据", maps))
-	if _, ok := maps[name]; !ok {
-		return errors.New(fmt.Sprintf("警告! 你正在想要删除%d但是我们并没有在插件中找到该名字的插件", name))
-	}
-	//先是在config中删除对应的文件
-	configPath := GetConfigPath() + SEPA + name + ".json"
-	compentPath := maps[name]
-	//删除文件关联中心
-	delete(maps, name)
-	data, _ := json.Marshal(maps)
-	bindingPath := GetBindingPath()
-	file, err := os.Create(bindingPath)
-	if err != nil {
-		panic(err)
-	}
-	_, err = file.Write(data)
-	//删除config
-	err = DelectFile(configPath)
+	err := os.Mkdir(subDir, 0755)
 	if err != nil {
 		return err
 	}
-	//删除主要实现逻辑的
-	err = DelectFile(compentPath)
+
+	// 创建 JSON 文件并根据指定结构体进行初始化。
+	jsonFile := filepath.Join(subDir, name+".json")
+	jsonData, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return err
 	}
-	PrintInfo(NewPrintMsg("提示", fmt.Sprintf("%v已经删除 干净了", name)))
+	err = ioutil.WriteFile(jsonFile, jsonData, 0644)
+	if err != nil {
+		return err
+	}
+
+	// 创建 Lua 文件并根据指定字符串进行初始化。
+	luaFile := filepath.Join(subDir, name+".lua")
+	err = ioutil.WriteFile(luaFile, []byte(luaCode), 0644)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
-
-// 安全地删除指定文件
-func DelectFile(path string) error {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return nil
-	} else {
-		// 文件存在，删除文件
-		err := os.Remove(path)
-		if err != nil {
-			return err
-		} else {
-			return nil
-		}
-	}
-}
-
-// 格式化处理指令
-func FormateCmd(str string) CmdMsg {
-
-	words := strings.Fields(str)
-	if len(words) < 3 {
-		return CmdMsg{isCmd: false}
-	}
-	if words[0] != "lua" {
-		return CmdMsg{isCmd: false}
-	}
-	head := words[1]
-	//如果不属于任何指令则返回空cmdmsg
-	if head != HEADLUA && head != HEADRELOAD && head != HEADSTART {
-		return CmdMsg{isCmd: false}
-	}
-	behavior := words[2]
-	args := []string{}
-	if len(words) >= 3 {
-		args = words[3:]
-	}
-	return CmdMsg{
-		Head:     head,
-		Behavior: behavior,
-		args:     args,
-		isCmd:    true,
-	}
-}
-
-/*
-// 检查插件是否符合规范
-func checkCompoent(l *lua.LState) error {
-	// 检查函数是否存在Init函数 active函数 以及选填的[save函数] [getData函数]
-	ComponentFn := []string{
-		COMPONENT_INIT_FN,
-		COMPONENT_ACTIVE_FN,
-	}
-	for _, v := range ComponentFn {
-		if l.GetGlobal(v) == lua.LNil {
-			return errors.New("错误 该插件不含有" + v + "函数")
-		}
-	}
-	return nil
-
-	//errors.New("错误")
-}
-*/

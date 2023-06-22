@@ -3,29 +3,27 @@ package mainframe
 import (
 	"fmt"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"sync"
 
 	lua "github.com/yuin/gopher-lua"
 )
 
-// 内置函数
-type BuiltlnFner interface {
-	//实现与lua对接
-	NewFrame(L *lua.LState) int
-	GetListener(L *lua.LState) int
-	GetControl(L *lua.LState) int
-	LoadFn(l *lua.LState) error
-}
-
-// 实现BuiltFner
+// 内置函数加载器
 type BuiltlnFn struct {
 	OmgFrame *LuaComponenter
+	Listener sync.Map
 }
 
 // 写入
 func (b *BuiltlnFn) LoadFn(L *lua.LState) error {
 
 	// 创建一个Lua table
-
+	// 注册Listener类型
+	mt := L.NewTypeMetatable("listener")
+	L.SetField(mt, "__index", L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
+		"NextMsg": NextMsg,
+	}))
+	//注册skynet
 	skynet := L.NewTable()
 
 	//注入方法 GetListener GetControl
@@ -40,10 +38,7 @@ func (b *BuiltlnFn) GetListener(L *lua.LState) int {
 	listener := L.NewTable()
 	//listener的方法 listen("可变参数") 获取参数  listenPackage(Id)
 
-	L.SetField(listener, "listenMsg", L.NewFunction(func(l *lua.LState) int {
-
-		return 1
-	}))
+	L.SetField(listener, "GetMsgListner", L.NewFunction(b.GetMsgListener))
 	L.SetField(listener, "listenPackage", L.NewFunction(func(l *lua.LState) int {
 
 		return 1
@@ -57,10 +52,7 @@ func (b *BuiltlnFn) GetControl(L *lua.LState) int {
 	L.SetField(GameControl, "SendWsCmd", L.NewFunction(func(l *lua.LState) int {
 		if l.GetTop() == 1 {
 			args := L.CheckString(1)
-
-			b.OmgFrame.mainFrame.GetGameControl().SendCmdAndInvokeOnResponse(args, func(output *packet.CommandOutput) {
-				fmt.Println("测试", output.OutputMessages)
-			})
+			b.OmgFrame.mainFrame.GetGameControl().SendCmd(args)
 
 		}
 		return 1
@@ -86,51 +78,39 @@ func (b *BuiltlnFn) GetControl(L *lua.LState) int {
 	return 1
 }
 
-// 指令返回信息
-type CmdInvokeResponse struct {
-	isSuccess bool
-	BackMsg   string
+// 模拟消息
+type Message struct {
+	Type    string
+	Content string
 }
 
-// 消息返回信息
-type MsgResponse struct {
-	playerName string
-	Msg        []string
+// 监听器
+// Listener 结构体
+type Listener struct {
+	msgChannel chan Message // 每个监听器都有一个独立的消息通道
 }
 
-// 监听
-type Listener interface {
+// GetListener 创建一个新的监听器并返回其引用
+func (f *BuiltlnFn) GetMsgListener(L *lua.LState) int {
+	listener := &Listener{msgChannel: make(chan Message, 25)} // 创建一个新监听器实例，并初始化其消息通道容量为25
+	ptr := &f.Listener
+	ptr.Store(listener, struct{}{}) // 将新监听器添加到监听器集合中
+
+	ud := L.NewUserData()                              // 创建一个新的UserData，用于在Lua中表示监听器实例
+	ud.Value = listener                                // 将监听器实例存储在UserData中
+	L.SetMetatable(ud, L.GetTypeMetatable("listener")) // 设置UserData的元表
+
+	L.Push(ud) // 将UserData返回给Lua
+	return 1
 }
 
-// 实现Listener
-type Listen struct {
-}
-type GameControler interface {
-	//占位
-	GameControler() string
-	SendWsCmd(str string)
-	SendPlayerCmd(str string)
-	SendWsCmdAndInvokeOnResponse(str string, callBack func(*CmdInvokeResponse) bool)
-	SetOnParamMsg(playerName string, callBack func(*MsgResponse) bool)
-}
+// NextMsg 用于从监听器的消息通道中获取下一个消息
+func NextMsg(L *lua.LState) int {
+	ud := L.CheckUserData(1)         // 从Lua参数中获取UserData
+	listener := ud.Value.(*Listener) // 从UserData中提取监听器实例
 
-// 游行行为 实现了gamecontroler
-type GameControl struct {
-}
-
-// 让gamecontrol实现gamecontroler
-func (g *GameControl) GameControler() string {
-	return "this is gamecontrol"
-}
-func (g *GameControl) SendWsCmd(str string) {
-	//todo
-}
-func (g *GameControl) SendPlayerCmd(str string) {
-	//todo
-}
-func (g *GameControl) SendWsCmdAndInvokeOnResponse(str string, callBack func(*CmdInvokeResponse) bool) {
-	//to do
-}
-func (g *GameControl) SetOnParamMsg(playerName string, callBack func(*MsgResponse) bool) {
-	//todo
+	msg := <-listener.msgChannel // 从监听器的消息通道中读取下一个消息，如果没有消息，则阻塞等待
+	L.Push(lua.LString(msg.Type))
+	L.Push(lua.LString(msg.Content))
+	return 2
 }
