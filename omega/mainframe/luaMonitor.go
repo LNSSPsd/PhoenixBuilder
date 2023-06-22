@@ -18,6 +18,7 @@ const (
 	OMGROOTPATH         = "omega_storage"
 	OMGDATAPATH         = OMGROOTPATH + SEPA + "data"
 	SEPA                = string(filepath.Separator)
+	LUASOURCE           = "Lua-Component"
 )
 
 // 插件监测器
