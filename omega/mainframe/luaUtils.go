@@ -281,12 +281,13 @@ func (f *FileControl) DeleteSubDir(subDirName string) error {
 
 // Result 结构体用于存储 JSON 文件和 Lua 文件的路径。
 type Result struct {
-	JsonFile string
-	LuaFile  string
+	JsonFile   string
+	LuaFile    string
+	jsonConfig LuaCommpoentConfig
 }
 
 // GetLuaComponentPath返回一个包含同名字 JSON 文件和 Lua 文件路径的字典。
-func (f *FileControl) GetLuaComponentPath() (map[string]Result, error) {
+func (f *FileControl) GetLuaComponentData() (map[string]Result, error) {
 	dir := OMGCONFIGPATH
 	results := make(map[string]Result)
 
@@ -305,9 +306,15 @@ func (f *FileControl) GetLuaComponentPath() (map[string]Result, error) {
 
 			// 如果找到 JSON 和 Lua 文件，将它们的路径添加到结果字典中。
 			if f.fileExists(jsonFile) && f.fileExists(luaFile) {
+				//读取json文件
+				config, err := f.ReadConfig(jsonFile)
+				if err != nil {
+					PrintInfo(NewPrintMsg("警告", err))
+				}
 				results[dirName] = Result{
-					JsonFile: jsonFile,
-					LuaFile:  luaFile,
+					JsonFile:   jsonFile,
+					LuaFile:    luaFile,
+					jsonConfig: config,
 				}
 			}
 		}
