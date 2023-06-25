@@ -334,7 +334,6 @@ func (f *FileControl) fileExists(path string) bool {
 	return !os.IsNotExist(err)
 }
 
-// createDirAndFiles 函数接受一个目录路径、一个子目录名称、一个结构体和一个字符串作为参数，
 // 在指定目录下创建具有指定名称的子目录，并在子目录中创建同名的 JSON 和 Lua 文件。
 func (f *FileControl) CreateDirAndFiles(name string) error {
 	// 创建子目录。

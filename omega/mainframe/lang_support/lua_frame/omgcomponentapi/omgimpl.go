@@ -1,7 +1,6 @@
 package omgApi
 
 import (
-	blockNBT_API "phoenixbuilder/fastbuilder/bdump/blockNBT/API"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/omega/defines"
 )
@@ -20,7 +19,6 @@ type OmgCoreComponent interface {
 	GetGlobalContext(key string) (entry interface{})
 	SetGlobalContext(key string, entry interface{})
 	GetUQHolder() *uqHolder.UQHolder
-	GetNewUQHolder() *blockNBT_API.PacketHandleResult
 	GetWorldsDir(elem ...string) string
 	GetOmegaNormalCacheDir(elem ...string) string
 	GetAllConfigs() []*defines.ComponentConfig
