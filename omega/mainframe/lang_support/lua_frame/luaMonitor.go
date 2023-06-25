@@ -13,7 +13,6 @@ import (
 const (
 	COMPONENT_INIT_FN   = "init"
 	COMPONENT_ACTIVE_FN = "active"
-	COMPONENT__SAVE_FN  = "save"
 	OMGPATH             = "omega_storage" + SEPA + "data"
 	OMGCONFIGPATH       = OMGROOTPATH + SEPA + "配置"
 	OMGROOTPATH         = "omega_storage"
