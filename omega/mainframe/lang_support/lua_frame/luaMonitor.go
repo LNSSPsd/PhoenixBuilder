@@ -118,7 +118,7 @@ func (m *Monitor) InjectComponents() error {
 			m.ComponentPoll[k] = &LuaComponent{
 				L:       L,
 				Msg:     make(map[string]string),
-				Running: false, //初始化完成但是未初始化
+				Running: false, //初始化完成但是未运行
 				Config:  _config,
 			}
 		}
