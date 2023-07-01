@@ -3,28 +3,22 @@ module phoenixbuilder
 go 1.18
 
 require (
-	github.com/df-mc/atomic v1.10.0
-	golang.org/x/exp v0.0.0-20220713135740-79cabaa25d75
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	github.com/cheggaaa/pb v1.0.29
+	github.com/df-mc/goleveldb v1.1.9
+	github.com/hashicorp/go-version v1.6.0
 	rogchap.com/v8go v0.7.0
 )
 
 require (
 	github.com/atomicgo/cursor v0.0.1 // indirect
-	github.com/cheggaaa/pb v1.0.29 // indirect
-	github.com/df-mc/goleveldb v1.1.9 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gookit/color v1.4.2 // indirect
-	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/klauspost/cpuid v1.3.1 // indirect
 	github.com/klauspost/reedsolomon v1.9.9 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
-	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mmcloughlin/avo v0.0.0-20200803215136-443f81d77104 // indirect
-	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
-	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/templexxx/cpu v0.0.7 // indirect
 	github.com/templexxx/xorsimd v0.4.1 // indirect
 	github.com/tjfoc/gmsm v1.3.2 // indirect
@@ -39,12 +33,9 @@ require (
 replace rogchap.com/v8go v0.7.0 => ./depends/v8go@v0.7.0
 
 require (
-	github.com/Shopify/go-lua v0.0.0-20221004153744-91867de107cf
 	github.com/Tnze/go-mc v1.17.0
 	github.com/andybalholm/brotli v1.0.3
 	github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb
-	github.com/brentp/intintmap v0.0.0-20190211203843-30dc0ade9af9
-	github.com/cespare/xxhash v1.1.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/go-gl/mathgl v1.0.0
 	github.com/google/go-cmp v0.5.8 // indirect
@@ -53,10 +44,8 @@ require (
 	github.com/klauspost/compress v1.13.6
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20211230184646-baf1f7156737
-	github.com/pelletier/go-toml v1.9.4
 	github.com/pterm/pterm v0.12.29
 	github.com/sandertv/go-raknet v1.9.1
-	github.com/sirupsen/logrus v1.8.1
 	github.com/xtaci/kcp-go/v5 v5.6.1
 	github.com/yuin/gopher-lua v1.1.0
 	go.kuoruan.net/v8go-polyfills v0.5.0
