@@ -8,10 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"phoenixbuilder/GameControl/GlobalAPI"
-	"phoenixbuilder/GameControl/ResourcesControlCenter"
 	"phoenixbuilder/fastbuilder/args"
-	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/core"
 	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
 	"phoenixbuilder/fastbuilder/environment"
@@ -25,9 +22,8 @@ import (
 	fbtask "phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/uqHolder"
-	"phoenixbuilder/fastbuilder/utils"
-	"phoenixbuilder/io/commands"
-	utils_core "phoenixbuilder/lib/utils/core"
+	GameInterface "phoenixbuilder/game_control/game_interface"
+	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -39,16 +35,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pterm/pterm"
 )
 
 func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) {
-	if args.NoReadline() {
+	if args.NoReadline {
 		return
 	}
 	defer Fatal()
-	commandSender := env.CommandSender.(*commands.CommandSender)
+	gameInterface := env.GameInterface
 	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
 	for {
 		if breaker != nil {
@@ -67,31 +62,11 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 			continue
 		}
 		if cmd[0] == '.' {
-			resp, _ := env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommandWithResponce(cmd[1:])
+			resp, _ := gameInterface.SendCommandWithResponse(cmd[1:])
 			fmt.Printf("%+v\n", resp)
 		} else if cmd[0] == '!' {
-			resp, _ := env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendWSCommandWithResponce(cmd[1:])
+			resp, _ := gameInterface.SendWSCommandWithResponse(cmd[1:])
 			fmt.Printf("%+v\n", resp)
-		}
-		if cmd == "move" {
-			go func() {
-				for {
-					move.Auto()
-					time.Sleep(time.Second / 20)
-				}
-			}()
-			continue
-		}
-		if cmd[0] == '>' && len(cmd) > 1 {
-			umsg := cmd[1:]
-			if env.FBAuthClient != nil {
-				fbcl := env.FBAuthClient.(*fbauth.Client)
-				if !fbcl.CanSendMessage() {
-					commandSender.WorldChatOutput("FastBuildeｒ", "Lost connection to the authentication server.")
-					break
-				}
-				fbcl.WorldChat(umsg)
-			}
 		}
 		functionHolder.Process(cmd)
 	}
@@ -100,7 +75,6 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 	conn := env.Connection.(*minecraft.Conn)
 	hostBridgeGamma := env.ScriptBridge.(*script_bridge.HostBridgeGamma)
-	commandSender := env.CommandSender.(*commands.CommandSender)
 	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
 
 	chunkAssembler := assembler.NewAssembler(assembler.REQUEST_AGGRESSIVE, time.Second*5)
@@ -152,20 +126,21 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 						continue
 					}
 					//fmt.Printf("%X", p.Content)
-					//fmt.Printf("%s\n", p.Content)
 					firstArgLenB := p.Content[19:21]
 					firstArgLen := binary.BigEndian.Uint16(firstArgLenB)
 					firstArg := string(p.Content[21 : 21+firstArgLen])
 					secondArgLen := uint16(p.Content[23+firstArgLen])
 					secondArg := string(p.Content[24+firstArgLen : 24+firstArgLen+secondArgLen])
-					//fmt.Printf("%s\n", secondArg)
+					//fmt.Printf("%s\n%s\n",firstArg, secondArg)
+					//fmt.Printf("%v\n", env.Connection.(*minecraft.Conn).GameData().EntityUniqueID)
+					//fmt.Printf("%X\n", p.Content)
 					//valM,_:=getUserInputMD5()
 					//valS,_:=getUserInputMD5()
-					//valM := utils.GetMD5(fmt.Sprintf("qhk+um%ssvdrx,9=>", secondArg))
-					//valS := utils.GetMD5(fmt.Sprintf("%s%s", valM[16:], valM[:16]))
-					//fmt.Printf("%s\n",valM)
+					//valT,_:=getUserInputMD5()
+
 					client := env.FBAuthClient.(*fbauth.Client)
-					valM, valS := client.TransferCheckNum(firstArg, secondArg)
+					valM, valS, valT := client.TransferCheckNum(firstArg, secondArg, env.Connection.(*minecraft.Conn).GameData().EntityUniqueID)
+
 					/*conn.WritePacket(&packet.PyRpc{
 						Content: bytes.Join([][]byte{[]byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xe, 0x53, 0x65, 0x74, 0x4d, 0x43, 0x50, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x4e, 0x75, 0x6d, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x91, 0xc4, 0x20},
 							[]byte(valM),
@@ -173,22 +148,24 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 						}, []byte{}),
 					})*/
 					conn.WritePacket(&packet.PyRpc{
-						Content: bytes.Join([][]byte{[]byte{0x93, 0xc4, 0x0e}, []byte("SetMCPCheckNum"), []byte{0x91, 0x93, 0xc4, 0x20},
+						Content: bytes.Join([][]byte{[]byte{0x93, 0xc4, 0x0e}, []byte("SetMCPCheckNum"), []byte{0x91, 0x98, 0xc4, 0x20},
 							[]byte(valM),
 							[]byte{0xc4, 0x20},
 							[]byte(valS),
 							[]byte{0xc2},
+							[]byte{0x90},
+							[]byte{0xc4, 0x00},
+							[]byte{0xc4, 0x00},
+							[]byte{3},
+							[]byte{0xc4, 0x20},
+							[]byte(valT),
 							[]byte{0xC0},
 						}, []byte{}),
 					})
 					getchecknum_everPassed = true
 					/*go func() {
 						time.Sleep(3*time.Second)
-						ud, _ := uuid.NewUUID()
-						chann := make(chan *packet.CommandOutput)
-						commandSender.UUIDMap.Store(ud.String(), chann)
-						commandSender.SendCommand("list", ud)
-						resp := <-chann
+						resp, _ := env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommandWithResponce("list")
 						fmt.Printf("%+v\n", resp)
 					} ()*/
 				} else {
@@ -235,45 +212,13 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 		// 	pterm.Info.Println("ClientCacheBlobStatus", p)
 		case *packet.Text:
 			if p.TextType == packet.TextTypeChat {
-				if args.InGameResponse() {
+				if args.InGameResponse {
 					if p.SourceName == env.RespondUser {
 						functionHolder.Process(p.Message)
 					}
 				}
 				break
 			}
-		case *packet.CommandOutput:
-			if p.CommandOrigin.UUID.String() == configuration.ZeroId.String() {
-				pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
-				if !(p.OutputMessages[0].Message == "commands.generic.unknown") {
-					configuration.IsOp = true
-				}
-				if len(pos) == 0 {
-					commandSender.Output(I18n.T(I18n.InvalidPosition))
-					break
-				}
-				configuration.GlobalFullConfig(env).Main().Position = types.Position{
-					X: pos[0],
-					Y: pos[1],
-					Z: pos[2],
-				}
-				commandSender.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
-				break
-			} else if p.CommandOrigin.UUID.String() == configuration.OneId.String() {
-				pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
-				if len(pos) == 0 {
-					commandSender.Output(I18n.T(I18n.InvalidPosition))
-					break
-				}
-				configuration.GlobalFullConfig(env).Main().End = types.Position{
-					X: pos[0],
-					Y: pos[1],
-					Z: pos[2],
-				}
-				commandSender.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot_End), pos))
-				break
-			}
-			utils_core.ProcessCommandOutput(commandSender, p)
 		case *packet.ActorEvent:
 			if p.EventType == packet.ActorEventDeath && p.EntityRuntimeID == conn.GameData().EntityRuntimeID {
 				conn.WritePacket(&packet.PlayerAction{
@@ -317,12 +262,6 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 			if exist := chunkAssembler.AddPendingTask(p); !exist {
 				requests := chunkAssembler.GenRequestFromLevelChunk(p)
 				chunkAssembler.ScheduleRequest(requests)
-			}
-		case *packet.UpdateBlock:
-			channel, h := commandSender.BlockUpdateSubscribeMap.LoadAndDelete(p.Position)
-			if h {
-				ch := channel.(chan bool)
-				ch <- true
 			}
 		case *packet.Respawn:
 			if p.EntityRuntimeID == conn.GameData().EntityRuntimeID {
@@ -368,7 +307,7 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 		env.LoginInfo.ServerPasscode,
 		env.LoginInfo.Token,
 	)
-	conn, err := core.InitMCConnection(ctx, authenticator, options...)
+	conn, err := core.InitializeMinecraftConnection(ctx, authenticator, options...)
 
 	if err != nil {
 		pterm.Error.Println(err)
@@ -379,13 +318,13 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 		panic(err)
 	}
 	if len(env.RespondUser) == 0 {
-		if args.GetCustomGameName() == "" {
+		if args.CustomGameName == "" {
 			go func() {
 				user := env.FBAuthClient.(*fbauth.Client).ShouldRespondUser()
 				env.RespondUser = user
 			}()
 		} else {
-			env.RespondUser = args.GetCustomGameName()
+			env.RespondUser = args.CustomGameName
 		}
 	}
 	env.Connection = conn
@@ -394,28 +333,28 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	env.UQHolder.(*uqHolder.UQHolder).UpdateFromConn(conn)
 	env.UQHolder.(*uqHolder.UQHolder).CurrentTick = 0
 
-	env.Resources = &ResourcesControlCenter.Resources{}
-	env.ResourcesUpdater = env.Resources.(*ResourcesControlCenter.Resources).Init()
-	env.GlobalAPI = &GlobalAPI.GlobalAPI{
+	env.Resources = &ResourcesControl.Resources{}
+	env.ResourcesUpdater = env.Resources.(*ResourcesControl.Resources).Init()
+	env.GameInterface = &GameInterface.GameInterface{
 		WritePacket: env.Connection.(*minecraft.Conn).WritePacket,
-		BotInfo: GlobalAPI.BotInfo{
-			BotName:      env.Connection.(*minecraft.Conn).IdentityData().DisplayName,
-			BotIdentity:  env.Connection.(*minecraft.Conn).IdentityData().Identity,
-			BotRunTimeID: env.Connection.(*minecraft.Conn).GameData().EntityRuntimeID,
-			BotUniqueID:  env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
+		ClientInfo: GameInterface.ClientInfo{
+			DisplayName:     env.Connection.(*minecraft.Conn).IdentityData().DisplayName,
+			ClientIdentity:  env.Connection.(*minecraft.Conn).IdentityData().Identity,
+			XUID:            env.Connection.(*minecraft.Conn).IdentityData().XUID,
+			EntityRuntimeID: env.Connection.(*minecraft.Conn).GameData().EntityRuntimeID,
+			EntityUniqueID:  env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
 		},
-		Resources: env.Resources.(*ResourcesControlCenter.Resources),
+		Resources: env.Resources.(*ResourcesControl.Resources),
 	}
 
-	if args.ShouldEnableOmegaSystem() {
+	if args.ShouldEnableOmegaSystem {
 		_, cb := embed.EnableOmegaSystem(env)
 		go cb()
 		//cb()
 	}
 
-	commandSender := commands.InitCommandSender(env)
 	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
-	function.InitInternalFunctions(functionHolder)
+	function.InitPresetFunctions(functionHolder)
 	fbtask.InitTaskStatusDisplay(env)
 	move.ConnectTime = time.Time{}
 	move.Position = conn.GameData().PlayerPosition
@@ -428,48 +367,32 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 
 	hostBridgeGamma := env.ScriptBridge.(*script_bridge.HostBridgeGamma)
 	hostBridgeGamma.HostSetSendCmdFunc(func(mcCmd string, waitResponse bool) *packet.CommandOutput {
-		ud, _ := uuid.NewUUID()
 		if !waitResponse {
-			env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommand(mcCmd, ud)
+			env.GameInterface.SendCommand(mcCmd)
 			return nil
 		}
-		resp, _ := env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommandWithResponce(mcCmd)
+		resp, _ := env.GameInterface.SendCommandWithResponse(mcCmd)
 		return &resp
 	})
 	hostBridgeGamma.HostConnectEstablished()
 	defer hostBridgeGamma.HostConnectTerminate()
 
-	go func() {
-		if args.ShouldMuteWorldChat() {
-			return
-		}
-		for {
-			csmsg := <-env.WorldChatChannel
-			commandSender.WorldChatOutput(csmsg[0], csmsg[1])
-		}
-	}()
-
 	taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 	types.ForwardedBrokSender = taskholder.BrokSender
 
-	zeroId, _ := uuid.NewUUID()
-	oneId, _ := uuid.NewUUID()
-	configuration.ZeroId = zeroId
-	configuration.OneId = oneId
-
-	if args.ExternalListenAddress() != "" {
-		external.ListenExt(env, args.ExternalListenAddress())
+	if args.ExternalListenAddress != "" {
+		external.ListenExt(env, args.ExternalListenAddress)
 	}
 	env.UQHolder.(*uqHolder.UQHolder).UpdateFromConn(conn)
 	return
 }
 
-// func getUserInputMD5() (string, error) {
-// 	reader := bufio.NewReader(os.Stdin)
-// 	fmt.Printf("MD5: ")
-// 	code, err := reader.ReadString('\n')
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	return strings.TrimRight(code, "\r\n"), err
-// }
+func getUserInputMD5() (string, error) {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Printf("MD5: ")
+	code, err := reader.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimRight(code, "\r\n"), err
+}

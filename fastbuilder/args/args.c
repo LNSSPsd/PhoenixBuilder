@@ -8,34 +8,39 @@
 #include <limits.h>
 #endif
 #include <sys/types.h>
+#include <stdint.h>
 
 #ifndef FB_VERSION
-#define FB_VERSION "(CUSTOM)"
+#define FB_VERSION "(CUSTOMIZED)"
 #define FB_COMMIT "???"
 #define FB_COMMIT_LONG "???"
 #warning "It seems that you're building PhoenixBuilder with plain `go build` command, it is highly recommended to use `make current` instead."
 #endif
 
+struct go_string {
+	char *buf;
+	uint64_t length;
+};
+
+#define EMPTY_GOSTRING {"",0}
+
 char args_isDebugMode=0;
-char args_disableHashCheck=0;
-char replaced_auth_server=0;
-char *newAuthServer;
-char args_muteWorldChat=0;
-char args_noPyRpc=1;
-char use_startup_script=0;
-char *startup_script;
-char specified_server=0;
-char *server_code;
-char *server_password="";
-char custom_token=0;
-char *token_content;
-char *externalListenAddr="";
-char *capture_output_file="";
+char args_disableVersionCheck=0;
+struct go_string newAuthServer={
+	"wss://api.fastbuilder.pro:2053/",
+	31
+};
+struct go_string startup_script=EMPTY_GOSTRING;
+struct go_string server_code=EMPTY_GOSTRING;
+struct go_string server_password=EMPTY_GOSTRING;
+struct go_string token_content=EMPTY_GOSTRING;
+struct go_string externalListenAddr=EMPTY_GOSTRING;
+struct go_string capture_output_file=EMPTY_GOSTRING;
 char args_no_readline=0;
-char *pack_scripts="";
-char *pack_scripts_out="";
+struct go_string pack_scripts=EMPTY_GOSTRING;
+struct go_string pack_scripts_out=EMPTY_GOSTRING;
 char enable_omega_system=0;
-char *custom_gamename="";
+struct go_string custom_gamename=EMPTY_GOSTRING;
 char ingame_response=0;
 
 extern void custom_script_engine_const(const char *key, const char *val);
@@ -46,7 +51,6 @@ void print_help(const char *self_name) {
 	printf("\t--debug: Run in debug mode.\n");
 	printf("\t-A <url>, --auth-server=<url>: Use the specified authentication server, instead of the default one.\n");
 	printf("\t--no-update-check: Suppress update notifications.\n");
-	printf("\t-M, --no-world-chat: Ignore world chat on client side.\n");
 	printf("\t--force-pyrpc: Enable the PyRpcPacket interaction, client will be kicked automatically by netease's rental server.\n");
 #ifdef WITH_V8
 	printf("\t-S, --script=<*.js>: run a .js script at start\n");
@@ -71,22 +75,6 @@ void print_help(const char *self_name) {
 	printf("\t-h, --help: Show this help context.\n");
 	printf("\t-v, --version: Show the version information of this program.\n");
 	printf("\t\t--version-plain: Show the version of this program.\n");
-}
-
-char *get_fb_version() {
-#ifdef FBGUI_VERSION
-	return FB_VERSION "@" FBGUI_VERSION " (" FB_COMMIT ")";
-#else
-	return FB_VERSION " (" FB_COMMIT ")";
-#endif
-}
-
-char *get_fb_plain_version() {
-#ifdef FBGUI_VERSION
-	return FBGUI_VERSION;
-#else
-	return FB_VERSION;
-#endif
 }
 
 char *commit_hash() {
@@ -118,10 +106,27 @@ void read_token(char *token_path) {
 	fseek(file,0,SEEK_END);
 	size_t flen=ftell(file);
 	fseek(file,0,SEEK_SET);
-	token_content=malloc(flen+1);
-	token_content[flen]=0;
-	fread(token_content, 1, flen, file);
+	token_content.length=flen;
+	token_content.buf=malloc(flen);
+	fread(token_content.buf, 1, flen, file);
 	fclose(file);
+}
+
+void quickmake(struct go_string **target_ptr) {
+	size_t length=strlen(optarg);
+	char *data=malloc(length);
+	memcpy(data, optarg, length);
+	*target_ptr=malloc(16);
+	(*target_ptr)->buf=data;
+	(*target_ptr)->length=length;
+}
+
+void quickset(struct go_string *target_ptr) {
+	size_t length=strlen(optarg);
+	char *data=malloc(length);
+	memcpy(data, optarg, length);
+	target_ptr->buf=data;
+	target_ptr->length=length;
 }
 
 void quickcopy(char **target_ptr) {
@@ -230,10 +235,11 @@ int _parse_args(int argc, char **argv) {
 				args_isDebugMode=1;
 				break;
 			case 3:
-				args_disableHashCheck=1;
+				args_disableVersionCheck=1;
 				break;
 			case 5:
-				args_noPyRpc=0;
+				fprintf(stderr, "--force-pyrpc not available\n");
+				return 10;
 				break;
 			case 6:
 				fprintf(stderr, "--no-nbt option is no longer available.\n");
@@ -274,13 +280,13 @@ int _parse_args(int argc, char **argv) {
 				args_no_readline=1;
 				break;
 			case 18:
-				quickcopy(&pack_scripts);
+				quickset(&pack_scripts);
 				break;
 			case 19:
-				quickcopy(&pack_scripts_out);
+				quickset(&pack_scripts_out);
 				break;
 			case 20:
-				quickcopy(&capture_output_file);
+				quickset(&capture_output_file);
 				break;
 			case 23:
 				ingame_response=1;
@@ -294,38 +300,29 @@ int _parse_args(int argc, char **argv) {
 			print_help(argv[0]);
 			return 0;
 		case 'A':
-			replaced_auth_server=1;
-			quickcopy(&newAuthServer);
-			break;
-		case 'M':
-			args_muteWorldChat=1;
+			quickset(&newAuthServer);
 			break;
 		case 'S':
 #ifndef WITH_V8
 			fprintf(stderr,"-S, --script option isn't available: No V8 linked for this version.\n");
 			return 10;
 #endif
-			use_startup_script=1;
-			quickcopy(&startup_script);
+			quickset(&startup_script);
 			break;
 		case 'c':
-			specified_server=1;
-			quickcopy(&server_code);
+			quickset(&server_code);
 			break;
 		case 'p':
-			specified_server=1;
-			quickcopy(&server_password);
+			quickset(&server_password);
 			break;
 		case 't':
-			custom_token=1;
 			read_token(optarg);
 			break;
 		case 'T':
-			custom_token=1;
-			quickcopy(&token_content);
+			quickset(&token_content);
 			break;
 		case 'E':
-			quickcopy(&externalListenAddr);
+			quickset(&externalListenAddr);
 			break;
 		case 'v':
 			print_version(1);
@@ -334,7 +331,7 @@ int _parse_args(int argc, char **argv) {
 			enable_omega_system=1;
 			break;
 		case 'N':
-			quickcopy(&custom_gamename);
+			quickset(&custom_gamename);
 			break;
 		default:
 			print_help(argv[0]);
@@ -344,7 +341,44 @@ int _parse_args(int argc, char **argv) {
 	return -1;
 }
 
-void parse_args(int argc, char **argv) {
+struct go_string args_var_fbversion_struct={
+	FB_VERSION " (" FB_COMMIT ")",
+	sizeof(FB_VERSION " (" FB_COMMIT ")")
+};
+
+/*
+// Go uses a different ABI than C, which would use BX for the 2nd return,
+// and we couldn't do that w/o asm.
+struct go_string *args_func_authServer() {
+	if(!newAuthServer) {
+		static struct go_string original_auth_server={
+			"wss://api.fastbuilder.pro:2053/",
+			31
+		};
+		return &original_auth_server;
+	}
+	return newAuthServer;
+}*/
+
+struct go_string args_var_fbplainversion_struct={
+	FB_VERSION,
+	sizeof(FB_VERSION)
+};
+
+struct go_string args_fb_commit_struct={
+	FB_COMMIT,
+	sizeof(FB_COMMIT)
+};
+
+int args_has_specified_server() {
+	return server_code.length!=0;
+}
+
+int args_specified_token() {
+	return token_content.length!=0;
+}
+
+__attribute__((constructor)) static void parse_args(int argc, char **argv) {
 	int ec;
 	if((ec=_parse_args(argc,argv))!=-1) {
 		exit(ec);

@@ -12,8 +12,8 @@ var Builder = map[string]func(config *types.MainConfig, blc chan *types.Module) 
 	"sphere":    Sphere,
 	"ellipse":   Ellipse,
 	"ellipsoid": Ellipsoid,
-	"plot":      Paint,
-	"schem":     Schematic,
+	"paint":     Paint,
+	"schematic": Schematic,
 	"acme":      Acme,
 	"bdump":     BDump,
 	"mapart":    MapArt,
@@ -25,8 +25,4 @@ func Generate(config *types.MainConfig, blc chan *types.Module) error {
 	} else {
 		return Builder[config.Execute](config, blc)
 	}
-}
-
-func PipeGenerate(configs []*types.Config) []*types.Module {
-	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 )
 
 type AccessWrapper struct {
@@ -66,7 +67,7 @@ func GetTokenByPassword(connectCtx context.Context, client *Client, userName, us
 	}
 	code, _ := resp["code"].(float64)
 	if code != 0 {
-		return "", fmt.Errorf("user auth fail: incorrect username or password")
+		return "", fmt.Errorf("user auth fail: %v", resp["message"].(string))
 	}
 	FBToken, ok := resp["token"].(string)
 	if !ok {
@@ -85,20 +86,22 @@ func (aw *AccessWrapper) GetFBUid() string {
 }
 
 type AuthRequest struct {
-	Action         string `json:"action"`
-	ServerCode     string `json:"serverCode"`
-	ServerPassword string `json:"serverPassword"`
-	Key            string `json:"publicKey"`
-	FBToken        string
+	Action            string `json:"action"`
+	ServerCode        string `json:"serverCode"`
+	ServerPassword    string `json:"serverPassword"`
+	Key               string `json:"publicKey"`
+	FBToken           string
+	ProtocolVersionId int64 `json:"version_id"`
 }
 
 func (aw *AccessWrapper) auth(ctx context.Context, publicKey []byte) (resp string, err error) {
 	authreq := &AuthRequest{
-		Action:         "phoenix::login",
-		ServerCode:     aw.ServerCode,
-		ServerPassword: aw.ServerPassword,
-		Key:            base64.StdEncoding.EncodeToString(publicKey),
-		FBToken:        aw.FBToken,
+		Action:            "phoenix::login",
+		ServerCode:        aw.ServerCode,
+		ServerPassword:    aw.ServerPassword,
+		Key:               base64.StdEncoding.EncodeToString(publicKey),
+		FBToken:           aw.FBToken,
+		ProtocolVersionId: 2,
 	}
 	msg, err := json.Marshal(authreq)
 	if err != nil {
@@ -142,7 +145,7 @@ func (aw *AccessWrapper) auth(ctx context.Context, publicKey []byte) (resp strin
 	return chainInfo, nil
 }
 
-func (aw *AccessWrapper) GetAccess(ctx context.Context, publicKey []byte) (address string, chainInfo string, err error) {
+func (aw *AccessWrapper) getAccess(ctx context.Context, publicKey []byte) (address string, chainInfo string, err error) {
 	chainAddr, err := aw.auth(ctx, publicKey)
 	if err != nil {
 		return "", "", err
@@ -154,6 +157,23 @@ func (aw *AccessWrapper) GetAccess(ctx context.Context, publicKey []byte) (addre
 	chainInfo = chainAndAddr[0]
 	address = chainAndAddr[1]
 	return address, chainInfo, nil
+}
+
+func (aw *AccessWrapper) GetAccess(ctx context.Context, publicKey []byte) (address string, chainInfo string, err error) {
+	// TODO make it configurable
+	maxRetryTimes := 3
+	fastRetryDelay := time.Second
+	for retryTimes := 0; retryTimes < maxRetryTimes; retryTimes++ {
+		address, chainInfo, err = aw.getAccess(ctx, publicKey)
+		if err != nil && strings.Contains(err.Error(), "Link server processing error") {
+			fmt.Println("Link server processing error, retrying...")
+			time.Sleep(fastRetryDelay)
+			continue
+		} else {
+			break
+		}
+	}
+	return address, chainInfo, err
 }
 
 func (aw *AccessWrapper) BotOwner(ctx context.Context) (name string, err error) {
@@ -203,13 +223,15 @@ type RPCNumRequest struct {
 	Action string `json:"action"`
 	First  string `json:"1st"`
 	Second string `json:"2nd"`
+	Third  int64  `json:"3rd"`
 }
 
-func (aw *AccessWrapper) TransferCheckNum(ctx context.Context, first string, second string) (string, string, error) {
+func (aw *AccessWrapper) TransferCheckNum(ctx context.Context, first string, second string, third int64) (string, string, string, error) {
 	rspreq := &RPCNumRequest{
 		Action: "phoenix::transfer-check-num",
 		First:  first,
 		Second: second,
+		Third:  third,
 	}
 	msg, err := json.Marshal(rspreq)
 	if err != nil {
@@ -217,13 +239,14 @@ func (aw *AccessWrapper) TransferCheckNum(ctx context.Context, first string, sec
 	}
 	resp, err := aw.Client.SendMessageAndGetResponseWithDeadline(msg, ctx)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	code, _ := resp["code"].(float64)
 	if code != 0 {
-		return "", "", fmt.Errorf("Failed to transfer checknum")
+		return "", "", "", fmt.Errorf("failed to transfer checknum %v", resp["message"])
 	}
 	valM, _ := resp["valM"].(string)
 	valS, _ := resp["valS"].(string)
-	return valM, valS, nil
+	valT, _ := resp["valT"].(string)
+	return valM, valS, valT, nil
 }
