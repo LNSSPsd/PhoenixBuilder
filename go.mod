@@ -6,14 +6,11 @@ require (
 	github.com/cheggaaa/pb v1.0.29
 	github.com/df-mc/goleveldb v1.1.9
 	github.com/hashicorp/go-version v1.6.0
-	github.com/mitchellh/mapstructure v1.5.0
-	github.com/pierrec/lz4 v2.6.1+incompatible
 	rogchap.com/v8go v0.7.0
 )
 
 require (
 	github.com/atomicgo/cursor v0.0.1 // indirect
-	github.com/frankban/quicktest v1.14.5 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gookit/color v1.4.2 // indirect
 	github.com/klauspost/cpuid v1.3.1 // indirect
