@@ -10,6 +10,7 @@ import (
 	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
 	lf "phoenixbuilder/omega/mainframe/lang_support/lua_frame"
+	"phoenixbuilder/omega/mainframe/lang_support/lua_frame/BuiltlnFn"
 	omgApi "phoenixbuilder/omega/mainframe/lang_support/lua_frame/omgcomponentapi"
 	"phoenixbuilder/omega/utils"
 
@@ -579,7 +580,7 @@ func (o *Partol) Activate() {
 type LuaComponenter struct {
 	*BaseCoreComponent
 	Monitor   *lf.Monitor
-	LuaFrame  *lf.BuiltlnFn
+	LuaFrame  *BuiltlnFn.BuiltlnFn
 	mainFrame defines.MainFrame
 }
 
@@ -654,11 +655,11 @@ func (b *LuaComponenter) MsgDistributionCenter(chat *defines.GameChat) bool {
 		for _, v := range chat.Msg {
 			msg += v + " "
 		}
-		message := lf.Message{
+		message := BuiltlnFn.Message{
 			Type:    chat.Name,
 			Content: msg,
 		}
-		listener := key.(*lf.Listener) // 获取监听器实例
+		listener := key.(*BuiltlnFn.Listener) // 获取监听器实例
 		select {
 		case listener.MsgChannel <- message: // 尝试将消息发送到监听器的消息通道
 		default: // 如果监听器的消息通道已满
