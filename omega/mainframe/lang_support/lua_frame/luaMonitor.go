@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"phoenixbuilder/omega/mainframe/lang_support/lua_frame/BuiltlnFn"
 	omgApi "phoenixbuilder/omega/mainframe/lang_support/lua_frame/omgcomponentapi"
 	"sync"
 
@@ -31,7 +32,7 @@ type Monitor struct {
 	LuaComponentData map[string]Result
 	OmgFrame         *omgApi.OmgApi
 	FileControl      *FileControl
-	BuiltlnFner      *BuiltlnFn
+	BuiltlnFner      *BuiltlnFn.BuiltlnFn
 }
 
 // 插件
@@ -50,7 +51,7 @@ func NewMonitor(lc *omgApi.OmgApi) *Monitor {
 		ComponentPoll: make(map[string]*LuaComponent),
 		//获取omg框架
 		OmgFrame: lc,
-		BuiltlnFner: &BuiltlnFn{
+		BuiltlnFner: &BuiltlnFn.BuiltlnFn{
 			OmegaFrame: lc,
 			Listener:   sync.Map{},
 		},
