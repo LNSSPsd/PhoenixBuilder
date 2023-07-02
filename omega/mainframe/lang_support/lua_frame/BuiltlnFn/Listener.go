@@ -11,25 +11,30 @@ type BuiltListener struct {
 	*BuiltlnFn
 }
 
-// 监听器
-// Listener 结构体
-type Listener struct {
-	MsgChannel chan Message // 每个监听器都有一个独立的消息通道
-}
-
-// NextMsg 用于从监听器的消息通道中获取下一个消息
-func NextMsg(L *lua.LState) int {
-	ud := L.CheckUserData(1)         // 从Lua参数中获取UserData
-	listener := ud.Value.(*Listener) // 从UserData中提取监听器实例
-
-	msg := <-listener.MsgChannel // 从监听器的消息通道中读取下一个消息，如果没有消息，则阻塞等待
-	L.Push(lua.LString(msg.Type))
-	L.Push(lua.LString(msg.Content))
-	return 2
-}
-
+/*
 // Listener实现
-func (b *BuiltListener) BuiltlnListner(L *lua.LState) int {
+
+	func (b *BuiltListener) BuiltlnListner(L *lua.LState) int {
+		// 注册Listener类型
+
+		mt := L.NewTypeMetatable("listener")
+		L.SetField(mt, "__index", L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
+			"NextMsg": NextMsg,
+		}))
+		listener := L.NewTable()
+		//listener的方法 listen("可变参数") 获取参数  listenPackage(Id)
+
+		L.SetField(listener, "GetMsgListner", L.NewFunction(b.GetMsgListener))
+		L.SetField(listener, "listenPackage", L.NewFunction(func(l *lua.LState) int {
+
+			return 1
+		}))
+		//返回listener对象
+		L.Push(listener)
+		return 1
+	}
+*/
+func (b *BuiltListener) BuiltFunc(L *lua.LState) int {
 	// 注册Listener类型
 
 	mt := L.NewTypeMetatable("listener")
@@ -47,6 +52,23 @@ func (b *BuiltListener) BuiltlnListner(L *lua.LState) int {
 	//返回listener对象
 	L.Push(listener)
 	return 1
+}
+
+// 监听器
+// Listener 结构体
+type Listener struct {
+	MsgChannel chan Message // 每个监听器都有一个独立的消息通道
+}
+
+// NextMsg 用于从监听器的消息通道中获取下一个消息
+func NextMsg(L *lua.LState) int {
+	ud := L.CheckUserData(1)         // 从Lua参数中获取UserData
+	listener := ud.Value.(*Listener) // 从UserData中提取监听器实例
+
+	msg := <-listener.MsgChannel // 从监听器的消息通道中读取下一个消息，如果没有消息，则阻塞等待
+	L.Push(lua.LString(msg.Type))
+	L.Push(lua.LString(msg.Content))
+	return 2
 }
 
 // GetListener 创建一个新的监听器并返回其引用

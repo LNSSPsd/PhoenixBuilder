@@ -11,7 +11,7 @@ type BuiltGameControler struct {
 	*BuiltlnFn
 }
 
-func (b *BuiltGameControler) BuiltGameContrler(L *lua.LState) int {
+func (b *BuiltGameControler) BuiltFunc(L *lua.LState) int {
 	GameControl := L.NewTable()
 	L.SetField(GameControl, "SendWsCmd", L.NewFunction(b.SendWsCmd))
 	L.SetField(GameControl, "SendCmdAndInvokeOnResponse", L.NewFunction(b.SendCmdAndInvokeOnResponse))
@@ -20,6 +20,18 @@ func (b *BuiltGameControler) BuiltGameContrler(L *lua.LState) int {
 	L.Push(GameControl)
 	return 1
 }
+
+/*
+	func (b *BuiltGameControler) BuiltGameContrler(L *lua.LState) int {
+		GameControl := L.NewTable()
+		L.SetField(GameControl, "SendWsCmd", L.NewFunction(b.SendWsCmd))
+		L.SetField(GameControl, "SendCmdAndInvokeOnResponse", L.NewFunction(b.SendCmdAndInvokeOnResponse))
+		//等待说话
+		L.SetField(GameControl, "SetOnParamMsg", L.NewFunction(b.SetOnParamMsg))
+		L.Push(GameControl)
+		return 1
+	}
+*/
 func (b *BuiltGameControler) SendWsCmd(L *lua.LState) int {
 	args := L.CheckString(1)
 	b.OmegaFrame.MainFrame.GetGameControl().SendCmd(args)
