@@ -45,7 +45,7 @@ struct go_string capture_output_file=EMPTY_GOSTRING;
 char args_no_readline=0;
 struct go_string pack_scripts=EMPTY_GOSTRING;
 struct go_string pack_scripts_out=EMPTY_GOSTRING;
-char enable_omega_system=0;
+char enable_omega_system=1;
 struct go_string custom_gamename=EMPTY_GOSTRING;
 char ingame_response=0;
 
