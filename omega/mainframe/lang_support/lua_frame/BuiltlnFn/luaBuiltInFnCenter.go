@@ -24,7 +24,7 @@ func (b *BuiltlnFn) LoadFn(L *lua.LState) error {
 	//注入
 	SkynetBuiltFnDic := b.GetSkynetBuiltlnFunction()
 	for k, v := range SkynetBuiltFnDic {
-		L.SetField(skynet, k, L.NewFunction(v))
+		L.SetField(skynet, k, L.NewFunction(v.BuiltFunc))
 	}
 	// 将table命名为ComplexStruct，并将其设为全局变量
 	L.SetGlobal("skynet", skynet)
