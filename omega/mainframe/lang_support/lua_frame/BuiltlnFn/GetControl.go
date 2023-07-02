@@ -7,7 +7,11 @@ import (
 	"phoenixbuilder/omega/defines"
 )
 
-func (b *BuiltlnFn) BuiltGameContrler(L *lua.LState) int {
+type BuiltGameControler struct {
+	*BuiltlnFn
+}
+
+func (b *BuiltGameControler) BuiltGameContrler(L *lua.LState) int {
 	GameControl := L.NewTable()
 	L.SetField(GameControl, "SendWsCmd", L.NewFunction(b.SendWsCmd))
 	L.SetField(GameControl, "SendCmdAndInvokeOnResponse", L.NewFunction(b.SendCmdAndInvokeOnResponse))
@@ -16,13 +20,13 @@ func (b *BuiltlnFn) BuiltGameContrler(L *lua.LState) int {
 	L.Push(GameControl)
 	return 1
 }
-func (b *BuiltlnFn) SendWsCmd(L *lua.LState) int {
+func (b *BuiltGameControler) SendWsCmd(L *lua.LState) int {
 	args := L.CheckString(1)
 	b.OmegaFrame.MainFrame.GetGameControl().SendCmd(args)
 
 	return 1
 }
-func (b *BuiltlnFn) SendCmdAndInvokeOnResponse(L *lua.LState) int {
+func (b *BuiltGameControler) SendCmdAndInvokeOnResponse(L *lua.LState) int {
 	if L.GetTop() == 1 {
 		args := L.CheckString(1)
 		ch := make(chan bool)
@@ -43,7 +47,7 @@ func (b *BuiltlnFn) SendCmdAndInvokeOnResponse(L *lua.LState) int {
 	}
 	return 1
 }
-func (b *BuiltlnFn) SetOnParamMsg(L *lua.LState) int {
+func (b *BuiltGameControler) SetOnParamMsg(L *lua.LState) int {
 	if L.GetTop() == 1 {
 		name := L.CheckString(1)
 		ch := make(chan bool)

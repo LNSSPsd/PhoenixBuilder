@@ -5,7 +5,11 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-func (b *BuiltlnFn) LoadSideComponent(L *lua.LState) int {
+type LoadSide struct {
+	*BuiltlnFn
+}
+
+func (b *LoadSide) LoadSideComponent(L *lua.LState) int {
 	if L.GetTop() == 1 {
 		code := L.CheckString(1)
 		if _, err := L.LoadString(code); err != nil {
