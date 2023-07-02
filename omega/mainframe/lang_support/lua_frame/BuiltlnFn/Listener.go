@@ -7,6 +7,9 @@ type Message struct {
 	Type    string
 	Content string
 }
+type BuiltListener struct {
+	*BuiltlnFn
+}
 
 // 监听器
 // Listener 结构体
@@ -26,8 +29,9 @@ func NextMsg(L *lua.LState) int {
 }
 
 // Listener实现
-func (b *BuiltlnFn) BuiltlnListner(L *lua.LState) int {
+func (b *BuiltListener) BuiltlnListner(L *lua.LState) int {
 	// 注册Listener类型
+
 	mt := L.NewTypeMetatable("listener")
 	L.SetField(mt, "__index", L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
 		"NextMsg": NextMsg,
@@ -46,7 +50,7 @@ func (b *BuiltlnFn) BuiltlnListner(L *lua.LState) int {
 }
 
 // GetListener 创建一个新的监听器并返回其引用
-func (f *BuiltlnFn) GetMsgListener(L *lua.LState) int {
+func (f *BuiltListener) GetMsgListener(L *lua.LState) int {
 	listener := &Listener{MsgChannel: make(chan Message, 25)} // 创建一个新监听器实例，并初始化其消息通道容量为25
 	ptr := &f.Listener
 	ptr.Store(listener, struct{}{}) // 将新监听器添加到监听器集合中
