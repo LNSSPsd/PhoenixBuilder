@@ -15,17 +15,26 @@ var upgrader = websocket.Upgrader{
 var conn *websocket.Conn
 
 func websocketHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
-	conn, err = upgrader.Upgrade(w, r, nil)
+	// 升级HTTP连接为WebSocket连接
+	upgrader := websocket.Upgrader{}
+	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		log.Println("升级连接为WebSocket失败：", err)
 		return
 	}
-	defer func() {
-		if err := conn.Close(); err != nil {
-			log.Println(err)
+	defer conn.Close()
+
+	// 处理WebSocket连接
+	for {
+		// 读取客户端发送的消息
+		_, message, err := conn.ReadMessage()
+		if err != nil {
+			log.Println("读取消息失败：", err)
+			break
 		}
-	}()
+		conn.WriteMessage(websocket.TextMessage, []byte("hello"))
+		fmt.Println("收到消息：", string(message))
+	}
 }
 func BuiltnWebSokcet(L *lua.LState) int {
 
@@ -36,6 +45,7 @@ func BuiltnWebSokcet(L *lua.LState) int {
 			http.HandleFunc("/ws", websocketHandler)
 			go http.ListenAndServe(addr, nil)
 			fmt.Println("开始监听")
+
 			L.Push(lua.LBool(true))
 		} else {
 			fmt.Println("错误 websocket连接应该有一个参数 描述你的端口")
