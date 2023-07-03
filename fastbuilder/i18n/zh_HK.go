@@ -102,7 +102,7 @@ var I18nDict_zh_HK map[uint16]string = map[uint16]string{
 	PositionSet_End:                     "已設定終點座標",
 	QuitCorrectly:                       "正常退出",
 	Sch_FailedToResolve:                 "未能解析文檔",
-	SchematicSupportRemoved:             "近期，我们注意到，一些用户试图导入倒卖的文件（schematic格式），出于对创作者的创作权益保护的考量，我们取消了对此文件格式的支持。\n在我们找到更好的保护创作者的创作权益的方式之前，此功能将不会恢复。\n需要声明的是，FastBuilder 仅负责提供建筑的导入导出功能，倒卖为用户的个人行为，与 FastBuilder 无关，正如盗版书籍与阅读器的无关。\n但是，我们（FastBuilder 开发组、项目贡献者）愿意尽我们所能阻止此类事件继续发生。",
+	SchematicSupportRemoved:             "近期，我們注意到，一些用戶嘗試導入倒賣的文件（schematic格式），出於對創作者們的權益保護的考量，我們取消了對此文件的支持。\n在我們找到更好的保護創作者的創作權益的方式之前，此功能不會恢復。\n需要聲明的是，FastBuilder僅負責提供建築的導入與導出功能，倒賣行爲為用戶個人行爲，與FastBuilder無關，同盜版書籍與閲讀工具的無關。\n但是，我們（FastBuilder開發組、項目貢獻者）願意儘我們所能阻止此類事件再次發生。",
 	SelectLanguageOnConsole:             "請在控制台中選擇新语言",
 	ServerCodeTrans:                     "伺服器號碼",
 	SimpleParser_Int_ParsingFailed:      "解析器：未能處理整數型參數",
