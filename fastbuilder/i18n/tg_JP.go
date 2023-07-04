@@ -104,7 +104,6 @@ var I18nDict_tg_JP map[uint16]string = map[uint16]string{
 	PositionSet_End:                     "終点位置をセットした",
 	QuitCorrectly:                       "プログラムが正常に終了した。",
 	Sch_FailedToResolve:                 "ファイルを読めなかった",
-	SchematicSupportRemoved:             "最近、一部のユーザーがリセールのためのファイル（schematic形式）をインポートしようとするケースが発生していることに気づきました。クリエイターの創作権利を保護するため、私たちはこのファイル形式のサポートを停止しました。より良い方法を見つけるまで、この機能は回復されません。\n明言しておきますが、fbは建築物のインポート/エクスポート機能を提供するだけで、リセールはユーザーの個人的な行動であり、fbとは無関係です。これは、海賊版の本と読者との関係と同じです。\nしかし、私たち（FB開発チーム、プロジェクトの寄稿者）は、このような事態が続くのを防ぐために全力を尽くす意志があります。",
 	SelectLanguageOnConsole:             "コンソールで新言語を選べて。",
 	ServerCodeTrans:                     "サーバー",
 	SimpleParser_Int_ParsingFailed:      "アーギュメント読み込み器: 整数アーギュメントを読めなかった。",
@@ -137,5 +136,7 @@ var I18nDict_tg_JP map[uint16]string = map[uint16]string{
 	Task_Summary_2:                      "[タスク %d] %v 秒をかけた",
 	Task_Summary_3:                      "[タスク %d] 平均速度: %v ブロック/秒",
 	UnsupportedACMEVersion:              "このバーションの ACME ストラクチャーファイルは支援されていない。バーション 1.2 だけが支援されてる。",
+	Warning_ACME_Deprecated:             "警告 - `acme' は非推奨となり、削除されましたので、代わりにBDX形式に移行していただくようお願いいたします。詳細については、https://github.com/LNSSPsd/PhoenixBuilder/issues/313 をご参照くださいませ。",
+	Warning_Schem_Deprecated:            "警告 - `schem' は非推奨となり、削除されましたので、代わりにBDX形式に移行していただくようお願いいたします。詳細については、https://github.com/LNSSPsd/PhoenixBuilder/issues/313 をご参照くださいませ。",
 	Warning_UserHomeDir:                 "警告 - ユーザーのホームフォルダーが見つかれん。homedir=\".\";にした。\n",
 }

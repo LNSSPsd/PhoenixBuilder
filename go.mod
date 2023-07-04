@@ -23,8 +23,8 @@ require (
 	github.com/templexxx/xorsimd v0.4.1 // indirect
 	github.com/tjfoc/gmsm v1.3.2 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
-	golang.org/x/image v0.0.0-20191009234506-e7c1f5e7dbb8 // indirect
-	golang.org/x/mod v0.8.0 // indirect
+	golang.org/x/image v0.5.0 // indirect
+	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 )
@@ -49,7 +49,7 @@ require (
 	github.com/yuin/gopher-lua v1.1.0
 	go.kuoruan.net/v8go-polyfills v0.5.0
 	go.uber.org/atomic v1.9.0
-	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
+	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/net v0.7.0
 	golang.org/x/term v0.5.0
 	golang.org/x/text v0.10.0

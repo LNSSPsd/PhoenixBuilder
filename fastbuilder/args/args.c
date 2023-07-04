@@ -52,6 +52,7 @@ char ingame_response=0;
 extern void custom_script_engine_const(const char *key, const char *val);
 extern void do_suppress_se_const(const char *key);
 
+// TODO: Localizations via Gettext/Glibc intl
 void print_help(const char *self_name) {
 	printf("%s [options]\n",self_name);
 	printf("\t--debug: Run in debug mode.\n");
@@ -409,10 +410,12 @@ __attribute__((constructor)) static void parse_args_win32() {
 	}
 	for(int i=0;i<argc;i++) {
 		free(argv[i]);
-		LocalFree(ugly_argv[i]);
 	}
 	free(argv);
 	LocalFree(ugly_argv);
-	// timeBeginPeriod(1);
+	HMODULE winmm_lib=LoadLibraryA("winmm.dll");
+	void (*timeBeginPeriod)(int)=(void *)GetProcAddress(winmm_lib, "timeBeginPeriod");
+	timeBeginPeriod(1);
+	FreeLibrary(winmm_lib);
 }
 #endif

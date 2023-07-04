@@ -13,9 +13,13 @@ import (
 	I18n "phoenixbuilder/fastbuilder/i18n"
 
 	"github.com/pterm/pterm"
+	_ "unsafe"
 )
 
 var PassFatal bool = false
+
+//go:linkname onFatal args_hook_on_fatal
+func onFatal(string)
 
 func Fatal() {
 	if PassFatal {

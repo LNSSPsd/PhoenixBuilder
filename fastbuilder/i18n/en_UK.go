@@ -102,7 +102,6 @@ var I18nDict_en_UK map[uint16]string = map[uint16]string{
 	PositionSet_End:                     "End position set",
 	QuitCorrectly:                       "Quit correctly",
 	Sch_FailedToResolve:                 "Failed to resolve file",
-	SchematicSupportRemoved:             "Recently, we have noticed that some users are trying to import files (in schematic format) for reselling. To protect the creative rights of the authors, we have discontinued the support for this file format. This feature will not be reinstated until we find a better way to protect the rights of creators.\nIt should be stated that fb is only responsible for providing the import/export functions for buildings, and resale is a personal action of the users, unrelated to fb - just like the relationship between pirated books and readers.\nHowever, we (the FB development team, project contributors) are willing to do our best to prevent such incidents from continuing to happen.",
 	SelectLanguageOnConsole:             "Please select your new preferred language on console.",
 	ServerCodeTrans:                     "Server",
 	SimpleParser_Int_ParsingFailed:      "Parser: failed to parse an int argument",
@@ -135,6 +134,7 @@ var I18nDict_en_UK map[uint16]string = map[uint16]string{
 	Task_Summary_2:                      "[Task %d] Time used: %v second(s)",
 	Task_Summary_3:                      "[Task %d] Average speed: %v blocks/second",
 	UnsupportedACMEVersion:              "Unsupported ACME structure version. Only acme file version 1.2 is supported.",
-	Warning_ACME_Deprecated:             "WARNING - `acme' is deprecated and will be removed in future, please migrate to other format instead.\n",
+	Warning_ACME_Deprecated:             "WARNING - `acme' is deprecated and has been removed, please migrate to BDX format instead.\nSee https://github.com/LNSSPsd/PhoenixBuilder/issues/313 for more informations.",
+	Warning_Schem_Deprecated:            "WARNING - `schem' is deprecated and has been removed, please migrate to BDX format instead. \nSee https://github.com/LNSSPsd/PhoenixBuilder/issues/313 for more informations.",
 	Warning_UserHomeDir:                 "WARNING - Failed to obtain the user's home directory. made homedir=\".\";\n",
 }
