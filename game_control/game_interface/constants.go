@@ -5,6 +5,14 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 )
 
+// 描述命令请求的响应体中的错误类型
+const (
+	// 请求超时
+	ErrCommandRequestTimeOut = byte(iota) + 1
+	// 其他类型的错误
+	ErrCommandRequestOthers
+)
+
 // 用作铁砧的承重方块
 const AnvilBase string = "glass"
 
