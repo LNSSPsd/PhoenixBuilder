@@ -108,7 +108,7 @@ func (g *GameInterface) sendCommandWithResponse(
 			}
 		}
 		return CommandRespond{Respond: resp}
-	case <-time.After(time.Second):
+	case <-time.After(CommandRequestDeadLine):
 		g.Resources.Command.DeleteRequest(uniqueId)
 		return CommandRespond{
 			Error:     fmt.Errorf(`sendCommandWithResponse: Request "%v"(origin=%d) time out`, command, origin),
