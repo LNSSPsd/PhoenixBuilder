@@ -13,7 +13,7 @@ import (
 
 type AntiAFK struct {
 	*defines.BasicComponent
-	Duration int         `json:"检测周期"`
+	Duration int         `json:"检测周期_秒"`
 	CmdsIn   interface{} `json:"符合条件时执行的指令"`
 	cmds     []defines.Cmd
 	lastYRot map[uuid.UUID]float64
@@ -21,7 +21,7 @@ type AntiAFK struct {
 
 func (o *AntiAFK) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if cfg.Version == "0.0.1" {
-		cfg.Configs["检测周期"] = cfg.Configs["检测周期"].(float64) * 60
+		cfg.Configs["检测周期_秒"] = cfg.Configs["检测周期"].(float64) * 60
 		cfg.Version = "0.0.2"
 		cfg.Upgrade()
 	}
