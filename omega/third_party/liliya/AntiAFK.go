@@ -20,6 +20,11 @@ type AntiAFK struct {
 }
 
 func (o *AntiAFK) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
+	if cfg.Version == "0.0.1" {
+		cfg.Configs["检测周期"] = cfg.Configs["检测周期"].(float64) * 60
+		cfg.Version = "0.0.2"
+		cfg.Upgrade()
+	}
 	marshal, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(marshal, o); err != nil {
 		panic(err)
@@ -39,7 +44,7 @@ func (o *AntiAFK) Inject(frame defines.MainFrame) {
 }
 
 func (o *AntiAFK) Activate() {
-	t := time.NewTicker(time.Minute * time.Duration(o.Duration))
+	t := time.NewTicker(time.Second * time.Duration(o.Duration))
 	for {
 		<-t.C
 		o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("querytarget @a", func(output *packet.CommandOutput) {
@@ -64,7 +69,8 @@ func (o *AntiAFK) Activate() {
 						}
 						if v, ok := o.lastYRot[u.UUID]; ok && (v == u.YRot || math.Abs(v)+math.Abs(u.YRot) == 360) {
 							replacement := map[string]interface{}{
-								"[player]": "\"" + playerName + "\"",
+								"[player]":                   "\"" + playerName + "\"",
+								"[player_without_quotation]": playerName,
 							}
 							go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cmds, replacement, o.Frame.GetBackendDisplay())
 						} else {
