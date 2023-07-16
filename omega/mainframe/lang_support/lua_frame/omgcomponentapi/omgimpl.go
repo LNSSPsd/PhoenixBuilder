@@ -3,6 +3,7 @@ package omgApi
 import (
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/omega/defines"
+	"phoenixbuilder/omega/mainframe/lang_support/lua_frame/luaConfig"
 )
 
 // 完成了一个lua组件所需要omg的全部东西
@@ -45,4 +46,9 @@ func NewOmgCoreComponent(occ OmgCoreComponent, mainframe defines.MainFrame) *Omg
 	}
 
 	return omgapi
+}
+
+type CodeAndConfig struct {
+	Config luaConfig.LuaCommpoentConfig
+	Code   []byte
 }

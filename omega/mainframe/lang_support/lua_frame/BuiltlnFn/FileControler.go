@@ -4,7 +4,7 @@ import (
 	"fmt"
 	lua "github.com/yuin/gopher-lua"
 	"path/filepath"
-	"phoenixbuilder/omega/mainframe/lang_support/lua_frame/utils"
+	"phoenixbuilder/omega/mainframe/lang_support/lua_frame/LuaUtils"
 )
 
 type BuiltFileControler struct {
@@ -15,12 +15,12 @@ func (b *BuiltFileControler) BuiltFunc(L *lua.LState) int {
 	fileControler := L.NewTable()
 	L.SetField(fileControler, "GetData", L.NewFunction(b.GetData))
 	L.SetField(fileControler, "GetConfigPath", L.NewFunction(func(l *lua.LState) int {
-		l.Push(lua.LString(utils.GetOmgConfigPath()))
+		l.Push(lua.LString(LuaUtils.GetOmgConfigPath()))
 		return 1
 	}))
 	//获取配置文件的坐标位置
 	L.SetField(fileControler, "GetDataPath", L.NewFunction(func(l *lua.LState) int {
-		l.Push(lua.LString(filepath.Join(utils.GetRootPath(), "data")))
+		l.Push(lua.LString(filepath.Join(LuaUtils.GetRootPath(), "data")))
 		return 1
 	}))
 

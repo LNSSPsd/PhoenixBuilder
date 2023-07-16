@@ -1,6 +1,7 @@
 package mainframe
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -10,9 +11,10 @@ import (
 	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
 	lf "phoenixbuilder/omega/mainframe/lang_support/lua_frame"
+	"phoenixbuilder/omega/mainframe/lang_support/lua_frame/LuaUtils"
+
 	omgApi "phoenixbuilder/omega/mainframe/lang_support/lua_frame/omgcomponentapi"
 	"phoenixbuilder/omega/utils"
-
 	// "runtime/pprof"
 	"strings"
 	"time"
@@ -578,9 +580,12 @@ func (o *Partol) Activate() {
 // 插件
 type LuaComponenter struct {
 	*BaseCoreComponent
-	Monitor   *lf.Monitor
-	LuaFrame  *lf.BuiltlnFn
-	mainFrame defines.MainFrame
+
+	Monitor        *lf.Monitor
+	CodeAndConfigs map[string]omgApi.CodeAndConfig
+	//LuaFrame  *lf.BuiltlnFn
+	//mainFrame defines.MainFrame
+
 }
 
 func (b *LuaComponenter) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
@@ -588,44 +593,64 @@ func (b *LuaComponenter) Init(cfg *defines.ComponentConfig, storage defines.Stor
 	err := json.Unmarshal(m, b)
 	if err != nil {
 		panic(err)
+
 	}
-	//读取lua框架
+	b.CodeAndConfigs = make(map[string]omgApi.CodeAndConfig)
+	//读取lua 代码及其配置
 	b.Monitor = lf.NewMonitor(omgApi.NewOmgCoreComponent(b.omega, b.mainFrame))
-	//读取一次已经产生的文件
-	b.Monitor.InintComponents()
-	i := 0
-	for k, v := range b.Monitor.LuaComponentData {
-		i++
-		if v.JsonConfig.Disabled {
-
-			b.Monitor.OmgFrame.Omega.GetBackendDisplay().Write(pterm.Warning.Sprintf("\t跳过加载组件 %3d/%3d [%v] %v@%v", i, len(b.Monitor.LuaComponentData), v.JsonConfig.Source, k, v.JsonConfig.Version))
-			//b.omega.backendLogger.Write()
-		} else {
-			b.Monitor.OmgFrame.Omega.GetBackendDisplay().Write(pterm.Success.Sprintf("\t正在加载组件 %3d/%3d [%v] %v@%v", i, len(b.Monitor.LuaComponentData), v.JsonConfig.Source, k, v.JsonConfig.Version))
-			//b.omega.backendLogger.Write()
+	if dic, err := b.Monitor.FileControl.GetLuaComponentList(); err != nil {
+		fmt.Println(err)
+		panic(err)
+	} else {
+		for _, v := range dic {
+			resulte, NewErr := b.Monitor.FileControl.GetConfigAndCode(v)
+			if NewErr != nil {
+				panic(NewErr)
+			}
+			b.CodeAndConfigs[v] = omgApi.CodeAndConfig{
+				Config: resulte.Config,
+				Code:   resulte.Code,
+			}
 		}
-
 	}
+
+	/*	//读取一次已经产生的文件
+		b.Monitor.InintComponents()
+		i := 0
+		for k, v := range b.Monitor.LuaComponentData {
+			i++
+			if v.JsonConfig.Disabled {
+
+				b.Monitor.OmgFrame.Omega.GetBackendDisplay().Write(pterm.Warning.Sprintf("\t跳过加载组件 %3d/%3d [%v] %v@%v", i, len(b.Monitor.LuaComponentData), v.JsonConfig.Source, k, v.JsonConfig.Version))
+				//b.omega.backendLogger.Write()
+			} else {
+				b.Monitor.OmgFrame.Omega.GetBackendDisplay().Write(pterm.Success.Sprintf("\t正在加载组件 %3d/%3d [%v] %v@%v", i, len(b.Monitor.LuaComponentData), v.JsonConfig.Source, k, v.JsonConfig.Version))
+				//b.omega.backendLogger.Write()
+			}
+		}
+	*/
 }
 func (b *LuaComponenter) Inject(frame defines.MainFrame) {
 	b.mainFrame = frame
 	//注入函数 并且开启插件
-
-	b.Monitor.InjectComponents()
-
+	//注入框架
+	b.Monitor.OmgFrame.MainFrame = frame
+	b.Monitor.OmgFrame.Omega = b.omega
 }
 
 func (o *LuaComponenter) Activate() {
 	time.Sleep(time.Second * 3)
 	//开启组件
-	o.Monitor.OmgFrame.MainFrame = o.mainFrame
-	for k, _ := range o.Monitor.ComponentPoll {
-		err := o.Monitor.StartComponent(k, o.Monitor.LuaComponentData[k].LuaFile)
-		if err != nil {
-			lf.PrintInfo(lf.NewPrintMsg("警告", err))
-		}
-	}
+	/*
+		for k, _ := range o.Monitor.ComponentPoll {
+			err := o.Monitor.StartComponent(k, o.Monitor.LuaComponentData[k].LuaFile)
+			if err != nil {
+				PrintInfo(lf.NewPrintMsg("警告", err))
+			}
+		}*/
 	//现在开始监听后台
+	ctx := o.Monitor.CreateLuaEnv(context.Background())
+	o.Monitor.StartAllComponent(ctx, o.CodeAndConfigs)
 	func() {
 		o.Monitor.OmgFrame.Omega.SetBackendCmdInterceptor(func(cmds []string) (stop bool) {
 			is := false
@@ -637,39 +662,42 @@ func (o *LuaComponenter) Activate() {
 				cmd += v + " "
 			}
 			if err := o.Monitor.CmdCenter(cmd); err != nil {
-				lf.PrintInfo(lf.NewPrintMsg("警告", err))
+
+				LuaUtils.PrintInfo(LuaUtils.NewPrintMsg("警告", err))
 			}
 			return is
 		})
 		//o.omega.SetBackendCmdInterceptor()
-		o.mainFrame.GetGameListener().SetGameChatInterceptor(o.MsgDistributionCenter)
+		//o.mainFrame.GetGameListener().SetGameChatInterceptor(o.MsgDistributionCenter)
 	}()
 
 }
 
+/*
 // 每次消息传输过来则分发处理
-func (b *LuaComponenter) MsgDistributionCenter(chat *defines.GameChat) bool {
-	b.Monitor.BuiltlnFner.Listener.Range(func(key, value interface{}) bool { // 遍历所有监听器
-		msg := ""
-		for _, v := range chat.Msg {
-			msg += v + " "
-		}
-		message := lf.Message{
-			Type:    chat.Name,
-			Content: msg,
-		}
-		listener := key.(*lf.Listener) // 获取监听器实例
-		select {
-		case listener.MsgChannel <- message: // 尝试将消息发送到监听器的消息通道
-		default: // 如果监听器的消息通道已满
-			<-listener.MsgChannel          // 从通道中读取并丢弃一条最旧的消息
-			listener.MsgChannel <- message // 将新消息发送到监听器的消息通道
-		}
-		return true
-	})
-	return false
-}
 
+	func (b *LuaComponenter) MsgDistributionCenter(chat *defines.GameChat) bool {
+		b.Monitor.BuiltlnFner.Listener.Range(func(key, value interface{}) bool { // 遍历所有监听器
+			msg := ""
+			for _, v := range chat.Msg {
+				msg += v + " "
+			}
+			message := lf.Message{
+				Type:    chat.Name,
+				Content: msg,
+			}
+			listener := key.(*lf.Listener) // 获取监听器实例
+			select {
+			case listener.MsgChannel <- message: // 尝试将消息发送到监听器的消息通道
+			default: // 如果监听器的消息通道已满
+				<-listener.MsgChannel          // 从通道中读取并丢弃一条最旧的消息
+				listener.MsgChannel <- message // 将新消息发送到监听器的消息通道
+			}
+			return true
+		})
+		return false
+	}
+*/
 func getCoreComponentsPool() map[string]func() defines.CoreComponent {
 	return map[string]func() defines.CoreComponent{
 		"菜单显示":      func() defines.CoreComponent { return &Menu{BaseCoreComponent: &BaseCoreComponent{}} },

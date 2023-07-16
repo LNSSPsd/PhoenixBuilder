@@ -1,4 +1,4 @@
-package utils
+package LuaUtils
 
 import (
 	"encoding/json"
@@ -285,6 +285,84 @@ func (f *FileControl) GetLuaComponentData() (map[string]Result, error) {
 					LuaFile:    luaFile,
 					JsonConfig: config,
 				}
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+// 获取所有插件名字
+func (f *FileControl) GetLuaComponentList() ([]string, error) {
+	dir := GetOmgConfigPath()
+	results := []string{}
+
+	// 使用 filepath.Walk 遍历指定目录及其子目录。
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// 如果当前路径是一个目录，则检查是否存在与目录名同名的 JSON 和 Lua 文件。
+		if info.IsDir() {
+			dirName := info.Name()
+
+			jsonFile := filepath.Join(path, dirName+".json")
+			luaFile := filepath.Join(path, dirName+".lua")
+
+			// 如果找到 JSON 和 Lua 文件，将它们的路径添加到结果字典中。
+			if f.fileExists(jsonFile) && f.fileExists(luaFile) {
+				//读取json文件
+				if err != nil {
+					PrintInfo(NewPrintMsg("警告", err))
+				}
+				results = append(results, dirName)
+
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+// GetLuaCodeAndConfig返回一个包含同名字 JSON 文件和 Lua 文件路径的字典。 列表先存的是json后是code
+func (f *FileControl) GetLuaCodeAndConfig() (map[string][]string, error) {
+	dir := GetOmgConfigPath()
+	results := make(map[string][]string)
+
+	// 使用 filepath.Walk 遍历指定目录及其子目录。
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// 如果当前路径是一个目录，则检查是否存在与目录名同名的 JSON 和 Lua 文件。
+		if info.IsDir() {
+			dirName := info.Name()
+
+			jsonFile := filepath.Join(path, dirName+".json")
+			luaFile := filepath.Join(path, dirName+".lua")
+
+			// 如果找到 JSON 和 Lua 文件，将它们的路径添加到结果字典中。
+			if f.fileExists(jsonFile) && f.fileExists(luaFile) {
+				//读取json文件
+				if err != nil {
+					PrintInfo(NewPrintMsg("警告", err))
+				}
+				results[dirName] = []string{}
+				results[dirName] = append(results[dirName], jsonFile)
+				results[dirName] = append(results[dirName], luaFile)
+
 			}
 		}
 		return nil
