@@ -48,7 +48,6 @@ func ReadOutAllExamplesHelper(targetDir string) map[int]string {
 // 创建lua环境
 func CreateLuaEnv(ctx context.Context) (ac concurrent.AsyncCtrl, L *lua.LState) {
 	L = lua.NewState()
-	//获得一个上下文管理器
 	ac = concurrent.NewAsyncCtrl(ctx)
 	// go implements
 	// 1. monk system
