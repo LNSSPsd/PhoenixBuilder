@@ -103,6 +103,9 @@ func (m *Monitor) CreateLuaEnv(ctx context.Context) (ac concurrent.AsyncCtrl) {
 func (m *Monitor) StartAllComponent(ctx concurrent.AsyncCtrl, CodeAndConfigs map[string]omgApi.CodeAndConfig) error {
 	errChans := []<-chan error{}
 	for _, v := range CodeAndConfigs {
+		if v.Config.Disabled {
+			continue
+		}
 		errchan := concurrent.FireLuaCodeInGoRoutine(ctx, m.Enver.L, string(v.Code))
 		errChans = append(errChans, errchan)
 	}
