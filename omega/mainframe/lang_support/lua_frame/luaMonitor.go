@@ -1,24 +1,20 @@
 package luaFrame
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"path/filepath"
+	"phoenixbuilder/omega/mainframe/lang_support/lua_frame/BuiltlnFn"
+	"phoenixbuilder/omega/mainframe/lang_support/lua_frame/definition"
+	"phoenixbuilder/omega/mainframe/lang_support/lua_frame/luaConfig"
 	omgApi "phoenixbuilder/omega/mainframe/lang_support/lua_frame/omgcomponentapi"
+	"phoenixbuilder/omega/mainframe/lang_support/lua_frame/utils"
+	"reflect"
 	"sync"
 
+	"github.com/pterm/pterm"
 	lua "github.com/yuin/gopher-lua"
-)
-
-const (
-	COMPONENT_INIT_FN   = "init"
-	COMPONENT_ACTIVE_FN = "active"
-	OMGPATH             = "omega_storage" + SEPA + "data"
-	OMGCONFIGPATH       = OMGROOTPATH + SEPA + "配置"
-	OMGROOTPATH         = "omega_storage"
-	OMGDATAPATH         = OMGROOTPATH + SEPA + "data"
-	SEPA                = string(filepath.Separator)
-	LUASOURCE           = "Lua-Component"
 )
 
 // 插件监测器
@@ -28,10 +24,10 @@ type Monitor struct {
 	//区别点在于lua的优势导致 这个插件能够热重载以及能够修改其中的主要逻辑
 	ComponentPoll map[string]*LuaComponent
 	//omg框架
-	LuaComponentData map[string]Result
+	LuaComponentData map[string]utils.Result
 	OmgFrame         *omgApi.OmgApi
-	FileControl      *FileControl
-	BuiltlnFner      *BuiltlnFn
+	FileControl      *utils.FileControl
+	BuiltlnFner      *BuiltlnFn.BuiltlnFn
 }
 
 // 插件
@@ -42,7 +38,7 @@ type LuaComponent struct {
 	//是否运行
 	Running bool
 	//插件的配置
-	Config LuaCommpoentConfig
+	Config luaConfig.LuaCommpoentConfig
 }
 
 func NewMonitor(lc *omgApi.OmgApi) *Monitor {
@@ -50,102 +46,36 @@ func NewMonitor(lc *omgApi.OmgApi) *Monitor {
 		ComponentPoll: make(map[string]*LuaComponent),
 		//获取omg框架
 		OmgFrame: lc,
-		BuiltlnFner: &BuiltlnFn{
-			OmegaFrame: lc,
-			Listener:   sync.Map{},
+		BuiltlnFner: &BuiltlnFn.BuiltlnFn{
+			OmegaFrame:       lc,
+			Listener:         sync.Map{},
+			PackageChanSlice: []*definition.PackageChan{},
 		},
-		FileControl: &FileControl{},
+		FileControl: &utils.FileControl{},
 	}
 
-}
-
-// 更新lua插件的地址
-func (m *Monitor) InintComponents() {
-	//m.FileControl.CheckFilePath()
-	//获取路径
-	luaComponentData, err_first := m.FileControl.GetLuaComponentData()
-
-	m.LuaComponentData = luaComponentData
-	if err_first != nil {
-		PrintInfo(NewPrintMsg("警告", err_first))
-	}
-
-}
-
-// 单独加载某个插件
-func (m *Monitor) InjectComponent(name string) error {
-	if _v, ok := m.LuaComponentData[name]; !ok {
-		errors.New(fmt.Sprintf("你正在尝试运行组件:%v 但是它并未在配置文件之中找到 请确定它存在", name))
-	} else {
-		k := name
-		v := _v
-		_config := v.JsonConfig
-		//如果配置文件是开启
-		if !_config.Disabled {
-			L := lua.NewState()
-			// 为 Lua 虚拟机提供一个安全的环境 提供基础的方法
-			if err := m.BuiltlnFner.LoadFn(L); err != nil {
-				return err
-			}
-			m.ComponentPoll[k] = &LuaComponent{
-				L:       L,
-				Msg:     make(map[string]string),
-				Running: false, //初始化完成但是未运行
-				Config:  _config,
-			}
-		} else {
-			errors.New(fmt.Sprintf("找到了%v插件配置文件 但是配置文件处于关闭状态", name))
-		}
-	}
-
-	return nil
-}
-
-// 加载配置文件 创始pool池子
-func (m *Monitor) InjectComponents() error {
-	//开启配置文件为开启的 将决定开启的加入componentPool
-	for _k, _v := range m.LuaComponentData {
-		k := _k
-		v := _v
-		_config := v.JsonConfig
-		//如果配置文件是开启
-		if !_config.Disabled {
-			L := lua.NewState()
-			// 为 Lua 虚拟机提供一个安全的环境 提供基础的方法
-			if err := m.BuiltlnFner.LoadFn(L); err != nil {
-				return err
-			}
-			m.ComponentPoll[k] = &LuaComponent{
-				L:       L,
-				Msg:     make(map[string]string),
-				Running: false, //初始化完成但是未运行
-				Config:  _config,
-			}
-		}
-	}
-	return nil
 }
 
 // 接受指令处理并且执行
 func (m *Monitor) CmdCenter(msg string) error {
 
-	CmdMsg := FormateCmd(msg)
-	if !CmdMsg.isCmd {
+	CmdMsg := utils.FormateCmd(msg)
+	if !CmdMsg.IsCmd {
 		return errors.New(fmt.Sprintf("很显然%v并不是指令的任何一种 请输入lua luas help寻求帮助", msg))
 	}
 
 	switch CmdMsg.Head {
-	case HEADLUA:
+	case utils.HEADLUA:
 		//lua指令
 		if err := m.luaCmdHandler(&CmdMsg); err != nil {
-			PrintInfo(NewPrintMsg("警告", err))
+			utils.PrintInfo(utils.NewPrintMsg("警告", err))
 		}
-	case HEADRELOAD:
+		/*case HEADRELOAD:
 		go func() {
 			if err := m.Reload(&CmdMsg); err != nil {
 				PrintInfo(NewPrintMsg("警告", err))
 			}
-		}()
+		}()*/
 		/*
 			case HEADSTART:
 				go func() {
@@ -160,57 +90,38 @@ func (m *Monitor) CmdCenter(msg string) error {
 
 // 插件行为 重加载某个插件 如果参数为all则全部插件重加载 记住reload和startComponent是有区别的
 // reload是再次扫描对应的插件然后默认不开启 而startCompent是直接在插件池子里面开启插件
-func (m *Monitor) Reload(cmdmsg *CmdMsg) error {
+func (m *Monitor) Reload(cmdmsg *utils.CmdMsg) error {
 
 	switch cmdmsg.Behavior {
 	case "component":
-		args := cmdmsg.args
+		args := cmdmsg.Args
 		if len(args) != 1 {
 			return errors.New("lua reload compoent指令后面应该有且仅有一个参数")
 		}
 		componentName := args[0]
-		//更新一次文件
-		m.InintComponents()
 		//检查
 
 		if args[0] == "all" {
-			//依次关闭插件
-			for k, _ := range m.ComponentPoll {
-				m.CloseLua(k)
+			nameDic, err := m.FileControl.GetLuaComponentData()
+			if err != nil {
+				return err
 			}
-			m.InjectComponents()
-			//开启组件
-			for k, _ := range m.ComponentPoll {
-				err := m.StartComponent(k, m.LuaComponentData[k].LuaFile)
-				if err != nil {
-					PrintInfo(NewPrintMsg("警告", err))
+			//开启所有插件
+			for name, _ := range nameDic {
+				if newErr := m.RunComponent(name); newErr != nil {
+					return newErr
 				}
 			}
 			return nil
 		}
-		//初始化
-		if err := m.CloseLua(componentName); err != nil {
-			return err
+		//单独开启
+		if NewErr := m.RunComponent(componentName); NewErr != nil {
+			return NewErr
 		}
-		if err := m.InjectComponent(componentName); err != nil {
-			return err
-		}
-		//运行组件
-		if v, ok := m.LuaComponentData[componentName]; !ok {
-			return errors.New(fmt.Sprintf("你正在尝试运行组件:%v 但是它并未在配置文件之中找到 请确定它存在", componentName))
-		} else {
-			if err := m.StartComponent(componentName, v.LuaFile); err != nil {
-				return err
-			}
-		}
-		/*
-			if err := m.Load(componentName); err != nil {
-				return err
-			}*/
-		PrintInfo(NewPrintMsg("提示", fmt.Sprintf("%v已经重新加载", componentName)))
+		utils.PrintInfo(utils.NewPrintMsg("提示", fmt.Sprintf("%v已经重新加载", componentName)))
 		return nil
 	default:
-		PrintInfo(NewPrintMsg("警告", "无效指令"))
+		utils.PrintInfo(utils.NewPrintMsg("警告", "无效指令"))
 
 	}
 	return nil
@@ -243,60 +154,43 @@ func (m *Monitor) StartCmdHandler(CmdMsg *CmdMsg) error {
 	}
 	return nil
 }*/
-
-// 启动插件 name为插件名字luapath为lua代码的路径 启动插件时保证每次代码都是新的 所以会删除原有的插件
-func (m *Monitor) StartComponent(name string, luapath string) error {
-	//将原有插件删除
-	if err := m.CloseLua(name); err != nil {
-		return err
-	}
-	//判断是否存在插件
-	if _, ok := m.ComponentPoll[name]; !ok {
-		//查找配置 看是否存在
-		return errors.New(fmt.Sprintf("你正在尝试运行组件:%v 但是它并未在配置文件之中找到 请确定它存在", name))
-	}
-	//执行代码
-	go func(Name string, luaPath string) {
-		m.ComponentPoll[Name].Running = true
-		PrintInfo(NewPrintMsg("lua插件", fmt.Sprintf("%v插件启动成功 版本:%v", Name, m.ComponentPoll[Name].Config.Version)))
-
-		if err := m.ComponentPoll[Name].L.DoFile(luaPath); err != nil {
-			PrintInfo(NewPrintMsg("lua代码报错", err))
-		}
-
-	}(name, luapath)
-	return nil
-}
-
 // 安全地关闭组件并且从配置文件中删除
 func (m *Monitor) CloseLua(name string) error {
-	if v, ok := m.ComponentPoll[name]; ok && v.Running {
+
+	if v, ok := m.ComponentPoll[name]; ok {
+		//如果为nil
+		if v.L == nil {
+			delete(m.ComponentPoll, name)
+			return nil
+		}
 		v.L.Close()
+		v.L = nil
 		v.Running = false
 		delete(m.ComponentPoll, name)
 		return nil
 	}
+
 	return nil
 }
 
 // lua指令类执行
-func (m *Monitor) luaCmdHandler(CmdMsg *CmdMsg) error {
-	args := CmdMsg.args
+func (m *Monitor) luaCmdHandler(CmdMsg *utils.CmdMsg) error {
+	args := CmdMsg.Args
 	switch CmdMsg.Behavior {
 	case "help":
 		warning := []string{
 			"lua luas help 寻求指令帮助\n",
-			"lua reload component [重加载的插件名字] 加载/重加载指定插件 如果参数是all就是全部插件重载\n",
+			//"lua reload component [重加载的插件名字] 加载/重加载指定插件 如果参数是all就是全部插件重载\n",
 			"lua luas new [新插件名字] [描述]创建一个自定义空白插件[描述为选填]\n",
 			"lua luas delect [插件名字]\n",
 			"lua luas list 列出当前正在运行的插件\n",
-			"lua luas stop [插件名字] 暂停插件运行 参数为all则暂停所有插件运行",
+			//"lua luas stop [插件名字] 暂停插件运行 参数为all则暂停所有插件运行",
 		}
 		msg := ""
 		for _, v := range warning {
 			msg += v
 		}
-		PrintInfo(NewPrintMsg("提示", msg))
+		utils.PrintInfo(utils.NewPrintMsg("提示", msg))
 	case "new":
 		//参数检查
 		if len(args) != 1 && len(args) != 2 {
@@ -316,7 +210,7 @@ func (m *Monitor) luaCmdHandler(CmdMsg *CmdMsg) error {
 		if err := m.FileControl.CreateDirAndFiles(componentName); err != nil {
 			return err
 		}
-		PrintInfo(NewPrintMsg("提示", fmt.Sprintf("已经创建文件基本结构请到目录%v 修改", OMGCONFIGPATH+SEPA+componentName)))
+		utils.PrintInfo(utils.NewPrintMsg("提示", fmt.Sprintf("已经创建文件基本结构请到目录%v 修改", filepath.Join(utils.GetOmgConfigPath(), componentName))))
 
 	case "delect":
 		if len(args) != 1 {
@@ -333,28 +227,93 @@ func (m *Monitor) luaCmdHandler(CmdMsg *CmdMsg) error {
 				msg += fmt.Sprintf("[%v]", k)
 			}
 		}
-		PrintInfo(NewPrintMsg("信息", msg+"处于开启状态"))
-	case "stop":
-		if len(args) != 1 {
-			return errors.New("lua luas stop指令后面应该加上需要删除的插件名字")
+		utils.PrintInfo(utils.NewPrintMsg("信息", msg+"处于开启状态"))
+	/*case "stop":
+	if len(args) != 1 {
+		return errors.New("lua luas stop指令后面应该加上需要删除的插件名字")
+	}
+	name := args[0]
+	if name == "all" {
+		for k, _ := range m.ComponentPoll {
+			m.CloseLua(k)
+			PrintInfo(NewPrintMsg("提示", fmt.Sprintf("%v插件关闭成功", k)))
 		}
-		name := args[0]
-		if name == "all" {
-			for k, _ := range m.ComponentPoll {
-				m.CloseLua(k)
-				PrintInfo(NewPrintMsg("提示", fmt.Sprintf("%v插件关闭成功", k)))
-			}
-			PrintInfo(NewPrintMsg("提示", "全部组件已经关闭"))
-			return nil
-		}
-		if _, ok := m.ComponentPoll[name]; !ok {
-			return errors.New(fmt.Sprintf("我们并没有在加载的插件池子中找到%v", name))
-		}
-		m.CloseLua(name)
-		PrintInfo(NewPrintMsg("提示", fmt.Sprintf("%v插件关闭成功", name)))
-
+		PrintInfo(NewPrintMsg("提示", "全部组件已经关闭"))
+		return nil
+	}
+	if _, ok := m.ComponentPoll[name]; !ok {
+		return errors.New(fmt.Sprintf("我们并没有在加载的插件池子中找到%v", name))
+	}
+	m.CloseLua(name)
+	PrintInfo(NewPrintMsg("提示", fmt.Sprintf("%v插件关闭成功", name)))
+	*/
 	default:
 		return errors.New("未知指令 请输入lua luas help寻求帮助")
 	}
+	return nil
+}
+
+// 安全地启动插件
+func (m *Monitor) RunComponent(name string) error {
+	//安全关闭
+	if v, ok := m.ComponentPoll[name]; ok {
+		if v.L == nil {
+			utils.PrintInfo(utils.NewPrintMsg("警告", fmt.Sprintf("%v存在于运行池子中 但是lua解释器为nil", name)))
+			//删除
+			delete(m.ComponentPoll, name)
+		}
+		//判断是否存在某个方法
+		method := reflect.ValueOf(v.L).MethodByName("DoString")
+		if !method.IsValid() {
+			utils.PrintInfo(utils.NewPrintMsg("警告", fmt.Sprintf("%v检测如果调用loadfille会触发错误", name)))
+			delete(m.ComponentPoll, name)
+		}
+		//如果启动状态则关闭删除
+		v.L.Close()
+		delete(m.ComponentPoll, name)
+
+	}
+	//获取配置
+	data, err := m.FileControl.GetConfigAndCode(name)
+	if err != nil {
+		return err
+	}
+	//判断配置是否开启
+	if data.Config.Disabled {
+		m.OmgFrame.Omega.GetBackendDisplay().Write(pterm.Warning.Sprintf("\t跳过加载组件  [%v] %v@%v", data.Config.Source, name, data.Config.Version))
+		return nil
+	}
+	m.OmgFrame.Omega.GetBackendDisplay().Write(pterm.Success.Sprintf("\t正在加载组件 [%v] %v@%v", data.Config.Source, name, data.Config.Version))
+
+	//另外开线程
+	go func(newName string) {
+		//如果没有
+		L := lua.NewState()
+		// 为 Lua 虚拟机提供一个安全的环境 提供基础的方法
+		configString, ConfigErr := json.Marshal(data.Config)
+		if ConfigErr != nil {
+			utils.PrintInfo(utils.NewPrintMsg("警告", ConfigErr))
+		}
+		L.SetGlobal("ComponentConfig", lua.LString(configString))
+		if err := m.BuiltlnFner.LoadFn(L); err != nil {
+			fmt.Println(err)
+			return
+		}
+		m.ComponentPoll[name] = &LuaComponent{
+			L:       L,
+			Msg:     make(map[string]string),
+			Running: false, //初始化完成但是未运行
+			Config:  data.Config,
+		}
+		defer m.CloseLua(newName)
+
+		if _, ok := m.ComponentPoll[name]; !ok {
+			utils.PrintInfo(utils.NewPrintMsg("警告", fmt.Sprintf("%v不存在该组件名字", name)))
+			return
+		}
+		if err := m.ComponentPoll[name].L.DoString(string(data.Code)); err != nil {
+			utils.PrintInfo(utils.NewPrintMsg("lua代码报错", err))
+		}
+	}(name)
 	return nil
 }

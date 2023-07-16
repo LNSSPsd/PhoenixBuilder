@@ -46,6 +46,7 @@ type EventPoller interface {
 	EventDataProvider
 }
 
+// lua异步交互器
 type LuaAsyncInvoker interface {
 	SafeCall(L *lua.LState, cp lua.P, args ...lua.LValue) (err error)
 	Coro(fn func())

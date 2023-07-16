@@ -1,4 +1,4 @@
-package luaFrame
+package utils
 
 import (
 	"encoding/json"
@@ -7,6 +7,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"phoenixbuilder/omega/mainframe/lang_support/lua_frame/definition"
+	"phoenixbuilder/omega/mainframe/lang_support/lua_frame/luaConfig"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -25,10 +28,10 @@ const (
 
 // 指令信息 必须遵循 HEAD BEHAVIOR
 type CmdMsg struct {
-	isCmd    bool
+	IsCmd    bool
 	Head     string
 	Behavior string
-	args     []string
+	Args     []string
 }
 type PrintMsg struct {
 	Type string
@@ -38,37 +41,6 @@ type PrintMsg struct {
 // 绑定函数 "名字":"逻辑实现的文件名"
 type MappedBinding struct {
 	Map map[string]string `json:"绑定"`
-}
-
-// 获取插件路径绝对路径 文件名字/插件名字
-func GetComponentPath() []string {
-	nameList := []string{}
-	dirPath := OMGPATH + SEPA + "lua"
-	fileExt := ".lua"
-	// 读取目录下的所有文件
-	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		// 如果目录不存在，则创建它
-		err := os.MkdirAll(dirPath, os.ModePerm)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println("Directory created:", dirPath)
-
-	}
-	files, err := ioutil.ReadDir(dirPath)
-	if err != nil {
-		panic(err)
-	}
-
-	// 遍历目录下的所有文件名
-	for _, file := range files {
-		// 如果文件后缀名为 .lua，则打印文件名（去掉后缀名）
-		if strings.HasSuffix(file.Name(), fileExt) {
-			nameList = append(nameList, file.Name())
-		}
-
-	}
-	return nameList
 }
 
 // 打印指定消息
@@ -84,30 +56,28 @@ func NewPrintMsg(typeName string, BodyString interface{}) PrintMsg {
 	}
 }
 
-// 获取data的相对位置omega_storage\\data
+// 获取omega_storage位置
 func GetRootPath() string {
-	return OMGDATAPATH
+	if runtime.GOOS == "android" {
+		return filepath.Join(GetAndroidDownPath(), definition.OMGSTIRAGEPATH)
+	}
+	return definition.OMGSTIRAGEPATH
+}
+
+// 获取安卓的下载目录
+func GetAndroidDownPath() string {
+	downloadDir := filepath.Join(os.Getenv("EXTERNAL_STORAGE"), "Download")
+	return downloadDir
 }
 
 // 获取"omega_storage\\data"
 func GetDataPath() string {
-	return OMGDATAPATH
+	return filepath.Join(GetRootPath(), "data")
 }
 
 // "omega_storage\\配置"
 func GetOmgConfigPath() string {
-	return OMGCONFIGPATH
-}
-
-// 针对binding.json文件进行的各种包装
-// 获取binding.json的路径
-func GetBindingPath() string {
-	return GetRootPath() + SEPA + "lua" + SEPA + BINDINGFILE
-}
-
-// 获取data/lua/config
-func GetConfigPath() string {
-	return GetRootPath() + SEPA + "lua" + SEPA + "config"
+	return filepath.Join(GetRootPath(), "配置")
 }
 
 // 安全地删除指定文件
@@ -130,15 +100,15 @@ func FormateCmd(str string) CmdMsg {
 
 	words := strings.Fields(str)
 	if len(words) < 3 {
-		return CmdMsg{isCmd: false}
+		return CmdMsg{IsCmd: false}
 	}
 	if words[0] != "lua" {
-		return CmdMsg{isCmd: false}
+		return CmdMsg{IsCmd: false}
 	}
 	head := words[1]
 	//如果不属于任何指令则返回空cmdmsg
 	if head != HEADLUA && head != HEADRELOAD && head != HEADSTART {
-		return CmdMsg{isCmd: false}
+		return CmdMsg{IsCmd: false}
 	}
 	behavior := words[2]
 	args := []string{}
@@ -148,8 +118,8 @@ func FormateCmd(str string) CmdMsg {
 	return CmdMsg{
 		Head:     head,
 		Behavior: behavior,
-		args:     args,
-		isCmd:    true,
+		Args:     args,
+		IsCmd:    true,
 	}
 }
 
@@ -233,8 +203,8 @@ func (f *FileControl) Read(filename string) ([]byte, error) {
 }
 
 // 读取并返回结构体
-func (f *FileControl) ReadConfig(path string) (LuaCommpoentConfig, error) {
-	newConfig := LuaCommpoentConfig{
+func (f *FileControl) ReadConfig(path string) (luaConfig.LuaCommpoentConfig, error) {
+	newConfig := luaConfig.LuaCommpoentConfig{
 		Disabled: true, //默认关闭
 	}
 	data, err := f.Read(path)
@@ -262,9 +232,8 @@ func (f *FileControl) DelectCompoentFile(name string) error {
 // deleteSubDir 函数接受一个父目录路径和一个子目录名称作为参数，
 // 并安全地删除指定的子目录及其所有子文件。
 func (f *FileControl) DeleteSubDir(subDirName string) error {
-	parentDir := OMGCONFIGPATH
+	parentDir := GetOmgConfigPath()
 	subDir := filepath.Join(parentDir, subDirName)
-
 	// 检查子目录是否存在。
 	if !f.fileExists(subDir) {
 		return nil
@@ -283,12 +252,12 @@ func (f *FileControl) DeleteSubDir(subDirName string) error {
 type Result struct {
 	JsonFile   string
 	LuaFile    string
-	JsonConfig LuaCommpoentConfig
+	JsonConfig luaConfig.LuaCommpoentConfig
 }
 
 // GetLuaComponentPath返回一个包含同名字 JSON 文件和 Lua 文件路径的字典。
 func (f *FileControl) GetLuaComponentData() (map[string]Result, error) {
-	dir := OMGCONFIGPATH
+	dir := GetOmgConfigPath()
 	results := make(map[string]Result)
 
 	// 使用 filepath.Walk 遍历指定目录及其子目录。
@@ -328,6 +297,40 @@ func (f *FileControl) GetLuaComponentData() (map[string]Result, error) {
 	return results, nil
 }
 
+type LuaResult struct {
+	Config luaConfig.LuaCommpoentConfig
+	Code   []byte
+}
+
+// 获取指定配置和code
+func (f *FileControl) GetConfigAndCode(name string) (LuaResult, error) {
+	Path := filepath.Join(GetOmgConfigPath(), name)
+	//检查是否存在
+	info, err := os.Stat(Path)
+	if err != nil {
+		return LuaResult{}, errors.New("不存在该目录")
+	}
+	//检查是否为目录
+	if !info.IsDir() {
+		return LuaResult{}, errors.New("不应该在配置文件里面存在一个lua插件名字的文件")
+	}
+	//获取路径
+	jsonPath := filepath.Join(Path, name+".json")
+	LuaPath := filepath.Join(Path, name+".lua")
+	jsonConfig, err := f.ReadConfig(jsonPath)
+	if err != nil {
+		return LuaResult{}, err
+	}
+	luaCode, err := f.Read(LuaPath)
+	if err != nil {
+		return LuaResult{}, err
+	}
+	return LuaResult{
+		jsonConfig,
+		luaCode,
+	}, nil
+}
+
 // fileExists 函数接受一个文件路径作为参数，如果文件存在则返回 true，否则返回 false。
 func (f *FileControl) fileExists(path string) bool {
 	_, err := os.Stat(path)
@@ -338,7 +341,7 @@ func (f *FileControl) fileExists(path string) bool {
 func (f *FileControl) CreateDirAndFiles(name string) error {
 	// 创建子目录。
 	dir := GetOmgConfigPath()
-	data := LuaCommpoentConfig{
+	data := luaConfig.LuaCommpoentConfig{
 		Name:     name,
 		Usage:    "",
 		Version:  "0.0.1",
@@ -391,4 +394,13 @@ func (f *FileControl) CreateDirAndFiles(name string) error {
 	}
 
 	return nil
+}
+
+// RemoveAt 从列表中删除指定下标的元素，返回删除后的列表和删除的元素
+func RemoveSlice(list []interface{}, index int) ([]interface{}, interface{}) {
+	if index < 0 || index >= len(list) {
+		return list, nil
+	}
+	value := list[index]
+	return append(list[:index], list[index+1:]...), value
 }
