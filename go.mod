@@ -16,6 +16,7 @@ require (
 require (
 	github.com/atomicgo/cursor v0.0.1 // indirect
 	github.com/cjoudrey/gluahttp v0.0.0-20201111170219-25003d9adfa9 // indirect
+	github.com/df-mc/atomic v1.10.0 // indirect
 	github.com/frankban/quicktest v1.14.5 // indirect
 	github.com/go-zeromq/goczmq/v4 v4.2.2 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
@@ -54,7 +55,7 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20211230184646-baf1f7156737
 	github.com/pterm/pterm v0.12.29
-	github.com/sandertv/go-raknet v1.9.1
+	github.com/sandertv/go-raknet v1.12.0
 	github.com/xtaci/kcp-go/v5 v5.6.1
 	github.com/yuin/gopher-lua v1.1.0
 	go.kuoruan.net/v8go-polyfills v0.5.0
