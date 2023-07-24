@@ -1,15 +1,29 @@
-package itemNBT
+package NBTAssigner
 
 import (
 	"encoding/json"
 	"fmt"
+	"phoenixbuilder/fastbuilder/mcstructure"
+	"phoenixbuilder/fastbuilder/types"
+	"strings"
 )
+
+// 从 SupportBlocksPool 检查这个方块实体是否已被支持。
+// 如果尚未被支持，则返回空字符串，否则返回这种方块的类型。
+// 以告示牌为例，所有的告示牌都可以写作为 Sign
+func IsNBTBlockSupported(blockName string) string {
+	value, ok := SupportBlocksPool[blockName]
+	if ok {
+		return value
+	}
+	return ""
+}
 
 // 从 SupportItemsPool 检查这个 NBT 物品是否已被支持。
 // 如果尚未被支持，则返回空字符串，否则返回这种物品的类型。
 // 以告示牌为例，所有的告示牌都可以写作为 Sign
-func IsNBTItemSupported(blockName string) string {
-	value, ok := SupportItemsPool[blockName]
+func IsNBTItemSupported(itemName string) string {
+	value, ok := SupportItemsPool[itemName]
 	if ok {
 		return value
 	}
@@ -49,11 +63,27 @@ func MarshalItemComponents(itemComponents *ItemComponents) string {
 	// 返回值
 }
 
+// 将 types.Module 解析为 GeneralBlock
+func ParseBlockModule(singleBlock *types.Module) (GeneralBlock, error) {
+	got, err := mcstructure.ParseStringNBT(singleBlock.Block.BlockStates, true)
+	if err != nil {
+		return GeneralBlock{}, fmt.Errorf("ParseBlockModule: Could not parse block states; singleBlock.Block.BlockStates = %#v", singleBlock.Block.BlockStates)
+	}
+	blockStates, normal := got.(map[string]interface{})
+	if !normal {
+		return GeneralBlock{}, fmt.Errorf("ParseBlockModule: The target block states is not map[string]interface{}; got = %#v", got)
+	}
+	// get block states
+	return GeneralBlock{
+		Name:   strings.Replace(strings.ToLower(strings.ReplaceAll(*singleBlock.Block.Name, " ", "")), "minecraft:", "", 1),
+		States: blockStates,
+		NBT:    singleBlock.NBTMap,
+	}, nil
+	// return
+}
+
 /*
-将 singleItem 解析为 GeneralItem ；
-supportBlocksPool 指代此位置所对应的表格：
-"phoenixbuilder/fastbuilder/bdump/block_nbt/pool.go:SupportBlocksPool"。
-这么做为了避免循环导入 Package ，因此我们要求由相关的外层调用者提供此字段。
+将 singleItem 解析为 GeneralItem 。
 
 特别地，如果此物品存在 item_lock 物品组件，
 则只会解析物品组件的相关数据，
@@ -71,22 +101,22 @@ func ParseItemFromNBT(
 		return GeneralItem{}, fmt.Errorf("ParseItemFromNBT: %v", err)
 	}
 	// basic
-	itemAdditionalData, err := DecodeItemAdditionalData(singleItem)
+	itemAdditionalData, err := DecodeItemEnhancementData(singleItem)
 	if err != nil {
 		return GeneralItem{}, fmt.Errorf("ParseItemFromNBT: %v", err)
 	}
 	// additional
 	if itemAdditionalData != nil && itemAdditionalData.ItemComponents != nil && len(itemAdditionalData.ItemComponents.ItemLock) != 0 {
 		return GeneralItem{
-			Basic:      itemBasicData,
-			Additional: itemAdditionalData,
-			Custom:     nil,
+			Basic:       itemBasicData,
+			Enhancement: itemAdditionalData,
+			Custom:      nil,
 		}, nil
 	}
 	// 如果此物品使用了物品组件 item_lock ，
 	// 则后续数据将不被解析。
 	// 因为存在 item_lock 的物品无法跨容器移动
-	itemCustomData, err := DecodeItemCustomData(itemBasicData, singleItem, supportBlocksPool)
+	itemCustomData, err := DecodeItemCustomData(itemBasicData, singleItem)
 	if err != nil {
 		return GeneralItem{}, fmt.Errorf("ParseItemFromNBT: %v", err)
 	}
@@ -97,9 +127,9 @@ func ParseItemFromNBT(
 	// 如果此物品是一个 NBT 方块，
 	// 则附魔属性将被丢弃，因为无法为方块附魔
 	return GeneralItem{
-		Basic:      itemBasicData,
-		Additional: itemAdditionalData,
-		Custom:     itemCustomData,
+		Basic:       itemBasicData,
+		Enhancement: itemAdditionalData,
+		Custom:      itemCustomData,
 	}, nil
 	// return
 }

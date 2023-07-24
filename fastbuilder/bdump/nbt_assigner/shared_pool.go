@@ -1,4 +1,4 @@
-package blockNBT
+package NBTAssigner
 
 // 此表描述了现阶段已经支持了的方块实体。
 // 键代表方块名，而值代表这种方块应该归属的类型
@@ -67,6 +67,10 @@ var SupportBlocksPool map[string]string = map[string]string{
 	"warped_hanging_sign":    "Sign",
 	// 告示牌
 }
+
+// 此表描述了现阶段已经支持了的特殊物品，如烟花等物品。
+// 键代表物品名，而值代表这种物品应该归属的类型
+var SupportItemsPool map[string]string = map[string]string{}
 
 // 此表描述了可被 replaceitem 生效的容器。
 // key 代表容器的方块名，而 value 则代表此容器放置物品所使用的复合标签或列表

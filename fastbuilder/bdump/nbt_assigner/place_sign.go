@@ -1,4 +1,4 @@
-package blockNBT
+package NBTAssigner
 
 import (
 	"fmt"

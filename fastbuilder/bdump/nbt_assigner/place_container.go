@@ -1,15 +1,14 @@
-package blockNBT
+package NBTAssigner
 
 import (
 	"fmt"
-	itemNBT "phoenixbuilder/fastbuilder/bdump/item_nbt"
 	"phoenixbuilder/fastbuilder/types"
 	GameInterface "phoenixbuilder/game_control/game_interface"
 )
 
 // 从容器的 NBT 数据中提取物品数据。
 // 返回的列表代表提取到的每个物品
-func (c *Container) getContainerContents() ([]itemNBT.ItemOrigin, error) {
+func (c *Container) getContainerContents() ([]ItemOrigin, error) {
 	key := SupportContainerPool[c.BlockEntity.Block.Name]
 	if len(key) == 0 {
 		return nil, ErrNotASupportedContainer
@@ -18,19 +17,19 @@ func (c *Container) getContainerContents() ([]itemNBT.ItemOrigin, error) {
 	itemContentsGot, ok := c.BlockEntity.Block.NBT[key]
 	// 从 containerOriginNBT 获取物品的数据
 	if !ok {
-		return []itemNBT.ItemOrigin{}, nil
+		return []ItemOrigin{}, nil
 	}
 	// 对于唱片机和讲台这种容器，如果它们没有被放物品的话，
 	// 那么对应的 key 是找不到的，但是这并非是错误
 	switch itemContents := itemContentsGot.(type) {
 	case map[string]interface{}:
-		return []itemNBT.ItemOrigin{itemContents}, nil
+		return []ItemOrigin{itemContents}, nil
 		// 如果这个物品是一个唱片机或者讲台，
 		// 那么传入的 itemContents 是一个复合标签而非列表。
 		// 因此，为了统一数据格式，
 		// 我们将复合标签处理成通常情况下的列表
 	case []interface{}:
-		res := []itemNBT.ItemOrigin{}
+		res := []ItemOrigin{}
 		for key, value := range itemContents {
 			singleItem, success := value.(map[string]interface{})
 			if !success {
@@ -56,7 +55,7 @@ func (c *Container) Decode() error {
 	}
 	// 获取容器内的物品数据
 	for _, value := range itemContents {
-		got, err := itemNBT.ParseItemFromNBT(value, SupportBlocksPool)
+		got, err := ParseItemFromNBT(value, SupportBlocksPool)
 		if err != nil {
 			return fmt.Errorf("Decode: %v", err)
 		}

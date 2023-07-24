@@ -1,4 +1,4 @@
-package itemNBT
+package NBTAssigner
 
 import (
 	"encoding/json"
@@ -143,13 +143,14 @@ func DecodeItemBasicData(singleItem ItemOrigin) (ItemBasicData, error) {
 	// 返回值
 }
 
-// 从 singleItem 解码单个物品附加的 NBT 数据。
+// 从 singleItem 解码单个物品的增强数据，
+// 其中包含物品组件、显示名称和附魔属性。
 // 特别地，如果此物品存在 item_lock 物品组件，
 // 则只会解析物品组件的相关数据，
 // 因为存在 item_lock 的物品无法跨容器移动
-func DecodeItemAdditionalData(
+func DecodeItemEnhancementData(
 	singleItem ItemOrigin,
-) (*ItemAdditionalData, error) {
+) (*ItemEnhancementData, error) {
 	var displayName string
 	var enchantments *[]Enchantment
 	var itemComponents *ItemComponents
@@ -237,7 +238,7 @@ func DecodeItemAdditionalData(
 	}
 	// 物品组件
 	if itemComponents != nil && len(itemComponents.ItemLock) != 0 {
-		return &ItemAdditionalData{
+		return &ItemEnhancementData{
 			DisplayName:    "",
 			Enchantments:   nil,
 			ItemComponents: itemComponents,
@@ -300,7 +301,7 @@ func DecodeItemAdditionalData(
 	}
 	// 物品的附魔属性
 	if len(displayName) != 0 || enchantments != nil || itemComponents != nil {
-		return &ItemAdditionalData{
+		return &ItemEnhancementData{
 			DisplayName:    displayName,
 			Enchantments:   enchantments,
 			ItemComponents: itemComponents,
@@ -310,18 +311,10 @@ func DecodeItemAdditionalData(
 	// 返回值
 }
 
-/*
-从 singleItem 解码单个物品的自定义 NBT 数据。
-
-itemBasicData 指代 singleItem 对应的基本物品数据；
-supportBlocksPool 指代此位置所对应的表格：
-"phoenixbuilder/fastbuilder/bdump/block_nbt/pool.go:SupportBlocksPool"。
-这么做为了避免循环导入 Package ，因此我们要求由相关的外层调用者提供此字段
-*/
+// 从 singleItem 解码单个物品的自定义 NBT 数据
 func DecodeItemCustomData(
 	itemBasicData ItemBasicData,
 	singleItem ItemOrigin,
-	supportBlocksPool map[string]string,
 ) (*ItemCustomData, error) {
 	nbt_tag_origin, ok := singleItem["tag"]
 	if !ok {

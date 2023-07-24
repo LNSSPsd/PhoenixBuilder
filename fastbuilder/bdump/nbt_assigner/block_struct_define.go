@@ -1,8 +1,7 @@
-package blockNBT
+package NBTAssigner
 
 import (
 	"fmt"
-	itemNBT "phoenixbuilder/fastbuilder/bdump/item_nbt"
 	"phoenixbuilder/fastbuilder/environment/interfaces"
 	"phoenixbuilder/fastbuilder/types"
 )
@@ -34,7 +33,7 @@ type GeneralBlock struct {
 }
 
 // AdditionalData 结构体用于描述一个方块实体的其他附加数据，例如方块的绝对坐标
-type AdditionalData struct {
+type BlockAdditionalData struct {
 	// 字符串形式的方块状态，用于在放置方块时使用
 	BlockStates string
 	// 方块坐标(绝对坐标)
@@ -59,7 +58,7 @@ type BlockEntity struct {
 	// 一个通用型方块的数据，例如名称、方块状态和所携带的 NBT 数据
 	Block GeneralBlock
 	// 此方块的其他附加数据，例如方块的绝对坐标
-	AdditionalData AdditionalData
+	AdditionalData BlockAdditionalData
 }
 
 // ------------------------- command_block -------------------------
@@ -93,7 +92,7 @@ type Container struct {
 	// 该方块实体的详细数据
 	BlockEntity *BlockEntity
 	// 容器的内容物
-	Contents []itemNBT.GeneralItem
+	Contents []GeneralItem
 }
 
 // 未被支持的容器会被应用此错误信息。

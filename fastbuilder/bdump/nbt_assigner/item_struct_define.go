@@ -1,4 +1,4 @@
-package itemNBT
+package NBTAssigner
 
 import (
 	"phoenixbuilder/fastbuilder/environment/interfaces"
@@ -40,16 +40,6 @@ type ItemComponents struct {
 	ItemLock string
 	// 使该物品在玩家死亡时不会掉落
 	KeepOnDeath bool
-}
-
-// GeneralBlock 结构体用于一个通用型的方块
-type GeneralBlock struct {
-	// 方块名称(不含命名空间且应该全部小写)
-	Name string
-	// 方块状态
-	States map[string]interface{}
-	// 当前方块所携带的 NBT 数据
-	NBT map[string]interface{}
 }
 
 // 描述单个物品的自定义数据。
@@ -111,7 +101,7 @@ type ItemBasicData struct {
 }
 
 // 描述单个物品的附加数据
-type ItemAdditionalData struct {
+type ItemEnhancementData struct {
 	DisplayName    string          // 该物品的显示名称
 	Enchantments   *[]Enchantment  // 该物品的附魔属性
 	ItemComponents *ItemComponents // 该物品的物品组件
@@ -119,13 +109,13 @@ type ItemAdditionalData struct {
 
 // GeneralItem 结构体用于一个通用型的物品
 type GeneralItem struct {
-	Basic      ItemBasicData       // 该物品的基本数据
-	Additional *ItemAdditionalData // 该物品的附加数据
-	Custom     *ItemCustomData     // 由 PhoenixBuilder 定义的自定义数据
+	Basic       ItemBasicData        // 该物品的基本数据
+	Enhancement *ItemEnhancementData // 该物品的增强数据
+	Custom      *ItemCustomData      // 由 PhoenixBuilder 定义的自定义数据
 }
 
 // AdditionalData 结构体用于描述一个物品的其他附加数据，例如该物品应该生成的位置
-type AdditionalData struct {
+type ItemAdditionalData struct {
 	// 指定该物品实际的生成位置。
 	// 我们总是将物品生成在快捷栏
 	HotBarSlot uint8
@@ -158,5 +148,5 @@ type ItemPackage struct {
 	// 一个通用型物品的数据，例如名称和数据值(附加值)
 	Item GeneralItem
 	// 此物品的其他附加数据，例如物品应该被在快捷栏生成的位置
-	AdditionalData AdditionalData
+	AdditionalData ItemAdditionalData
 }
