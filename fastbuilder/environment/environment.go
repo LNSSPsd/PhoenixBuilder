@@ -2,12 +2,14 @@ package environment
 
 // This package imports only external packages to avoid import cycle.
 import (
-	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
 	"phoenixbuilder/fastbuilder/environment/interfaces"
+	fbauth "phoenixbuilder/fastbuilder/pv4"
 )
 
 type LoginInfo struct {
 	Token          string
+	Username       string
+	Password       string
 	ServerCode     string
 	ServerPasscode string
 }

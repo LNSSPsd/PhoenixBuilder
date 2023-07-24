@@ -3,13 +3,14 @@ package info_collect_utils
 import (
 	"bufio"
 	"fmt"
-	"golang.org/x/term"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"phoenixbuilder/fastbuilder/i18n"
+	I18n "phoenixbuilder/fastbuilder/i18n"
 	"strings"
 	"syscall"
+
+	"golang.org/x/term"
 )
 
 func LoadTokenPath() string {
@@ -18,7 +19,7 @@ func LoadTokenPath() string {
 		fmt.Println(I18n.T(I18n.Warning_UserHomeDir))
 		homedir = "."
 	}
-	fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
+	fbconfigdir := filepath.Join(homedir, ".config", "fastbuilder")
 	os.MkdirAll(fbconfigdir, 0700)
 	token := filepath.Join(fbconfigdir, "fbtoken")
 	return token

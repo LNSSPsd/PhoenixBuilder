@@ -2,15 +2,17 @@ package access_helper
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"phoenixbuilder/fastbuilder/core"
-	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
 	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/bundle"
 	neomega_core "phoenixbuilder/fastbuilder/lib/minecraft/neomega/decouple/core"
 	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/omega"
 	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/uqholder"
 	"phoenixbuilder/fastbuilder/lib/rental_server_impact/challenges"
 	"phoenixbuilder/fastbuilder/lib/rental_server_impact/info_collect_utils"
+	fbauth "phoenixbuilder/fastbuilder/pv4"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
@@ -27,19 +29,12 @@ func ImpactServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 	fmt.Println("connecting to fb server...")
 	fbClient := fbauth.CreateClient(clientOptions)
 	fmt.Println("done connecting to fb server")
+	hashedPassword := ""
 	if options.FBUserToken == "" {
-		var err_val string
-		fmt.Println("obtaining fb token from fb server...")
-		options.FBUserToken, err_val = fbClient.GetToken(options.FBUsername, options.FBUserPassword)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("%v: %s", ErrFBUserCenterLoginFail, err_val)
-		}
-		fmt.Println("done obtaining fb token from fb server")
+		psw_sum := sha256.Sum256([]byte(options.FBUserPassword))
+		hashedPassword = hex.EncodeToString(psw_sum[:])
 	}
-	if options.WriteBackToken {
-		info_collect_utils.WriteFBToken(options.FBUserToken, info_collect_utils.LoadTokenPath())
-	}
-	authenticator := fbauth.NewAccessWrapper(fbClient, options.ServerCode, options.ServerPassword, options.FBUserToken)
+	authenticator := fbauth.NewAccessWrapper(fbClient, options.ServerCode, options.ServerPassword, options.FBUserToken, options.FBUsername, hashedPassword)
 	{
 		connectMCServer := func() (conn *minecraft.Conn, err error) {
 			connectCtx := ctx
@@ -53,7 +48,11 @@ func ImpactServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 				}
 				return nil, fmt.Errorf("%v :%v", ErrFailToConnectRentalServer, err)
 			}
+			options.FBUserToken = authenticator.Token
 			return conn, nil
+		}
+		if options.WriteBackToken {
+			info_collect_utils.WriteFBToken(options.FBUserToken, info_collect_utils.LoadTokenPath())
 		}
 		fmt.Println("connecting to mc server...")
 		retryTimes := 0

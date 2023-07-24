@@ -56,7 +56,6 @@ func DefaultOptions() *Options {
 		FBUserToken:                "",
 		ServerCode:                 "",
 		ServerPassword:             "",
-		WriteBackToken:             true,
 		MicroOmegaOption:           bundle.MakeDefaultMicroOmegaOption(),
 		PrintUQHolderDebugInfo:     false,
 		MakeBotCreative:            true,
@@ -66,5 +65,6 @@ func DefaultOptions() *Options {
 		OpPrivilegeRemovedCallBack: nil,
 		ReadLoopFunction:           DefaultReadLoopFunction,
 		ReasonWithPrivilegeStuff:   true,
+		WriteBackToken:             true,
 	}
 }
