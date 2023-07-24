@@ -54,15 +54,11 @@ type ItemCustomData struct {
 
 		因此，如果该物品带有 NBT 且是一个方块，
 		那么此字段不为空指针。
-
-		注：
-		本 Package 只负责解码此字段，
-		但不会实现与此相关的功能。
-		方块的放置， packet.BlockPickRequest 的发送应该由相应的上层的调用者完成。
-		如果不这么做，将会导致循环导入 Package 的情况发生
 	*/
-	SubBlockData *GeneralBlock
+	SubBlockData GeneralBlockNBT
 	/*
+		指代该物品的 Tag 标签。
+
 		这个物品可能是一本写了字或者签过名的书，
 		也可能是一个由工作台合成的烟花。
 
@@ -78,7 +74,7 @@ type ItemCustomData struct {
 
 		TODO: 兼容此特性
 	*/
-	ItemTag *ItemOrigin
+	ItemTag ItemOrigin
 }
 
 // 描述单个物品的基本数据
@@ -131,10 +127,6 @@ type ItemAdditionalData struct {
 	Settings *types.MainConfig
 	// 是否是快速模式生成物品；若为真，则大多数方块物品的 NBT 数据将不会被注册
 	FastMode bool
-	// 为了避免循环导入 Package ，此处要求相关的外层调用者提供
-	// phoenixbuilder/fastbuilder/bdump/block_nbt/pool.go:SupportBlocksPool
-	// 所对应的表格
-	SupportBlocksPool map[string]string
 	// 部分情况下可能会携带的不定数据，通常情况下应该为空 [目前还未使用此字段]
 	Others interface{}
 }

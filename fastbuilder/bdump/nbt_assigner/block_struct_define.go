@@ -80,7 +80,7 @@ type CommandBlock struct {
 	// 该方块实体的详细数据
 	BlockEntity *BlockEntity
 	// 存放已解码的命令方块数据
-	CommandBlockData
+	CommandBlockData CommandBlockData
 	// 为向下兼容而设，因为旧方法下不需要放置命令方块
 	ShouldPlaceBlock bool
 }

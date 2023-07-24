@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/mcstructure"
 	"phoenixbuilder/fastbuilder/types"
+	"phoenixbuilder/mirror/chunk"
 	"strings"
 )
 
@@ -63,6 +64,23 @@ func MarshalItemComponents(itemComponents *ItemComponents) string {
 	// 返回值
 }
 
+// 取得名称为 blockName 且数据值(附加值)为 metaData 的方块的方块状态。
+// 特别地，name 需要加上命名空间 minecraft
+func get_block_states_of_legacy_block(
+	blockName string,
+	metaData uint16,
+) (map[string]interface{}, error) {
+	standardRuntimeID, found := chunk.LegacyBlockToRuntimeID(blockName, metaData)
+	if !found {
+		return nil, fmt.Errorf("get_block_states_of_legacy_block: Failed to get the runtimeID of block %s; metaData = %d", blockName, metaData)
+	}
+	generalBlock, found := chunk.RuntimeIDToBlock(standardRuntimeID)
+	if !found {
+		return nil, fmt.Errorf("get_block_states_of_legacy_block: Failed to converse StandardRuntimeID to NEMCRuntimeID; standardRuntimeID = %d, blockName = %s, metaData = %d", standardRuntimeID, blockName, metaData)
+	}
+	return generalBlock.Properties, nil
+}
+
 // 将 types.Module 解析为 GeneralBlock
 func ParseBlockModule(singleBlock *types.Module) (GeneralBlock, error) {
 	got, err := mcstructure.ParseStringNBT(singleBlock.Block.BlockStates, true)
@@ -92,44 +110,34 @@ func ParseBlockModule(singleBlock *types.Module) (GeneralBlock, error) {
 如果此物品是一个 NBT 方块，
 则附魔属性将被丢弃，因为无法为方块附魔
 */
-func ParseItemFromNBT(
-	singleItem ItemOrigin,
-	supportBlocksPool map[string]string,
-) (GeneralItem, error) {
-	itemBasicData, err := DecodeItemBasicData(singleItem)
+func (i *ItemPackage) ParseItemFromNBT(singleItem ItemOrigin) error {
+	err := i.Item.DecodeItemBasicData(singleItem)
 	if err != nil {
-		return GeneralItem{}, fmt.Errorf("ParseItemFromNBT: %v", err)
+		return fmt.Errorf("ParseItemFromNBT: %v", err)
 	}
+	i.AdditionalData.Type = IsNBTItemSupported(i.Item.Basic.Name)
 	// basic
-	itemAdditionalData, err := DecodeItemEnhancementData(singleItem)
+	err = i.Item.DecodeItemEnhancementData(singleItem)
 	if err != nil {
-		return GeneralItem{}, fmt.Errorf("ParseItemFromNBT: %v", err)
+		return fmt.Errorf("ParseItemFromNBT: %v", err)
 	}
 	// additional
-	if itemAdditionalData != nil && itemAdditionalData.ItemComponents != nil && len(itemAdditionalData.ItemComponents.ItemLock) != 0 {
-		return GeneralItem{
-			Basic:       itemBasicData,
-			Enhancement: itemAdditionalData,
-			Custom:      nil,
-		}, nil
+	if i.Item.Enhancement != nil && i.Item.Enhancement.ItemComponents != nil && len(i.Item.Enhancement.ItemComponents.ItemLock) != 0 {
+		return nil
 	}
 	// 如果此物品使用了物品组件 item_lock ，
 	// 则后续数据将不被解析。
 	// 因为存在 item_lock 的物品无法跨容器移动
-	itemCustomData, err := DecodeItemCustomData(itemBasicData, singleItem)
+	err = i.DecodeItemCustomData(singleItem)
 	if err != nil {
-		return GeneralItem{}, fmt.Errorf("ParseItemFromNBT: %v", err)
+		return fmt.Errorf("ParseItemFromNBT: %v", err)
 	}
 	// custom
-	if itemCustomData != nil && itemCustomData.SubBlockData != nil && itemAdditionalData != nil {
-		itemAdditionalData.Enchantments = nil
+	if i.Item.Custom != nil && i.Item.Custom.SubBlockData != nil && i.Item.Enhancement != nil {
+		i.Item.Enhancement.Enchantments = nil
 	}
 	// 如果此物品是一个 NBT 方块，
 	// 则附魔属性将被丢弃，因为无法为方块附魔
-	return GeneralItem{
-		Basic:       itemBasicData,
-		Enhancement: itemAdditionalData,
-		Custom:      itemCustomData,
-	}, nil
+	return nil
 	// return
 }

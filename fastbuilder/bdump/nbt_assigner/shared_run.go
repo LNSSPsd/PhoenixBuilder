@@ -68,17 +68,15 @@ func GenerateItemWithNBTData(
 	defer interfaceLock.Unlock()
 	interfaceLock.Lock()
 	// lock(or unlock) api
-	generalItem, err := ParseItemFromNBT(singleItem, additionalData.SupportBlocksPool)
+	newRequest := ItemPackage{
+		Interface:      intf,
+		Item:           GeneralItem{},
+		AdditionalData: *additionalData,
+	}
+	err := newRequest.ParseItemFromNBT(singleItem)
 	if err != nil {
 		return fmt.Errorf("GenerateItemWithNBTData: Failed to generate the NBT item in hotbar %d, and the error log is %v", additionalData.HotBarSlot, err)
 	}
-	// get general item
-	newRequest := ItemPackage{
-		Interface:      intf,
-		Item:           generalItem,
-		AdditionalData: *additionalData,
-	}
-	newRequest.AdditionalData.Type = IsNBTItemSupported(newRequest.Item.Basic.Name)
 	// get new request to generate new NBT item
 	generateNBTItemMethod := GetGenerateItemMethod(&newRequest)
 	err = generateNBTItemMethod.Decode()

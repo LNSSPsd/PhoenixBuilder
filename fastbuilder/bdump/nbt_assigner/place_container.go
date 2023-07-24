@@ -48,18 +48,29 @@ func (c *Container) getContainerContents() ([]ItemOrigin, error) {
 
 // 从 c.Package.Block.NBT 提取物品数据并保存在 c.Contents 中
 func (c *Container) Decode() error {
-	// 初始化
 	itemContents, err := c.getContainerContents()
 	if err != nil {
 		return fmt.Errorf("Decode: %v", err)
 	}
 	// 获取容器内的物品数据
 	for _, value := range itemContents {
-		got, err := ParseItemFromNBT(value, SupportBlocksPool)
+		newPackage := ItemPackage{
+			Interface: c.BlockEntity.Interface,
+			Item:      GeneralItem{},
+			AdditionalData: ItemAdditionalData{
+				HotBarSlot: 5,
+				Position:   c.BlockEntity.AdditionalData.Position,
+				Type:       "",
+				Settings:   c.BlockEntity.AdditionalData.Settings,
+				FastMode:   c.BlockEntity.AdditionalData.FastMode,
+				Others:     c.BlockEntity.AdditionalData.Others,
+			},
+		}
+		err := newPackage.ParseItemFromNBT(value)
 		if err != nil {
 			return fmt.Errorf("Decode: %v", err)
 		}
-		c.Contents = append(c.Contents, got)
+		c.Contents = append(c.Contents, newPackage.Item)
 	}
 	// 解码
 	return nil
