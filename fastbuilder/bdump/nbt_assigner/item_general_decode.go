@@ -136,8 +136,8 @@ func (g *GeneralItem) DecodeItemBasicData(singleItem ItemOrigin) error {
 // 从 singleItem 解码单个物品的增强数据，
 // 其中包含物品组件、显示名称和附魔属性。
 // 特别地，如果此物品存在 item_lock 物品组件，
-// 则只会解析物品组件的相关数据，
-// 因为存在 item_lock 的物品无法跨容器移动
+// 则只会解析物品组件和附魔的相关数据，
+// 因为存在 item_lock 的物品无法使用铁砧修改名称
 func (g *GeneralItem) DecodeItemEnhancementData(
 	singleItem ItemOrigin,
 ) error {
@@ -227,37 +227,6 @@ func (g *GeneralItem) DecodeItemEnhancementData(
 		// item_lock and keep_on_death
 	}
 	// 物品组件
-	if itemComponents != nil && len(itemComponents.ItemLock) != 0 {
-		g.Enhancement = &ItemEnhancementData{
-			DisplayName:    "",
-			Enchantments:   nil,
-			ItemComponents: itemComponents,
-		}
-		return nil
-	}
-	// 如果当前物品已经使用了 item_lock 物品组件，
-	// 则无需再解析后续的数据，
-	// 因为存在 item_lock 的物品无法跨容器移动
-	for i := 0; i < 1; i++ {
-		display_origin, ok := nbt_tag_got["display"]
-		if !ok {
-			break
-		}
-		display_got, normal := display_origin.(map[string]interface{})
-		if !normal {
-			return fmt.Errorf(`DecodeItemAdditionalData: Can not convert display_origin into map[string]interface{}; singleItem = %#v`, singleItem)
-		}
-		name_origin, ok := display_got["Name"]
-		if !ok {
-			break
-		}
-		name_got, normal := name_origin.(string)
-		if !normal {
-			return fmt.Errorf(`DecodeItemAdditionalData: Can not convert name_origin into string; singleItem = %#v`, singleItem)
-		}
-		displayName = name_got
-	}
-	// 物品的显示名称
 	if ench_origin, ok := nbt_tag_got["ench"]; ok {
 		ench_got, normal := ench_origin.([]interface{})
 		if !normal {
@@ -291,6 +260,37 @@ func (g *GeneralItem) DecodeItemEnhancementData(
 		}
 	}
 	// 物品的附魔属性
+	if itemComponents != nil && len(itemComponents.ItemLock) != 0 {
+		g.Enhancement = &ItemEnhancementData{
+			DisplayName:    "",
+			Enchantments:   enchantments,
+			ItemComponents: itemComponents,
+		}
+		return nil
+	}
+	// 如果当前物品已经使用了 item_lock 物品组件，
+	// 则无需再解析后续的数据，
+	// 因为存在 item_lock 的物品无法使用铁砧修改名称
+	for i := 0; i < 1; i++ {
+		display_origin, ok := nbt_tag_got["display"]
+		if !ok {
+			break
+		}
+		display_got, normal := display_origin.(map[string]interface{})
+		if !normal {
+			return fmt.Errorf(`DecodeItemAdditionalData: Can not convert display_origin into map[string]interface{}; singleItem = %#v`, singleItem)
+		}
+		name_origin, ok := display_got["Name"]
+		if !ok {
+			break
+		}
+		name_got, normal := name_origin.(string)
+		if !normal {
+			return fmt.Errorf(`DecodeItemAdditionalData: Can not convert name_origin into string; singleItem = %#v`, singleItem)
+		}
+		displayName = name_got
+	}
+	// 物品的显示名称
 	if len(displayName) != 0 || enchantments != nil || itemComponents != nil {
 		g.Enhancement = &ItemEnhancementData{
 			DisplayName:    displayName,
@@ -324,7 +324,7 @@ func (i *ItemPackage) DecodeItemCustomData(
 	blockType := IsNBTBlockSupported(i.Item.Basic.Name)
 	if len(blockType) != 0 {
 		blockStates, err = get_block_states_of_legacy_block(
-			i.Item.Basic.Name, i.Item.Basic.MetaData,
+			fmt.Sprintf("minecraft:%v", i.Item.Basic.Name), i.Item.Basic.MetaData,
 		)
 		if err != nil {
 			blockStates = map[string]interface{}{}

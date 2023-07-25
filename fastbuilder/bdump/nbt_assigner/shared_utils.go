@@ -104,8 +104,9 @@ func ParseBlockModule(singleBlock *types.Module) (GeneralBlock, error) {
 将 singleItem 解析为 GeneralItem 。
 
 特别地，如果此物品存在 item_lock 物品组件，
-则只会解析物品组件的相关数据，
-因为存在 item_lock 的物品无法跨容器移动；
+则只会解析该物品的物品组件和附魔属性，
+因为存在 item_lock 的物品无法使用铁砧修改名称，
+也不能跨容器移动；
 
 如果此物品是一个 NBT 方块，
 则附魔属性将被丢弃，因为无法为方块附魔
@@ -121,13 +122,14 @@ func (i *ItemPackage) ParseItemFromNBT(singleItem ItemOrigin) error {
 	if err != nil {
 		return fmt.Errorf("ParseItemFromNBT: %v", err)
 	}
-	// additional
+	// enhancement
 	if i.Item.Enhancement != nil && i.Item.Enhancement.ItemComponents != nil && len(i.Item.Enhancement.ItemComponents.ItemLock) != 0 {
 		return nil
 	}
 	// 如果此物品使用了物品组件 item_lock ，
 	// 则后续数据将不被解析。
-	// 因为存在 item_lock 的物品无法跨容器移动
+	// 因为存在 item_lock 的物品无法使用铁砧修改名称，
+	// 也不能跨容器移动
 	err = i.DecodeItemCustomData(singleItem)
 	if err != nil {
 		return fmt.Errorf("ParseItemFromNBT: %v", err)
