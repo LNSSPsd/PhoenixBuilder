@@ -66,19 +66,36 @@ func MarshalItemComponents(itemComponents *ItemComponents) string {
 
 // 取得名称为 blockName 且数据值(附加值)为 metaData 的方块的方块状态。
 // 特别地，name 需要加上命名空间 minecraft
-func get_block_states_of_legacy_block(
+func get_block_states_from_legacy_block(
 	blockName string,
 	metaData uint16,
 ) (map[string]interface{}, error) {
 	standardRuntimeID, found := chunk.LegacyBlockToRuntimeID(blockName, metaData)
 	if !found {
-		return nil, fmt.Errorf("get_block_states_of_legacy_block: Failed to get the runtimeID of block %s; metaData = %d", blockName, metaData)
+		return nil, fmt.Errorf("get_block_states_from_legacy_block: Failed to get the runtimeID of block %s; metaData = %d", blockName, metaData)
 	}
 	generalBlock, found := chunk.RuntimeIDToBlock(standardRuntimeID)
 	if !found {
-		return nil, fmt.Errorf("get_block_states_of_legacy_block: Failed to converse StandardRuntimeID to NEMCRuntimeID; standardRuntimeID = %d, blockName = %s, metaData = %d", standardRuntimeID, blockName, metaData)
+		return nil, fmt.Errorf("get_block_states_from_legacy_block: Failed to converse StandardRuntimeID to NEMCRuntimeID; standardRuntimeID = %d, blockName = %s, metaData = %d", standardRuntimeID, blockName, metaData)
 	}
 	return generalBlock.Properties, nil
+}
+
+// 取得名称为 blockName 且方块状态为 blockStates 的数据值(附加值) 。
+// 特别地，name 需要加上命名空间 minecraft
+func get_block_data_from_states(
+	blockName string,
+	blockStates map[string]interface{},
+) (uint16, error) {
+	standardRuntimeID, found := chunk.StateToRuntimeID(blockName, blockStates)
+	if !found {
+		return 0, fmt.Errorf("get_block_data_from_states: Failed to get the runtimeID of block %s; blockStates = %#v", blockName, blockStates)
+	}
+	legacyBlock, found := chunk.RuntimeIDToLegacyBlock(standardRuntimeID)
+	if !found {
+		return 0, fmt.Errorf("get_block_data_from_states: Failed to converse StandardRuntimeID to NEMCRuntimeID; standardRuntimeID = %d, blockName = %s, blockStates = %#v", standardRuntimeID, blockName, blockStates)
+	}
+	return legacyBlock.Val, nil
 }
 
 // 将 types.Module 解析为 GeneralBlock
@@ -109,7 +126,10 @@ func ParseBlockModule(singleBlock *types.Module) (GeneralBlock, error) {
 也不能跨容器移动；
 
 如果此物品是一个 NBT 方块，
-则附魔属性将被丢弃，因为无法为方块附魔
+则附魔属性和物品组件数据将被丢弃；
+
+如果该物品是一个 NBT 物品，
+则物品组件数据将被丢弃
 */
 func (i *ItemPackage) ParseItemFromNBT(singleItem ItemOrigin) error {
 	err := i.Item.DecodeItemBasicData(singleItem)
@@ -137,9 +157,15 @@ func (i *ItemPackage) ParseItemFromNBT(singleItem ItemOrigin) error {
 	// custom
 	if i.Item.Custom != nil && i.Item.Custom.SubBlockData != nil && i.Item.Enhancement != nil {
 		i.Item.Enhancement.Enchantments = nil
+		i.Item.Enhancement.ItemComponents = nil
 	}
 	// 如果此物品是一个 NBT 方块，
-	// 则附魔属性将被丢弃，因为无法为方块附魔
+	// 则附魔属性和物品组件将被丢弃
+	if i.Item.Custom != nil && i.Item.Custom.ItemTag != nil && i.Item.Enhancement != nil {
+		i.Item.Enhancement.ItemComponents = nil
+	}
+	// 如果该物品是一个 NBT 物品，
+	// 则物品组件数据将被丢弃
 	return nil
 	// return
 }

@@ -323,7 +323,7 @@ func (i *ItemPackage) DecodeItemCustomData(
 	// 获取当前物品的 tag 数据
 	blockType := IsNBTBlockSupported(i.Item.Basic.Name)
 	if len(blockType) != 0 {
-		blockStates, err = get_block_states_of_legacy_block(
+		blockStates, err = get_block_states_from_legacy_block(
 			fmt.Sprintf("minecraft:%v", i.Item.Basic.Name), i.Item.Basic.MetaData,
 		)
 		if err != nil {

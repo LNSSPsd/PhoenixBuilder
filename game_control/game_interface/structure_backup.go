@@ -5,6 +5,7 @@ package GameInterface
 import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/mcstructure"
+	ResourcesControl "phoenixbuilder/game_control/resources_control"
 
 	"github.com/google/uuid"
 )
@@ -20,48 +21,69 @@ type BlockPos mcstructure.BlockPos
 func (g *GameInterface) BackupStructure(structure MCStructure) (uuid.UUID, error) {
 	uniqueId := generateUUID()
 	// get new uuid
-	resp := g.SendWSCommandWithResponse(
-		fmt.Sprintf(
-			`structure save "%s" %d %d %d %d %d %d`,
-			uuid_to_safe_string(uniqueId),
-			structure.BeginX,
-			structure.BeginY,
-			structure.BeginZ,
-			structure.BeginX+structure.SizeX-1,
-			structure.BeginY+structure.SizeY-1,
-			structure.BeginZ+structure.SizeZ-1,
-		),
+	request := fmt.Sprintf(
+		`structure save "%s" %d %d %d %d %d %d`,
+		uuid_to_safe_string(uniqueId),
+		structure.BeginX,
+		structure.BeginY,
+		structure.BeginZ,
+		structure.BeginX+structure.SizeX-1,
+		structure.BeginY+structure.SizeY-1,
+		structure.BeginZ+structure.SizeZ-1,
 	)
-	if resp.Error != nil {
+	// get command to backup structure
+	resp := g.SendWSCommandWithResponse(request)
+	if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
 		return uuid.UUID{}, fmt.Errorf("BackupStructure: Failed to backup the structure; structure = %#v", structure)
 	}
-	// backup structure
-	if resp.Respond.SuccessCount <= 0 {
+	if resp.Error == nil && resp.Respond.SuccessCount <= 0 {
 		return uuid.UUID{}, fmt.Errorf("BackupStructure: Failed to backup the structure; structure = %#v; resp = %#v", structure, resp)
 	}
-	// check success states
+	// send command and check success states
+	if resp.Error != nil && resp.ErrorType == ResourcesControl.ErrCommandRequestTimeOut {
+		err := g.SendSettingsCommand(request, true)
+		if err != nil {
+			return uuid.UUID{}, fmt.Errorf("BackupStructure: Failed to backup the structure; structure = %#v, err = %v", structure, err)
+		}
+		resp := g.SendCommandWithResponse("list")
+		if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
+			return uuid.UUID{}, fmt.Errorf("BackupStructure: Failed to backup the structure; structure = %#v; resp = %#v", structure, resp)
+		}
+	}
+	// some special solutions for when we facing Netease Mask Words System
 	return uniqueId, nil
 	// return
 }
 
 // 在 pos 处恢复名称为 unique.String() 的备份用结构并删除此结构
 func (g *GameInterface) RevertStructure(uniqueID uuid.UUID, pos BlockPos) error {
-	resp := g.SendWSCommandWithResponse(
-		fmt.Sprintf(
-			`structure load "%v" %d %d %d`,
-			uuid_to_safe_string(uniqueID),
-			pos[0],
-			pos[1],
-			pos[2],
-		),
+	request := fmt.Sprintf(
+		`structure load "%v" %d %d %d`,
+		uuid_to_safe_string(uniqueID),
+		pos[0],
+		pos[1],
+		pos[2],
 	)
-	if resp.Error != nil {
+	// get command to revert the structure
+	resp := g.SendWSCommandWithResponse(request)
+	if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
 		return fmt.Errorf(`RevertStructure: Failed to revert structure named "%v"; pos = %#v`, uniqueID.String(), pos)
 	}
-	if resp.Respond.SuccessCount <= 0 {
+	if resp.Error == nil && resp.Respond.SuccessCount <= 0 {
 		return fmt.Errorf(`RevertStructure: Failed to revert structure named "%v"; pos = %#v`, uniqueID.String(), pos)
 	}
-	// revert structure
+	// send command and check sucess states
+	if resp.Error != nil && resp.ErrorType == ResourcesControl.ErrCommandRequestTimeOut {
+		err := g.SendSettingsCommand(request, true)
+		if err != nil {
+			return fmt.Errorf(`RevertStructure: Failed to revert structure named "%v"; pos = %#v, err = %v`, uniqueID.String(), pos, err)
+		}
+		resp := g.SendCommandWithResponse("list")
+		if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
+			return fmt.Errorf(`RevertStructure: Failed to revert structure named "%v"; pos = %#v, resp = %#v`, uniqueID.String(), pos, resp)
+		}
+	}
+	// some special solutions for when we facing Netease Mask Words System
 	err := g.SendSettingsCommand(
 		fmt.Sprintf(
 			`structure delete "%v"`,
