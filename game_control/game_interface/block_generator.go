@@ -174,7 +174,7 @@ func (g *GameInterface) PlaceShulkerBox(
 		teleportCommand = "tp ~ ~ ~ facing ~-1.0 ~ ~"
 	}
 	// 确定被备份方块的位置和用于修正机器人朝向的命令
-	uniqueId_02, err := g.BackupStructure(
+	uniqueIdReturn, err := g.BackupStructure(
 		MCStructure{
 			BeginX: pos[0],
 			BeginY: pos[1],
@@ -195,7 +195,7 @@ func (g *GameInterface) PlaceShulkerBox(
 	if err != nil {
 		return uuid.UUID{}, [3]int32{}, fmt.Errorf("PlaceShulkerBox: %v", err)
 	}
-	uniqueId_01, err := g.BackupStructure(
+	uniqueId, err := g.BackupStructure(
 		MCStructure{
 			BeginX: backupBlockPos[0],
 			BeginY: backupBlockPos[1],
@@ -234,11 +234,11 @@ func (g *GameInterface) PlaceShulkerBox(
 	}
 	// 更换手持物品栏为 hotBarSlot 并点击绿宝石块以放置潜影盒。
 	// 放置潜影盒前需要备份
-	err = g.RevertStructure(uniqueId_01, backupBlockPos)
+	err = g.RevertStructure(uniqueId, backupBlockPos)
 	if err != nil {
 		return uuid.UUID{}, [3]int32{}, fmt.Errorf("PlaceShulkerBox: %v", err)
 	}
 	// 恢复绿宝石块所在位置的方块为原本方块
-	return uniqueId_02, pos, nil
+	return uniqueIdReturn, pos, nil
 	// 返回值
 }
