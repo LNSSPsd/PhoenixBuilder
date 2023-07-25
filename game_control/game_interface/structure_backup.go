@@ -66,7 +66,7 @@ func (g *GameInterface) DeleteStructure(uniqueID uuid.UUID) error {
 		false,
 	)
 	if err != nil {
-		return fmt.Errorf("RevertStructure: %v", err)
+		return fmt.Errorf("DeleteStructure: %v", err)
 	}
 	return nil
 }
