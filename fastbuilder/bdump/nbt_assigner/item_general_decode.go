@@ -151,7 +151,7 @@ func (g *GeneralItem) DecodeItemEnhancementData(
 	if ok {
 		nbt_tag_got, normal = nbt_tag_origin.(map[string]interface{})
 		if !normal {
-			return fmt.Errorf(`DecodeItemAdditionalData: Can not convert nbt_tag_origin into map[string]interface{}; singleItem = %#v`, singleItem)
+			return fmt.Errorf(`DecodeItemEnhancementData: Can not convert nbt_tag_origin into map[string]interface{}; singleItem = %#v`, singleItem)
 		}
 	}
 	// 获取当前物品的 tag 数据
@@ -159,7 +159,7 @@ func (g *GeneralItem) DecodeItemEnhancementData(
 		if can_place_on_origin, ok := singleItem["CanPlaceOn"]; ok {
 			can_place_on_got, normal := can_place_on_origin.([]interface{})
 			if !normal {
-				return fmt.Errorf(`DecodeItemAdditionalData: Can not convert can_place_on_origin into []interface{}; singleItem = %#v`, singleItem)
+				return fmt.Errorf(`DecodeItemEnhancementData: Can not convert can_place_on_origin into []interface{}; singleItem = %#v`, singleItem)
 			}
 			if itemComponents == nil {
 				itemComponents = &ItemComponents{}
@@ -167,7 +167,7 @@ func (g *GeneralItem) DecodeItemEnhancementData(
 			for key, value := range can_place_on_got {
 				blockName, normal := value.(string)
 				if !normal {
-					return fmt.Errorf(`DecodeItemAdditionalData: Can not convert can_place_on_got[%d] into string; singleItem = %#v`, key, singleItem)
+					return fmt.Errorf(`DecodeItemEnhancementData: Can not convert can_place_on_got[%d] into string; singleItem = %#v`, key, singleItem)
 				}
 				itemComponents.CanPlaceOn = append(itemComponents.CanPlaceOn, blockName)
 			}
@@ -176,7 +176,7 @@ func (g *GeneralItem) DecodeItemEnhancementData(
 		if can_destroy_origin, ok := singleItem["CanDestroy"]; ok {
 			can_destroy_got, normal := can_destroy_origin.([]interface{})
 			if !normal {
-				return fmt.Errorf(`DecodeItemAdditionalData: Can not convert can_destroy_origin into []interface{}; singleItem = %#v`, singleItem)
+				return fmt.Errorf(`DecodeItemEnhancementData: Can not convert can_destroy_origin into []interface{}; singleItem = %#v`, singleItem)
 			}
 			if itemComponents == nil {
 				itemComponents = &ItemComponents{}
@@ -184,7 +184,7 @@ func (g *GeneralItem) DecodeItemEnhancementData(
 			for key, value := range can_destroy_got {
 				blockName, normal := value.(string)
 				if !normal {
-					return fmt.Errorf(`DecodeItemAdditionalData: Can not convert can_destroy_got[%d] into string; singleItem = %#v`, key, singleItem)
+					return fmt.Errorf(`DecodeItemEnhancementData: Can not convert can_destroy_got[%d] into string; singleItem = %#v`, key, singleItem)
 				}
 				itemComponents.CanDestroy = append(itemComponents.CanDestroy, blockName)
 			}
@@ -194,7 +194,7 @@ func (g *GeneralItem) DecodeItemEnhancementData(
 			if item_lock_origin, ok := nbt_tag_got["minecraft:item_lock"]; ok {
 				item_lock_got, normal := item_lock_origin.(byte)
 				if !normal {
-					return fmt.Errorf(`DecodeItemAdditionalData: Can not convert item_lock_origin into byte(uint8); singleItem = %#v`, singleItem)
+					return fmt.Errorf(`DecodeItemEnhancementData: Can not convert item_lock_origin into byte(uint8); singleItem = %#v`, singleItem)
 				}
 				if itemComponents == nil {
 					itemComponents = &ItemComponents{}
@@ -205,17 +205,17 @@ func (g *GeneralItem) DecodeItemEnhancementData(
 				case 2:
 					itemComponents.ItemLock = "lock_in_inventory"
 				default:
-					return fmt.Errorf(`DecodeItemAdditionalData: Unknown value(%d) of item_lock; singleItem = %#v`, item_lock_got, singleItem)
+					return fmt.Errorf(`DecodeItemEnhancementData: Unknown value(%d) of item_lock; singleItem = %#v`, item_lock_got, singleItem)
 				}
 			}
 			// item_lock
 			if keep_on_death_origin, ok := nbt_tag_got["minecraft:keep_on_death"]; ok {
 				keep_on_death_got, normal := keep_on_death_origin.(byte)
 				if !normal {
-					return fmt.Errorf(`DecodeItemAdditionalData: Can not convert keep_on_death_origin into byte(uint8); singleItem = %#v`, singleItem)
+					return fmt.Errorf(`DecodeItemEnhancementData: Can not convert keep_on_death_origin into byte(uint8); singleItem = %#v`, singleItem)
 				}
 				if keep_on_death_got != 1 {
-					return fmt.Errorf(`DecodeItemAdditionalData: Unknown value(%d) of kepp_on_death; singleItem = %#v`, keep_on_death_got, singleItem)
+					return fmt.Errorf(`DecodeItemEnhancementData: Unknown value(%d) of kepp_on_death; singleItem = %#v`, keep_on_death_got, singleItem)
 				}
 				if itemComponents == nil {
 					itemComponents = &ItemComponents{}
@@ -230,7 +230,7 @@ func (g *GeneralItem) DecodeItemEnhancementData(
 	if ench_origin, ok := nbt_tag_got["ench"]; ok {
 		ench_got, normal := ench_origin.([]interface{})
 		if !normal {
-			return fmt.Errorf(`DecodeItemAdditionalData: Can not convert ench_origin into []interface{}; singleItem = %#v`, singleItem)
+			return fmt.Errorf(`DecodeItemEnhancementData: Can not convert ench_origin into []interface{}; singleItem = %#v`, singleItem)
 		}
 		if len(ench_got) > 0 {
 			enchantments = &[]Enchantment{}
@@ -238,23 +238,23 @@ func (g *GeneralItem) DecodeItemEnhancementData(
 		for key, value := range ench_got {
 			value_got, normal := value.(map[string]interface{})
 			if !normal {
-				return fmt.Errorf(`DecodeItemAdditionalData: Can not convert ench_got[%d] into map[string]interface{}; singleItem = %#v`, key, singleItem)
+				return fmt.Errorf(`DecodeItemEnhancementData: Can not convert ench_got[%d] into map[string]interface{}; singleItem = %#v`, key, singleItem)
 			}
 			id_origin, ok := value_got["id"]
 			if !ok {
-				return fmt.Errorf(`DecodeItemAdditionalData: ench_got[%d]["id"] does not exist; singleItem = %#v`, key, singleItem)
+				return fmt.Errorf(`DecodeItemEnhancementData: ench_got[%d]["id"] does not exist; singleItem = %#v`, key, singleItem)
 			}
 			id_got, normal := id_origin.(int16)
 			if !normal {
-				return fmt.Errorf(`DecodeItemAdditionalData: Can not convert ench_got[%d]["id"] into int16; singleItem = %#v`, key, singleItem)
+				return fmt.Errorf(`DecodeItemEnhancementData: Can not convert ench_got[%d]["id"] into int16; singleItem = %#v`, key, singleItem)
 			}
 			lvl_origin, ok := value_got["lvl"]
 			if !ok {
-				return fmt.Errorf(`DecodeItemAdditionalData: ench_got[%d]["lvl"] does not exist; singleItem = %#v`, key, singleItem)
+				return fmt.Errorf(`DecodeItemEnhancementData: ench_got[%d]["lvl"] does not exist; singleItem = %#v`, key, singleItem)
 			}
 			lvl_got, normal := lvl_origin.(int16)
 			if !normal {
-				return fmt.Errorf(`DecodeItemAdditionalData: Can not convert ench_got[%d]["lvl"] into int16; singleItem = %#v`, key, singleItem)
+				return fmt.Errorf(`DecodeItemEnhancementData: Can not convert ench_got[%d]["lvl"] into int16; singleItem = %#v`, key, singleItem)
 			}
 			*enchantments = append(*enchantments, Enchantment{ID: uint8(id_got), Level: lvl_got})
 		}
@@ -278,7 +278,7 @@ func (g *GeneralItem) DecodeItemEnhancementData(
 		}
 		display_got, normal := display_origin.(map[string]interface{})
 		if !normal {
-			return fmt.Errorf(`DecodeItemAdditionalData: Can not convert display_origin into map[string]interface{}; singleItem = %#v`, singleItem)
+			return fmt.Errorf(`DecodeItemEnhancementData: Can not convert display_origin into map[string]interface{}; singleItem = %#v`, singleItem)
 		}
 		name_origin, ok := display_got["Name"]
 		if !ok {
@@ -286,7 +286,7 @@ func (g *GeneralItem) DecodeItemEnhancementData(
 		}
 		name_got, normal := name_origin.(string)
 		if !normal {
-			return fmt.Errorf(`DecodeItemAdditionalData: Can not convert name_origin into string; singleItem = %#v`, singleItem)
+			return fmt.Errorf(`DecodeItemEnhancementData: Can not convert name_origin into string; singleItem = %#v`, singleItem)
 		}
 		displayName = name_got
 	}
