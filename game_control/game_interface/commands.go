@@ -13,7 +13,7 @@ import (
 )
 
 // 向租赁服发送 Sizukana 命令且无视返回值。
-// 当 sendDimensionalCmd 为真时，
+// 当 dimensional 为真时，
 // 将使用 execute 更换命令执行环境为机器人所在的环境
 func (g *GameInterface) SendSettingsCommand(
 	command string,

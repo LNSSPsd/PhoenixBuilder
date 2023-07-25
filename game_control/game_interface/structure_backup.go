@@ -17,7 +17,8 @@ type MCStructure mcstructure.Area
 type BlockPos mcstructure.BlockPos
 
 // 备份 structure 所指代的区域为结构。
-// 返回一个 uuid.UUID 对象，其字符串形式代表被备份结构的名称
+// 返回一个 uuid.UUID 对象，
+// 其 uuid_to_safe_string(uuid.UUID) 形式代表被备份结构的名称
 func (g *GameInterface) BackupStructure(structure MCStructure) (uuid.UUID, error) {
 	uniqueId := generateUUID()
 	// get new uuid
@@ -55,7 +56,23 @@ func (g *GameInterface) BackupStructure(structure MCStructure) (uuid.UUID, error
 	// return
 }
 
-// 在 pos 处恢复名称为 unique.String() 的备份用结构并删除此结构
+// 删除名称为 uuid_to_safe_string(uuid.UUID) 的结构
+func (g *GameInterface) DeleteStructure(uniqueID uuid.UUID) error {
+	err := g.SendSettingsCommand(
+		fmt.Sprintf(
+			`structure delete "%v"`,
+			uuid_to_safe_string(uniqueID),
+		),
+		false,
+	)
+	if err != nil {
+		return fmt.Errorf("RevertStructure: %v", err)
+	}
+	return nil
+}
+
+// 在 pos 处恢复名称为 uuid_to_safe_string(uuid.UUID) 的备份用结构，
+// 然后删除此结构
 func (g *GameInterface) RevertStructure(uniqueID uuid.UUID, pos BlockPos) error {
 	request := fmt.Sprintf(
 		`structure load "%v" %d %d %d`,
@@ -84,13 +101,7 @@ func (g *GameInterface) RevertStructure(uniqueID uuid.UUID, pos BlockPos) error 
 		}
 	}
 	// some special solutions for when we facing Netease Mask Words System
-	err := g.SendSettingsCommand(
-		fmt.Sprintf(
-			`structure delete "%v"`,
-			uuid_to_safe_string(uniqueID),
-		),
-		false,
-	)
+	err := g.DeleteStructure(uniqueID)
 	if err != nil {
 		return fmt.Errorf("RevertStructure: %v", err)
 	}
