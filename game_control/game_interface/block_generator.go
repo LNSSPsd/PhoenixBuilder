@@ -99,7 +99,7 @@ func (g *GameInterface) PlaceShulkerBox(
 	pos [3]int32,
 	hotBarSlot uint8,
 	facing uint8,
-) ([3]int32, error) {
+) error {
 	var originPos [3]int32 = pos
 	var teleportCommand string
 	var backupBlockPos [3]int32
@@ -107,11 +107,11 @@ func (g *GameInterface) PlaceShulkerBox(
 	if facing == 0 || facing == 1 {
 		resp := g.SendWSCommandWithResponse("querytarget @s")
 		if resp.Error != nil {
-			return [3]int32{}, fmt.Errorf("PlaceShulkerBox: %v", resp.Error)
+			return fmt.Errorf("PlaceShulkerBox: %v", resp.Error)
 		}
 		got, err := g.ParseTargetQueryingInfo(resp.Respond)
 		if err != nil {
-			return [3]int32{}, fmt.Errorf("PlaceShulkerBox: %v", err)
+			return fmt.Errorf("PlaceShulkerBox: %v", err)
 		}
 		datas := got[0].Dimension
 		// 取得客户端所在的维度
@@ -181,7 +181,7 @@ func (g *GameInterface) PlaceShulkerBox(
 			},
 		)
 		if err != nil {
-			return [3]int32{}, fmt.Errorf("PlaceShulkerBox: %v", err)
+			return fmt.Errorf("PlaceShulkerBox: %v", err)
 		}
 		defer func() {
 			g.RevertStructure(backupShulkerBoxUniqueId, pos)
@@ -190,11 +190,11 @@ func (g *GameInterface) PlaceShulkerBox(
 	// 可能潜影盒并非生成在原本给定的坐标处，此时需要进行特殊处理
 	err := g.SetBlockAsync(pos, "air", "[]")
 	if err != nil {
-		return [3]int32{}, fmt.Errorf("PlaceShulkerBox: %v", err)
+		return fmt.Errorf("PlaceShulkerBox: %v", err)
 	}
 	err = g.SendSettingsCommand(teleportCommand, true)
 	if err != nil {
-		return [3]int32{}, fmt.Errorf("PlaceShulkerBox: %v", err)
+		return fmt.Errorf("PlaceShulkerBox: %v", err)
 	}
 	uniqueId, err := g.BackupStructure(
 		MCStructure{
@@ -207,11 +207,11 @@ func (g *GameInterface) PlaceShulkerBox(
 		},
 	)
 	if err != nil {
-		return [3]int32{}, fmt.Errorf("PlaceShulkerBox: %v", err)
+		return fmt.Errorf("PlaceShulkerBox: %v", err)
 	}
 	err = g.SetBlock(backupBlockPos, "emerald_block", "[]")
 	if err != nil {
-		return [3]int32{}, fmt.Errorf("PlaceShulkerBox: %v", err)
+		return fmt.Errorf("PlaceShulkerBox: %v", err)
 	}
 	// 清除潜影盒处的方块、修正机器人的朝向、备份相关的方块、
 	// 然后再在备份的方块处生成一个绿宝石块。
@@ -219,7 +219,7 @@ func (g *GameInterface) PlaceShulkerBox(
 	// SuperScript 最喜欢绿宝石块了！
 	err = g.ChangeSelectedHotbarSlot(hotBarSlot)
 	if err != nil {
-		return [3]int32{}, fmt.Errorf("PlaceShulkerBox: %v", err)
+		return fmt.Errorf("PlaceShulkerBox: %v", err)
 	}
 	err = g.PlaceBlock(
 		UseItemOnBlocks{
@@ -231,12 +231,12 @@ func (g *GameInterface) PlaceShulkerBox(
 		int32(facing),
 	)
 	if err != nil {
-		return [3]int32{}, fmt.Errorf("PlaceShulkerBox: %v", err)
+		return fmt.Errorf("PlaceShulkerBox: %v", err)
 	}
 	// 更换手持物品栏为 hotBarSlot 并点击绿宝石块以放置潜影盒。
 	err = g.RevertStructure(uniqueId, backupBlockPos)
 	if err != nil {
-		return [3]int32{}, fmt.Errorf("PlaceShulkerBox: %v", err)
+		return fmt.Errorf("PlaceShulkerBox: %v", err)
 	}
 	// 将绿宝石块处的方块恢复为原本方块
 	if pos != originPos {
@@ -254,14 +254,14 @@ func (g *GameInterface) PlaceShulkerBox(
 		)
 		err = g.SendSettingsCommand(request, true)
 		if err != nil {
-			return [3]int32{}, fmt.Errorf("PlaceShulkerBox: %v", err)
+			return fmt.Errorf("PlaceShulkerBox: %v", err)
 		}
 		resp := g.SendWSCommandWithResponse("list")
 		if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
-			return [3]int32{}, fmt.Errorf("PlaceShulkerBox: %v", err)
+			return fmt.Errorf("PlaceShulkerBox: %v", err)
 		}
 	}
 	// 可能潜影盒并非生成在原本给定的坐标处，此时需要进行特殊处理
-	return pos, nil
+	return nil
 	// 返回值
 }
