@@ -74,6 +74,10 @@ func (g *GameInterface) DeleteStructure(uniqueID uuid.UUID) error {
 // 在 pos 处恢复名称为 uuid_to_safe_string(uuid.UUID) 的备份用结构，
 // 然后删除此结构
 func (g *GameInterface) RevertStructure(uniqueID uuid.UUID, pos BlockPos) error {
+	defer func() {
+		g.DeleteStructure(uniqueID)
+	}()
+	// delete structure
 	request := fmt.Sprintf(
 		`structure load "%v" %d %d %d`,
 		uuid_to_safe_string(uniqueID),
@@ -101,11 +105,6 @@ func (g *GameInterface) RevertStructure(uniqueID uuid.UUID, pos BlockPos) error 
 		}
 	}
 	// some special solutions for when we facing Netease Mask Words System
-	err := g.DeleteStructure(uniqueID)
-	if err != nil {
-		return fmt.Errorf("RevertStructure: %v", err)
-	}
-	// delete structure
 	return nil
 	// return
 }
