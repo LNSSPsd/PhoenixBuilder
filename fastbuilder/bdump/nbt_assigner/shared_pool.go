@@ -81,15 +81,15 @@ var SupportContainerPool map[string]string = map[string]string{
 	"lit_smoker":         "Items",
 	"furnace":            "Items",
 	"lit_furnace":        "Items",
-	"chest":              "Items", // *
+	"chest":              "Items",
 	"barrel":             "Items",
-	"trapped_chest":      "Items", // *
-	"lectern":            "book",  // *
+	"trapped_chest":      "Items",
+	"lectern":            "book",
 	"hopper":             "Items",
 	"dispenser":          "Items",
 	"dropper":            "Items",
-	"jukebox":            "RecordItem", // *
+	"jukebox":            "RecordItem",
 	"brewing_stand":      "Items",
-	"undyed_shulker_box": "Items", // *
-	"shulker_box":        "Items", // *
+	"undyed_shulker_box": "Items",
+	"shulker_box":        "Items",
 }
