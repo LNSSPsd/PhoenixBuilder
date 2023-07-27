@@ -71,10 +71,13 @@ func (g *GameInterface) CopyItem(
 			result = sum
 		}
 		// 确定应当移动的物品数量和移动成功后的结果
+		if sourceData.Stack.NetworkID == 0 {
+			return false, fmt.Errorf("subFunc: Unknown item loss occurred")
+		}
 		if moveCounts <= 0 {
 			return true, nil
 		}
-		// 检查已有物品存量是否已达到要求的值
+		// 数据检查
 		resp, err := g.MoveItem(
 			source,
 			destination,
@@ -122,16 +125,6 @@ func (g *GameInterface) CopyItem(
 	// 将 source 处的物品合并到 destination 处
 	// 返回的布尔值代表合并后的物品总数是否已达到要求的数目
 	singleCodeBlock := func() (bool, error) {
-		err := openConatiner()
-		if err != nil {
-			return false, fmt.Errorf("singleCodeBlock: %v", err)
-		}
-		defer func() {
-			if g.Resources.Container.GetContainerOpeningData() != nil {
-				g.CloseContainer()
-			}
-		}()
-		// 打开木桶并等待数据同步
 		itemOnHotBarSlot := ItemLocation{
 			WindowID:    0,
 			ContainerID: 0xc,
@@ -143,7 +136,7 @@ func (g *GameInterface) CopyItem(
 			Slot:        13,
 		}
 		// 初始化
-		_, err = subFunc(itemOnHotBarSlot, itemOnConatiner)
+		_, err := subFunc(itemOnHotBarSlot, itemOnConatiner)
 		if err != nil {
 			return false, fmt.Errorf("singleCodeBlock: %v", err)
 		}
@@ -244,7 +237,12 @@ func (g *GameInterface) CopyItem(
 		if err != nil {
 			return fmt.Errorf("CopyItem: %v", err)
 		}
-		// 生成木桶
+		err = openConatiner()
+		if err != nil {
+			return fmt.Errorf("CopyItem: %v", err)
+		}
+		defer g.CloseContainer()
+		// 生成木桶，然后打开其并等待数据同步
 		for {
 			stop, err := singleCodeBlock()
 			if err != nil {
