@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/types"
 	GameInterface "phoenixbuilder/game_control/game_interface"
-	ResourcesControl "phoenixbuilder/game_control/resources_control"
 )
 
 // 从容器的 NBT 数据中提取物品数据。
@@ -175,12 +174,6 @@ func (c *Container) WriteData() error {
 			"",
 		)
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
-		}
-	}
-	if len(defaultSituation) > 0 {
-		resp := c.BlockEntity.Interface.SendWSCommandWithResponse("list")
-		if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
 			return fmt.Errorf("WriteData: %v", err)
 		}
 	}

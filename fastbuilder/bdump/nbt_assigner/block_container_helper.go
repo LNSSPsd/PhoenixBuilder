@@ -303,6 +303,11 @@ func (c *Container) GetSubBlock(
 		return false, 0, fmt.Errorf("GetSubBlock: %v", err)
 	}
 	// 解码并放置子方块
+	resp := c.BlockEntity.Interface.SendWSCommandWithResponse("list")
+	if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
+		return false, 0, fmt.Errorf("GetSubBlock: %v", err)
+	}
+	// 等待更改
 	success, spawnLocation, err := api.PickBlock(
 		c.BlockEntity.AdditionalData.Position,
 		true,
@@ -392,6 +397,11 @@ func (c *Container) GetNBTItem(
 		return false, fmt.Errorf("GetNBTItem: %v", err)
 	}
 	// 解码并取得该 NBT 物品
+	resp := c.BlockEntity.Interface.SendWSCommandWithResponse("list")
+	if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
+		return false, fmt.Errorf("GetNBTItem: %v", err)
+	}
+	// 等待更改
 	return true, nil
 	// 返回值
 }
