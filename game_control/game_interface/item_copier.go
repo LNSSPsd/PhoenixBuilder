@@ -38,7 +38,7 @@ func (g *GameInterface) CopyItem(
 		case <-packets:
 		case <-time.After(ItemCopyWaitContainerDataComingDeadLine):
 		}
-		err = g.Resources.Listener.StopAndDestroyListen(listener)
+		err = g.Resources.Listener.StopAndDestroy(listener)
 		if err != nil {
 			return fmt.Errorf("openConatiner: %v", err)
 		}

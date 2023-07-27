@@ -38,7 +38,7 @@ func (g *GameInterface) RenameItem(
 	if err != nil {
 		return nil, fmt.Errorf("RenameItem: %v", err)
 	}
-	err = ResourcesControl.DeepCopy(
+	ResourcesControl.DeepCopy(
 		&get,
 		&itemDatas,
 		func() {

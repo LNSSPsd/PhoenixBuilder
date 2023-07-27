@@ -63,9 +63,6 @@ func (s *singleListen) simplePacketDistributor(
 }
 
 // 将数据包 pk 分发到每个监听器上。
-// 如果此函数返回的错误不为空指针，
-// 那么这意味着底层实现存在问题，
-// 届时请相应的上层调用者 panic 此程序。
 // 属于私有实现
 func (p *packetListener) distributePacket(pk packet.Packet) error {
 	var err error
@@ -85,21 +82,21 @@ func (p *packetListener) distributePacket(pk packet.Packet) error {
 	)
 	// 分发数据包到每个监听器上
 	if err != nil {
-		return fmt.Errorf("distributePacket: %v", err)
+		return err
 	}
 	return nil
 	// 返回值
 }
 
 // 终止并关闭 listener 所指代的监听器
-func (p *packetListener) StopAndDestroyListen(listener uuid.UUID) error {
+func (p *packetListener) StopAndDestroy(listener uuid.UUID) error {
 	single_listen_origin, ok := p.listenerWithData.Load(listener)
 	if !ok {
-		return fmt.Errorf("StopAndDestroyListen: %v is not recorded", listener.String())
+		return fmt.Errorf("StopAndDestroy: %v is not recorded", listener.String())
 	}
 	singleListen, success := single_listen_origin.(singleListen)
 	if !success {
-		return fmt.Errorf("StopAndDestroyListen: Failed to convert single_listen_origin into singleListen; single_listen_origin = %#v", single_listen_origin)
+		return fmt.Errorf("StopAndDestroy: Failed to convert single_listen_origin into singleListen; single_listen_origin = %#v", single_listen_origin)
 	}
 	// convert data into known data type
 	singleListen.stop()

@@ -35,7 +35,7 @@ func (g *GameInterface) PickBlock(
 		case <-time.After(BlockPickRequestDeadLine):
 		}
 		// 确定方块是被 Pick 到了哪个物品栏
-		err = g.Resources.Listener.StopAndDestroyListen(listener)
+		err = g.Resources.Listener.StopAndDestroy(listener)
 		if err != nil {
 			return false, 0, fmt.Errorf("PickBlock: %v", err)
 		}
