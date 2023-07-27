@@ -46,7 +46,7 @@ func (g *GameInterface) PickBlock(
 			return true, uint8(selectedHotBarSlot), nil
 		}
 		// 如果当次请求超时，则重试，否则直接返回值。
-		// 最多重试 BlockPickRequestReTryMaximumCounts 次
+		// 最多尝试(总次数) BlockPickRequestReTryMaximumCounts 次
 	}
 	// 发送 Pick Block 请求并确定方块是被 Pick 到了哪个物品栏
 	return false, 0, nil

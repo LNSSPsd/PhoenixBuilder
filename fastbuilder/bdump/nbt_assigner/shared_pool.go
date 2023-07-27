@@ -81,7 +81,6 @@ var SupportContainerPool map[string]ContainerConstantData = map[string]Container
 	"furnace":            {StorageItemValue: "Items", CouldOpen: true, ContainerID: 25},
 	"lit_furnace":        {StorageItemValue: "Items", CouldOpen: true, ContainerID: 25},
 	"chest":              {StorageItemValue: "Items", CouldOpen: true, ContainerID: 7},
-	"barrel":             {StorageItemValue: "Items", CouldOpen: true, ContainerID: 58},
 	"trapped_chest":      {StorageItemValue: "Items", CouldOpen: true, ContainerID: 7},
 	"lectern":            {StorageItemValue: "book", CouldOpen: false, ContainerID: 255},
 	"hopper":             {StorageItemValue: "Items", CouldOpen: false, ContainerID: 7},
@@ -91,4 +90,6 @@ var SupportContainerPool map[string]ContainerConstantData = map[string]Container
 	"brewing_stand":      {StorageItemValue: "Items", CouldOpen: false, ContainerID: 59},
 	"undyed_shulker_box": {StorageItemValue: "Items", CouldOpen: false, ContainerID: 30},
 	"shulker_box":        {StorageItemValue: "Items", CouldOpen: false, ContainerID: 30},
+	// phoenixbuilder/game_control/game_interface/item_copier.go uses this field directly
+	"barrel": {StorageItemValue: "Items", CouldOpen: true, ContainerID: 58},
 }
