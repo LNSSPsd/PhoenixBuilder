@@ -65,15 +65,16 @@ func (s *singleListen) simplePacketDistributor(
 // 将数据包 pk 分发到每个监听器上。
 // 如果此函数返回的错误不为空指针，
 // 那么这意味着底层实现存在问题，
-// 届时请相应的上层调用者 panic 此程序
-func (p *packetListener) DistributePacket(pk packet.Packet) error {
+// 届时请相应的上层调用者 panic 此程序。
+// 属于私有实现
+func (p *packetListener) distributePacket(pk packet.Packet) error {
 	var err error
 	// 初始化
 	p.listenerWithData.Range(
 		func(key, value any) bool {
 			singleListen, success := value.(singleListen)
 			if !success {
-				err = fmt.Errorf("DistributePacket: Failed to convert value into singleListen; value = %#v", value)
+				err = fmt.Errorf("distributePacket: Failed to convert value into singleListen; value = %#v", value)
 				return false
 			}
 			if singleListen.packetID == pk.ID() {
@@ -84,7 +85,7 @@ func (p *packetListener) DistributePacket(pk packet.Packet) error {
 	)
 	// 分发数据包到每个监听器上
 	if err != nil {
-		return fmt.Errorf("DistributePacket: %v", err)
+		return fmt.Errorf("distributePacket: %v", err)
 	}
 	return nil
 	// 返回值

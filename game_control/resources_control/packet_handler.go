@@ -79,7 +79,7 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 		// used to request mcstructure data
 	}
 	// process packet
-	err := r.Listener.DistributePacket(*pk)
+	err := r.Listener.distributePacket(*pk)
 	if err != nil {
 		panic(fmt.Sprintf("handlePacket: %v", err))
 	}
