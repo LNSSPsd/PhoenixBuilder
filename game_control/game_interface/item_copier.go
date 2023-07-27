@@ -50,7 +50,7 @@ func (g *GameInterface) CopyItem(
 		source ItemLocation,
 		destination ItemLocation,
 	) (bool, error) {
-		var moveCounts uint8
+		var moveCounts int8
 		var result uint16
 		// 初始化
 		sourceData, err := g.Resources.Inventory.GetItemStackInfo(uint32(source.WindowID), source.Slot)
@@ -64,13 +64,17 @@ func (g *GameInterface) CopyItem(
 		// 获取物品数据
 		sum := sourceData.Stack.Count + destinationData.Stack.Count
 		if sum > uint16(requestCount) {
-			moveCounts = requestCount - uint8(destinationData.Stack.Count)
+			moveCounts = int8(requestCount - uint8(destinationData.Stack.Count))
 			result = uint16(requestCount)
 		} else {
-			moveCounts = byte(sourceData.Stack.Count)
+			moveCounts = int8(sourceData.Stack.Count)
 			result = sum
 		}
 		// 确定应当移动的物品数量和移动成功后的结果
+		if moveCounts <= 0 {
+			return true, nil
+		}
+		// 检查已有物品存量是否已达到要求的值
 		resp, err := g.MoveItem(
 			source,
 			destination,
@@ -100,7 +104,7 @@ func (g *GameInterface) CopyItem(
 					},
 				},
 			},
-			moveCounts,
+			uint8(moveCounts),
 		)
 		if err != nil {
 			return false, fmt.Errorf("subFunc: %v", err)
