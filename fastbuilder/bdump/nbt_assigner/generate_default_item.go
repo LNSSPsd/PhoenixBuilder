@@ -98,7 +98,11 @@ func (d *DefaultItem) WriteData() error {
 					Path: "slot.hotbar",
 					Slot: d.ItemPackage.AdditionalData.HotBarSlot,
 				},
-				types.ChestSlot{Name: "air"},
+				types.ChestSlot{
+					Name:   "air",
+					Count:  1,
+					Damage: 0,
+				},
 				"",
 			)
 			if err != nil {

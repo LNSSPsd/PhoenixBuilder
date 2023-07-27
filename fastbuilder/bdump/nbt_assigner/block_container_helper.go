@@ -594,6 +594,19 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 						return fmt.Errorf("subFunc: %v", err)
 					}
 				}
+				go api.ReplaceItemInInventory(
+					GameInterface.TargetMySelf,
+					GameInterface.ItemGenerateLocation{
+						Path: "slot.inventory",
+						Slot: key - 9,
+					},
+					types.ChestSlot{
+						Name:   "air",
+						Count:  1,
+						Damage: 0,
+					},
+					"",
+				)
 				resp := api.SendWSCommandWithResponse("list")
 				if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
 					return fmt.Errorf("subFunc: %v", resp.Error)
