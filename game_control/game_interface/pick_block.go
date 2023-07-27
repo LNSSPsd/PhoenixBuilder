@@ -21,7 +21,7 @@ func (g *GameInterface) PickBlock(
 			return false, 0, fmt.Errorf("PickBlock: %v", err)
 		}
 		// 将物品栏切换到 5
-		holder, packets := g.Resources.Listener.CreateNewListen(uint32(packet.IDPlayerHotBar), 1)
+		listener, packets := g.Resources.Listener.CreateNewListen(uint32(packet.IDPlayerHotBar), 1)
 		// 注册一个用于监听 packet.IDPlayerHotBar 的数据包监听器
 		g.WritePacket(&packet.BlockPickRequest{
 			Position:    pos,
@@ -35,7 +35,7 @@ func (g *GameInterface) PickBlock(
 		case <-time.After(BlockPickRequestDeadLine):
 		}
 		// 确定方块是被 Pick 到了哪个物品栏
-		err = g.Resources.Listener.StopAndDestroyListen(holder)
+		err = g.Resources.Listener.StopAndDestroyListen(listener)
 		if err != nil {
 			return false, 0, fmt.Errorf("PickBlock: %v", err)
 		}
