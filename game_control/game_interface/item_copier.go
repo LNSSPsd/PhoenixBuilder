@@ -236,11 +236,14 @@ func (g *GameInterface) CopyItem(
 			return fmt.Errorf("CopyItem: %v", err)
 		}
 		// 传送机器人到 blockPos
+		err = g.SetBlockAsync(blockPos, "air", "[]")
+		if err != nil {
+			return fmt.Errorf("CopyItem: %v", err)
+		}
 		err = g.SetBlock(blockPos, "barrel", `["facing_direction": 0]`)
 		if err != nil {
 			return fmt.Errorf("CopyItem: %v", err)
 		}
-		defer g.SetBlockAsync(blockPos, "air", "[]")
 		// 生成木桶
 		for {
 			stop, err := singleCodeBlock()
@@ -255,4 +258,5 @@ func (g *GameInterface) CopyItem(
 		return nil
 		// 返回值
 	}
+	// 复制物品为指定数目
 }
