@@ -66,7 +66,7 @@ func (g *GameInterface) sendCommandWithResponse(
 	command string,
 	origin uint32,
 ) ResourcesControl.CommandRespond {
-	uniqueId := generateUUID()
+	uniqueId := ResourcesControl.GenerateUUID()
 	err := g.Resources.Command.WriteRequest(uniqueId)
 	if err != nil {
 		return ResourcesControl.CommandRespond{

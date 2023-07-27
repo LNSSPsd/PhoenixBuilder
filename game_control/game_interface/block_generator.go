@@ -93,7 +93,8 @@ func (g *GameInterface) GenerateNewAnvil(pos [3]int32, blockStates string) (
 }
 
 // 在 pos 处以点击方块的形式放置朝向为 facing 的潜影盒。
-// hotBarSlot 指代该潜影盒在快捷栏的位置，我们将会使用该快捷栏的物品，
+// hotBarSlot 指代该潜影盒在快捷栏的位置。
+// 我们将会使用该快捷栏的物品，
 // 然后点击对应的方块以达到放置指定朝向的潜影盒的目的
 func (g *GameInterface) PlaceShulkerBox(
 	pos [3]int32,
@@ -183,9 +184,7 @@ func (g *GameInterface) PlaceShulkerBox(
 		if err != nil {
 			return fmt.Errorf("PlaceShulkerBox: %v", err)
 		}
-		defer func() {
-			g.RevertStructure(backupShulkerBoxUniqueId, pos)
-		}()
+		defer g.RevertStructure(backupShulkerBoxUniqueId, pos)
 	}
 	// 可能潜影盒并非生成在原本给定的坐标处，此时需要进行特殊处理
 	err := g.SetBlockAsync(pos, "air", "[]")

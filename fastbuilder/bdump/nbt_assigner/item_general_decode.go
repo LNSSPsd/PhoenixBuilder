@@ -99,7 +99,7 @@ func (g *GeneralItem) DecodeItemBasicData(singleItem ItemOrigin) error {
 				if !normal {
 					return fmt.Errorf(`DecodeItemBasicData: Can not convert states_origin into map[string]interface{}; singleItem = %#v`, singleItem)
 				}
-				runtimeId, found := chunk.StateToRuntimeID(g.Basic.Name, states_got)
+				runtimeId, found := chunk.StateToRuntimeID(fmt.Sprintf("minecraft:%s", g.Basic.Name), states_got)
 				if !found {
 					return fmt.Errorf(`DecodeItemBasicData: Could not convert legacy block to standard runtime id; singleItem = %#v`, singleItem)
 				}
@@ -324,7 +324,7 @@ func (i *ItemPackage) DecodeItemCustomData(
 	blockType := IsNBTBlockSupported(i.Item.Basic.Name)
 	if len(blockType) != 0 {
 		blockStates, err = get_block_states_from_legacy_block(
-			fmt.Sprintf("minecraft:%v", i.Item.Basic.Name), i.Item.Basic.MetaData,
+			i.Item.Basic.Name, i.Item.Basic.MetaData,
 		)
 		if err != nil {
 			blockStates = map[string]interface{}{}

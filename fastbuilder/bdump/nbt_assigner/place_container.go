@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/types"
 	GameInterface "phoenixbuilder/game_control/game_interface"
+	ResourcesControl "phoenixbuilder/game_control/resources_control"
 )
 
 // 从容器的 NBT 数据中提取物品数据。
 // 返回的列表代表提取到的每个物品
 func (c *Container) getContainerContents() ([]ItemOrigin, error) {
-	key := SupportContainerPool[c.BlockEntity.Block.Name]
-	if len(key) == 0 {
+	got, ok := SupportContainerPool[c.BlockEntity.Block.Name]
+	if !ok {
 		return nil, ErrNotASupportedContainer
 	}
 	// 确定目标容器是否已被支持
-	itemContentsGot, ok := c.BlockEntity.Block.NBT[key]
+	itemContentsGot, ok := c.BlockEntity.Block.NBT[got.StorageItemValue]
 	// 从 containerOriginNBT 获取物品的数据
 	if !ok {
 		return []ItemOrigin{}, nil
@@ -77,11 +78,12 @@ func (c *Container) Decode() error {
 	// 返回值
 }
 
-// 放置一个容器并填充物品
-func (c *Container) WriteData() error {
-	err := c.BlockEntity.Interface.SetBlock(c.BlockEntity.AdditionalData.Position, c.BlockEntity.Block.Name, c.BlockEntity.AdditionalData.BlockStates)
+// 放置一个容器并填充物品。
+// 这是针对 FastMode 模式的专门化处理
+func (c *Container) FastWrite() error {
+	err := c.BlockEntity.Interface.SetBlockAsync(c.BlockEntity.AdditionalData.Position, c.BlockEntity.Block.Name, c.BlockEntity.AdditionalData.BlockStates)
 	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
+		return fmt.Errorf("FastWrite: %v", err)
 	}
 	// 放置容器
 	for _, value := range c.Contents {
@@ -96,10 +98,93 @@ func (c *Container) WriteData() error {
 			"",
 		)
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
+			return fmt.Errorf("FastWrite: %v", err)
 		}
 	}
 	// 向容器内填充物品
+	return nil
+	// 返回值
+}
+
+// 放置一个容器并填充物品
+func (c *Container) WriteData() error {
+	if c.BlockEntity.AdditionalData.FastMode {
+		err := c.FastWrite()
+		if err != nil {
+			return fmt.Errorf("WriteData: %v", err)
+		}
+	}
+	// 针对 FastMode 模式的专门化处理
+	err := c.PlaceContainer()
+	if err != nil {
+		return fmt.Errorf("WriteData: %v", err)
+	}
+	// 放置容器
+	for key, value := range c.Contents {
+		if ContainerCouldOpen(c.BlockEntity.Block.Name) && value.Custom != nil && value.Custom.SubBlockData != nil {
+			success, spawnLocation, err := c.GetSubBlock(value)
+			if err != nil {
+				return fmt.Errorf("GetSubBlock: Failed to process the sub block from c.Contents[%d]; c.Contents = %#v, err = %v", key, c.Contents, err)
+			}
+			if !success {
+				continue
+			}
+			// 获取子方块的物品形式
+			err = c.MoveItemIntoContainer(spawnLocation, value.Basic.Slot)
+			if err != nil {
+				return fmt.Errorf("GetSubBlock: Failed to process the sub block from c.Contents[%d]; c.Contents = %#v, err = %v", key, c.Contents, err)
+			}
+			// 将子方块移动到容器中
+			continue
+		}
+		// 子方块
+		itemType := IsNBTItemSupported(value.Basic.Name)
+		if value.Custom != nil && value.Custom.ItemTag != nil && ItemSpecialCheck(
+			value.Basic.Name, itemType,
+			value.Basic.MetaData, value.Custom.ItemTag,
+		) {
+			success, err := c.GetNBTItem(value)
+			if err != nil {
+				return fmt.Errorf("GetSubBlock: Failed to process the nbt item from c.Contents[%d]; c.Contents = %#v, err = %v", key, c.Contents, err)
+			}
+			if !success {
+				continue
+			}
+			err = c.MoveItemIntoContainer(5, value.Basic.Slot)
+			if err != nil {
+				return fmt.Errorf("GetSubBlock: Failed to process the nbt item from c.Contents[%d]; c.Contents = %#v, err = %v", key, c.Contents, err)
+			}
+		}
+		// NBT 物品
+	}
+	// 针对子方块或 NBT 物品的特殊化处理
+	defaultSituation, err := c.ItemPlanner(c.Contents)
+	if err != nil {
+		return fmt.Errorf("GetSubBlock: %v", err)
+	}
+	// 仅包含附魔属性、 物品组件和自定义物品显示名称的物品
+	for _, value := range defaultSituation {
+		err := c.BlockEntity.Interface.(*GameInterface.GameInterface).ReplaceItemInContainer(
+			c.BlockEntity.AdditionalData.Position,
+			types.ChestSlot{
+				Name:   value.Basic.Name,
+				Count:  value.Basic.Count,
+				Damage: value.Basic.MetaData,
+				Slot:   value.Basic.Slot,
+			},
+			"",
+		)
+		if err != nil {
+			return fmt.Errorf("WriteData: %v", err)
+		}
+	}
+	if len(defaultSituation) > 0 {
+		resp := c.BlockEntity.Interface.SendWSCommandWithResponse("list")
+		if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
+			return fmt.Errorf("WriteData: %v", err)
+		}
+	}
+	// 对于可以直接在容器上应用 replaceitem 命令的物品
 	return nil
 	// 返回值
 }

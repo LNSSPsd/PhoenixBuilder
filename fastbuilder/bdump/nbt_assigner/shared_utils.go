@@ -31,6 +31,14 @@ func IsNBTItemSupported(itemName string) string {
 	return ""
 }
 
+// 从 ContainerCouldOpenPool 检查这个容器是否可以打开。
+// 如果不能打开，则返回假，否则返回真。
+// 如果提供的 blockName 不是容器，则始终返回假
+func ContainerCouldOpen(blockName string) bool {
+	value, _ := SupportContainerPool[blockName]
+	return value.CouldOpen
+}
+
 // 将 itemComponents 编码为游戏支持的 JSON 格式。
 // 如果传入的 itemComponents 为空指针，则返回空字符串
 func MarshalItemComponents(itemComponents *ItemComponents) string {
@@ -65,7 +73,7 @@ func MarshalItemComponents(itemComponents *ItemComponents) string {
 }
 
 // 取得名称为 blockName 且数据值(附加值)为 metaData 的方块的方块状态。
-// 特别地，name 需要加上命名空间 minecraft
+// 特别地，name **不**需要加上命名空间 minecraft
 func get_block_states_from_legacy_block(
 	blockName string,
 	metaData uint16,

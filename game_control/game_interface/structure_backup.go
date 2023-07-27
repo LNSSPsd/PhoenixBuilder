@@ -20,7 +20,7 @@ type BlockPos mcstructure.BlockPos
 // 返回一个 uuid.UUID 对象，
 // 其 uuid_to_safe_string(uuid.UUID) 形式代表被备份结构的名称
 func (g *GameInterface) BackupStructure(structure MCStructure) (uuid.UUID, error) {
-	uniqueId := generateUUID()
+	uniqueId := ResourcesControl.GenerateUUID()
 	// get new uuid
 	request := fmt.Sprintf(
 		`structure save "%s" %d %d %d %d %d %d`,

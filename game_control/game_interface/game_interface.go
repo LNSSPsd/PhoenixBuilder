@@ -5,6 +5,7 @@ import (
 	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"time"
 )
 
 // ------------------------- general -------------------------
@@ -44,6 +45,14 @@ const (
 	TargetAllEntity     string = "@e"
 	TargetNearestPlayer string = "@p"
 )
+
+// 描述 Pick Block 请求的最长截止时间。
+// 这与 packet.BlockPickRequest 相关。
+// 当超过此时间后，将视为该请求未被接受
+const BlockPickRequestDeadLine = time.Second
+
+// 描述 Pick Block 失败后要重试的最大次数
+const BlockPickRequestReTryMaximumCounts = 3
 
 // 用作铁砧的承重方块
 const AnvilBase string = "glass"

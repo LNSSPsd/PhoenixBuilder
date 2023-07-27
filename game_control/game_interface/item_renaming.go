@@ -38,11 +38,12 @@ func (g *GameInterface) RenameItem(
 	if err != nil {
 		return nil, fmt.Errorf("RenameItem: %v", err)
 	}
-	ResourcesControl.DeepCopy(
+	err = ResourcesControl.DeepCopy(
 		&get,
 		&itemDatas,
 		func() {
 			gob.Register(map[string]interface{}{})
+			gob.Register([]interface{}{})
 		},
 	)
 	// 取得已放入铁砧的物品的物品数据并保存在 itemDatas 处
@@ -52,6 +53,7 @@ func (g *GameInterface) RenameItem(
 		&backup,
 		func() {
 			gob.Register(map[string]interface{}{})
+			gob.Register([]interface{}{})
 		},
 	)
 	// 备份物品数据到 backup 处
@@ -99,7 +101,7 @@ func (g *GameInterface) RenameItem(
 				},
 				[]ItemChangingDetails{
 					{
-						details: map[ResourcesControl.ContainerID]ResourcesControl.StackRequestContainerInfo{
+						Details: map[ResourcesControl.ContainerID]ResourcesControl.StackRequestContainerInfo{
 							0x0: {
 								WindowID: uint32(containerOpeningData.WindowID),
 								ChangeResult: map[uint8]protocol.ItemInstance{

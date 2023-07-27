@@ -87,6 +87,18 @@ type CommandBlock struct {
 
 // ------------------------- container -------------------------
 
+// 描述单个容器的固定数据，
+// 这被用于 SupportContainerPool
+type ContainerConstantData struct {
+	// 描述此容器放置物品所使用的复合标签或列表
+	StorageItemValue string
+	// 描述此容器是否可以打开
+	CouldOpen bool
+	// 描述此容器的容器 ID 。
+	// 为 255 时代表未被支持
+	ContainerID uint8
+}
+
 // 描述一个容器
 type Container struct {
 	// 该方块实体的详细数据
