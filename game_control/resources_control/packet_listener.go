@@ -91,11 +91,11 @@ func (p *packetListener) distributePacket(pk packet.Packet) error {
 	// 返回值
 }
 
-// 终止并关闭 holder 所指代的监听器
-func (p *packetListener) StopAndDestroyListen(holder uuid.UUID) error {
-	single_listen_origin, ok := p.listenerWithData.Load(holder)
+// 终止并关闭 listener 所指代的监听器
+func (p *packetListener) StopAndDestroyListen(listener uuid.UUID) error {
+	single_listen_origin, ok := p.listenerWithData.Load(listener)
 	if !ok {
-		return fmt.Errorf("StopAndDestroyListen: %v is not recorded", holder.String())
+		return fmt.Errorf("StopAndDestroyListen: %v is not recorded", listener.String())
 	}
 	singleListen, success := single_listen_origin.(singleListen)
 	if !success {
@@ -103,7 +103,7 @@ func (p *packetListener) StopAndDestroyListen(holder uuid.UUID) error {
 	}
 	// convert data into known data type
 	singleListen.stop()
-	p.listenerWithData.Delete(holder)
+	p.listenerWithData.Delete(listener)
 	// send stop command and delete listener
 	return nil
 	// return
