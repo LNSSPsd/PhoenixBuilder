@@ -358,16 +358,17 @@ func (i *ItemPackage) DecodeItemCustomData(
 		return nil
 	}
 	// 如果该物品是一个 NBT 方块
-	if len(i.AdditionalData.Type) != 0 && ItemSpecialCheck(
-		i.Item.Basic.Name,
-		i.AdditionalData.Type,
-		i.Item.Basic.MetaData,
-		nbt_tag_got,
-	) {
-		i.Item.Custom = &ItemCustomData{
-			SubBlockData: nil,
-			ItemTag:      nbt_tag_got,
-		}
+	i.Item.Custom = &ItemCustomData{
+		SubBlockData: nil,
+		ItemTag:      nbt_tag_got,
+	}
+	i.AdditionalData.Type = IsNBTItemSupported(i.Item.Basic.Name)
+	needSpecialTreatment, err := GetGenerateItemMethod(i).SpecialCheck()
+	if err != nil {
+		return fmt.Errorf("DecodeItemCustomData: %v", err)
+	}
+	if !needSpecialTreatment {
+		i.Item.Custom = nil
 		return nil
 	}
 	// 如果该物品是一个 NBT 物品，例如通过工作台合成的烟花

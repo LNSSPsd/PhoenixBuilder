@@ -16,7 +16,9 @@ GeneralBlockNBT 提供了一个通用的接口，
 该接口实际与下方的 BlockEntity 结构体绑定
 */
 type GeneralBlockNBT interface {
+	// 解码
 	Decode() error
+	// 放置方块并尽可能注入 NBT
 	WriteData() error
 }
 
@@ -104,7 +106,7 @@ type Container struct {
 	// 该方块实体的详细数据
 	BlockEntity *BlockEntity
 	// 容器的内容物
-	Contents []GeneralItem
+	Contents []ItemPackage
 }
 
 // 未被支持的容器会被应用此错误信息。

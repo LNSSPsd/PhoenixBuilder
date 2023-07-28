@@ -20,7 +20,9 @@ type UseItemOnBlocks struct {
 你可以对容器使用这样的操作，这会使得容器被打开。
 
 你亦可以对物品展示框使用这样的操作，
-这会使得物品被放入或令展示框内的物品旋转
+这会使得物品被放入或令展示框内的物品旋转。
+
+此函数不会自动切换物品栏，也不会等待租赁服响应更改
 */
 func (g *GameInterface) ClickBlock(request UseItemOnBlocks) error {
 	blockRuntimeID, err := blockStatesToNEMCRuntimeID(
@@ -74,7 +76,7 @@ request 指代实际被点击的方块，但这并不代表新方块被创建的
 我们通过点击 request 处的方块，并指定点击的面为 blockFace ，
 然后租赁服根据这些信息，在另外相应的位置创建这些新的方块。
 
-此函数不会等待租赁服响应更改，它不是阻塞式的实现
+此函数不会自动切换物品栏，也不会等待租赁服响应更改
 */
 func (g *GameInterface) PlaceBlock(
 	request UseItemOnBlocks,
@@ -127,6 +129,31 @@ func (g *GameInterface) PlaceBlock(
 	})
 	if err != nil {
 		return fmt.Errorf("PlaceBlock: %v", err)
+	}
+	// send packet
+	return nil
+	// return
+}
+
+// 使用快捷栏 hotbarSlotID 进行一次空点击操作。
+// 此函数不会自动切换物品栏，也不会等待租赁服响应更改
+func (g *GameInterface) ClickAir(hotbarSlotID uint8) error {
+	itemData, err := g.Resources.Inventory.GetItemStackInfo(0, hotbarSlotID)
+	if err != nil {
+		return fmt.Errorf("ClickAir: %v", err)
+	}
+	// get datas of the target item stack
+	err = g.WritePacket(
+		&packet.InventoryTransaction{
+			TransactionData: &protocol.UseItemTransactionData{
+				ActionType: protocol.UseItemActionClickAir,
+				HotBarSlot: int32(hotbarSlotID),
+				HeldItem:   itemData,
+			},
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("ClickAir: %v", err)
 	}
 	// send packet
 	return nil

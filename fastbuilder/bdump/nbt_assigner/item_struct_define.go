@@ -15,8 +15,13 @@ GeneralItemNBT 提供了一个通用的接口，
 该接口实际与下方的 Item 结构体绑定
 */
 type GeneralItemNBT interface {
+	// 解码
 	Decode() error
+	// 生成物品并尽可能注入 NBT
 	WriteData() error
+	// 应当只被外部实现调用，
+	// 用于判断当前物品是否可以仅使用命令生成
+	SpecialCheck() (bool, error)
 }
 
 // ------------------------- general -------------------------
@@ -112,6 +117,9 @@ type GeneralItem struct {
 
 // AdditionalData 结构体用于描述一个物品的其他附加数据，例如该物品应该生成的位置
 type ItemAdditionalData struct {
+	// 如果该物品已被解码，
+	// 则此段为真，否则为假
+	Decoded bool
 	// 指定该物品实际的生成位置。
 	// 我们总是将物品生成在快捷栏
 	HotBarSlot uint8
@@ -141,4 +149,21 @@ type ItemPackage struct {
 	Item GeneralItem
 	// 此物品的其他附加数据，例如物品应该被在快捷栏生成的位置
 	AdditionalData ItemAdditionalData
+}
+
+// ------------------------- book -------------------------
+
+// 描述单个成书中已解码的部分
+type BookData struct {
+	Pages  []string // pages(TAG_List) = []string{}
+	Author string   // author(TAG_String) = ""
+	Title  string   // title(TAG_String) = ""
+}
+
+// Book 结构体用于描述一个完整的成书的数据
+type Book struct {
+	// 该 NBT 物品的详细数据
+	ItemPackage *ItemPackage
+	// 存放已解码的成书数据
+	BookData BookData
 }

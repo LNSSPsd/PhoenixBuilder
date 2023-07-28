@@ -18,8 +18,10 @@ func GetPlaceBlockMethod(block *BlockEntity) GeneralBlockNBT {
 // 取得用于生成目标 NBT 物品的 接口/方法
 func GetGenerateItemMethod(item *ItemPackage) GeneralItemNBT {
 	switch item.AdditionalData.Type {
+	case "Book":
+		return &Book{ItemPackage: item}
 	default:
 		return &DefaultItem{ItemPackage: item}
-		// 其他尚且未被支持的方块实体
+		// 其他尚且未被支持的 NBT 物品
 	}
 }

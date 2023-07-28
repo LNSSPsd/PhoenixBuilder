@@ -70,7 +70,7 @@ func (c *Container) Decode() error {
 		if err != nil {
 			return fmt.Errorf("Decode: %v", err)
 		}
-		c.Contents = append(c.Contents, newPackage.Item)
+		c.Contents = append(c.Contents, newPackage)
 	}
 	// 解码
 	return nil
@@ -89,10 +89,10 @@ func (c *Container) FastWrite() error {
 		err := c.BlockEntity.Interface.(*GameInterface.GameInterface).ReplaceItemInContainer(
 			c.BlockEntity.AdditionalData.Position,
 			types.ChestSlot{
-				Name:   value.Basic.Name,
-				Count:  value.Basic.Count,
-				Damage: value.Basic.MetaData,
-				Slot:   value.Basic.Slot,
+				Name:   value.Item.Basic.Name,
+				Count:  value.Item.Basic.Count,
+				Damage: value.Item.Basic.MetaData,
+				Slot:   value.Item.Basic.Slot,
 			},
 			"",
 		)
@@ -120,8 +120,8 @@ func (c *Container) WriteData() error {
 	}
 	// 放置容器
 	for key, value := range c.Contents {
-		if ContainerCouldOpen(c.BlockEntity.Block.Name) && value.Custom != nil && value.Custom.SubBlockData != nil {
-			success, spawnLocation, err := c.GetSubBlock(value)
+		if ContainerCouldOpen(c.BlockEntity.Block.Name) && value.Item.Custom != nil && value.Item.Custom.SubBlockData != nil {
+			success, spawnLocation, err := c.GetSubBlock(value.Item)
 			if err != nil {
 				return fmt.Errorf("GetSubBlock: Failed to process the sub block from c.Contents[%d]; c.Contents = %#v, err = %v", key, c.Contents, err)
 			}
@@ -129,7 +129,7 @@ func (c *Container) WriteData() error {
 				continue
 			}
 			// 获取子方块的物品形式
-			err = c.MoveItemIntoContainer(spawnLocation, value.Basic.Slot)
+			err = c.MoveItemIntoContainer(spawnLocation, value.Item.Basic.Slot)
 			if err != nil {
 				return fmt.Errorf("GetSubBlock: Failed to process the sub block from c.Contents[%d]; c.Contents = %#v, err = %v", key, c.Contents, err)
 			}
@@ -137,11 +137,7 @@ func (c *Container) WriteData() error {
 			continue
 		}
 		// 子方块
-		itemType := IsNBTItemSupported(value.Basic.Name)
-		if value.Custom != nil && value.Custom.ItemTag != nil && ItemSpecialCheck(
-			value.Basic.Name, itemType,
-			value.Basic.MetaData, value.Custom.ItemTag,
-		) {
+		if value.Item.Custom != nil && value.Item.Custom.ItemTag != nil {
 			success, err := c.GetNBTItem(value)
 			if err != nil {
 				return fmt.Errorf("GetSubBlock: Failed to process the nbt item from c.Contents[%d]; c.Contents = %#v, err = %v", key, c.Contents, err)
@@ -149,7 +145,7 @@ func (c *Container) WriteData() error {
 			if !success {
 				continue
 			}
-			err = c.MoveItemIntoContainer(5, value.Basic.Slot)
+			err = c.MoveItemIntoContainer(5, value.Item.Basic.Slot)
 			if err != nil {
 				return fmt.Errorf("GetSubBlock: Failed to process the nbt item from c.Contents[%d]; c.Contents = %#v, err = %v", key, c.Contents, err)
 			}
@@ -157,12 +153,20 @@ func (c *Container) WriteData() error {
 		// NBT 物品
 	}
 	// 针对子方块或 NBT 物品的特殊化处理
-	defaultSituation, err := c.ItemPlanner(c.Contents)
+	newList := []GeneralItem{}
+	for _, value := range c.Contents {
+		newList = append(newList, value.Item)
+	}
+	defaultSituation, err := c.ItemPlanner(newList)
 	if err != nil {
 		return fmt.Errorf("GetSubBlock: %v", err)
 	}
 	// 仅包含附魔属性、 物品组件和自定义物品显示名称的物品
 	for _, value := range defaultSituation {
+		var itemComponents *ItemComponents
+		if value.Enhancement != nil {
+			itemComponents = value.Enhancement.ItemComponents
+		}
 		err := c.BlockEntity.Interface.(*GameInterface.GameInterface).ReplaceItemInContainer(
 			c.BlockEntity.AdditionalData.Position,
 			types.ChestSlot{
@@ -171,7 +175,7 @@ func (c *Container) WriteData() error {
 				Damage: value.Basic.MetaData,
 				Slot:   value.Basic.Slot,
 			},
-			"",
+			MarshalItemComponents(itemComponents),
 		)
 		if err != nil {
 			return fmt.Errorf("WriteData: %v", err)

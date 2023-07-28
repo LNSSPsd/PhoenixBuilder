@@ -79,9 +79,11 @@ func GenerateItemWithNBTData(
 	}
 	// get new request to generate new NBT item
 	generateNBTItemMethod := GetGenerateItemMethod(&newRequest)
-	err = generateNBTItemMethod.Decode()
-	if err != nil {
-		return fmt.Errorf("GenerateItemWithNBTData: %v", err)
+	if !additionalData.Decoded {
+		err = generateNBTItemMethod.Decode()
+		if err != nil {
+			return fmt.Errorf("GenerateItemWithNBTData: %v", err)
+		}
 	}
 	// get method and decode nbt data into golang struct
 	err = generateNBTItemMethod.WriteData()

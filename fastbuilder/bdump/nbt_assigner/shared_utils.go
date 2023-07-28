@@ -35,7 +35,7 @@ func IsNBTItemSupported(itemName string) string {
 // 如果不能打开，则返回假，否则返回真。
 // 如果提供的 blockName 不是容器，则始终返回假
 func ContainerCouldOpen(blockName string) bool {
-	value, _ := SupportContainerPool[blockName]
+	value := SupportContainerPool[blockName]
 	return value.CouldOpen
 }
 

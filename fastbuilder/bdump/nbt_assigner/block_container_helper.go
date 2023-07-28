@@ -16,7 +16,7 @@ func (c *Container) getShulkerBox() error {
 	api := c.BlockEntity.Interface.(*GameInterface.GameInterface)
 	// 初始化
 	blockMetaData, _ = get_block_data_from_states(
-		c.BlockEntity.Block.Name,
+		fmt.Sprintf("minecraft:%s", c.BlockEntity.Block.Name),
 		c.BlockEntity.Block.States,
 	)
 	// 取得潜影盒的方块数据值(附加值)
@@ -344,13 +344,13 @@ func (c *Container) GetSubBlock(
 	// 返回值
 }
 
-// 获取 item 所指代的 NBT 物品到快捷栏 5 。
-// 如果 item 有自定义的物品显示名称或附魔属性，
+// 获取 itemPackage.Item 所指代的 NBT 物品到快捷栏 5 。
+// 如果 itemPackage.Item 有自定义的物品显示名称或附魔属性，
 // 则还会使用铁砧进行改名并使用 enchant 命令附魔。
 //
 // 返回的布尔值代表以上操作是否成功
 func (c *Container) GetNBTItem(
-	item GeneralItem,
+	itemPackage ItemPackage,
 ) (bool, error) {
 	api := c.BlockEntity.Interface.(*GameInterface.GameInterface)
 	// 初始化
@@ -374,19 +374,7 @@ func (c *Container) GetNBTItem(
 	}
 	defer api.RevertStructure(uniqueId, c.BlockEntity.AdditionalData.Position)
 	// 备份容器
-	newRequest := ItemPackage{
-		Interface: c.BlockEntity.Interface,
-		Item:      item,
-		AdditionalData: ItemAdditionalData{
-			HotBarSlot: 5,
-			Position:   c.BlockEntity.AdditionalData.Position,
-			Type:       IsNBTBlockSupported(item.Basic.Name),
-			Settings:   c.BlockEntity.AdditionalData.Settings,
-			FastMode:   c.BlockEntity.AdditionalData.FastMode,
-			Others:     c.BlockEntity.AdditionalData.Others,
-		},
-	}
-	method := GetGenerateItemMethod(&newRequest)
+	method := GetGenerateItemMethod(&itemPackage)
 	// 得到获取该 NBT 物品的方法
 	err = method.Decode()
 	if err != nil {
@@ -422,6 +410,12 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 		current := 0
 		firstFiltration := []GeneralItem{}
 		// 初始化
+		if !ContainerCouldOpen(c.BlockEntity.Block.Name) {
+			return contents, nil
+		}
+		// 如果该容器不可被打开，
+		// 则所有的物品均应当使用默认放入方法，
+		// 此时将直接返回值
 		err := api.SendSettingsCommand("clear", true)
 		if err != nil {
 			return []GeneralItem{}, fmt.Errorf("ItemPlanner: %v", err)
@@ -434,12 +428,16 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 			}
 			// 如果该物品存在 item_lock 物品组件，
 			// 则将其忽略，因为存在该组件的物品不能跨容器移动
-			if value.Enhancement == nil && value.Custom == nil {
+			if (value.Enhancement == nil && value.Custom == nil) || (value.Enhancement != nil && len(value.Enhancement.DisplayName) == 0 && value.Enhancement.Enchantments == nil) {
 				defaultSituation = append(defaultSituation, value)
 				continue
 			}
 			// 这是一个普通的物品，
 			// 可以直接在容器上应用 replaceitem 命令
+			if value.Custom != nil {
+				continue
+			}
+			// 此类物品已在之前被处理过了
 			firstFiltration = append(firstFiltration, value)
 			needOpenContainer = true
 			// 这些物品需要被特殊处理
