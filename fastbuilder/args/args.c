@@ -243,6 +243,7 @@ int _parse_args(int argc, char **argv) {
 			case 14:
 				fprintf(stderr,"--script-engine-const argument isn't available: V8 script engine is no longer available.\n");
 				return 10;
+				break;
 			case 15:
 				fprintf(stderr,"--script-engine-suppress-const argument isn't available: V8 script engine is no longer available.\n");
 				return 10;
