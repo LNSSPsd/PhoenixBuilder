@@ -59,11 +59,6 @@ void print_help(const char *self_name) {
 	printf("\t-A <url>, --auth-server=<url>: Use the specified authentication server, instead of the default one.\n");
 	printf("\t--no-update-check: Suppress update notifications.\n");
 	printf("\t--force-pyrpc: Enable the PyRpcPacket interaction, client will be kicked automatically by netease's rental server.\n");
-#ifdef WITH_V8
-	printf("\t-S, --script=<*.js>: run a .js script at start\n");
-	printf("\t--script-engine-const key=value: Define a const value for script engine's \"consts\" const. Can be used to replace the default value. Specify multiple items by using this argument for multiple times.\n");
-	printf("\t--script-engine-suppress-const <key>: Undefine a const value for script engine's \"consts\" const. Specify multiple items by using this argument for multiple times.\n");
-#endif
 	printf("\t-c, --code=<server code>: Specify a server code.\n");
 	printf("\t-p, --password=<server password>: Specify the password of the server specified by -c.\n");
 	printf("\t-t, --token=<path of FBToken>: Specify the path of FBToken, and quit if the file is unaccessible.\n");
@@ -71,13 +66,9 @@ void print_help(const char *self_name) {
 	printf("\t-E, --listen-external: Listen on the specified address and wait for external controlling connection.\n\t\tExample: -E 0.0.0.0:5768 - listen on port 5768 and accept connections from anywhere,\n\t\t\t-E 127.0.0.1:5769 - listen on port 5769 and accept connections from localhost only.\n");
 	printf("\t--capture=<*.bin>: Capture minecraft packet and dump to target file\n");
 	printf("\t--no-readline: Suppress user input.\n");
-	printf("\t--pack-scripts <manifest path>: Create a script package.\n");
-	printf("\t--pack-scripts-to <path>: Specify the path for the output script package.\n");
 	printf("\t-N, --gamename <name>: Specify the game name to use interactive commands (e.g. get), instead of using the server provided one.\n");
 	printf("\t--ingame-response: Turn on the feature to listen to commands or give output in game.\n");
 	printf("\t--del-userdata: Remove user data and exit.\n");
-	printf("\n");
-	printf("\t-O, --omega_system: Enable Omega System.\n");
 	printf("\n");
 	printf("\t-h, --help: Show this help context.\n");
 	printf("\t-v, --version: Show the version information of this program.\n");
@@ -94,12 +85,6 @@ void print_version(int detailed) {
 		return;
 	}
 	printf("PhoenixBuilder " FB_VERSION "\n");
-#ifdef FBGUI_VERSION
-	printf("With GUI " FBGUI_VERSION "\n");
-#endif
-#ifdef WITH_V8
-	printf("With V8 linked.\n");
-#endif
 	printf("COMMIT " FB_COMMIT_LONG "\n");
 	printf("\n");
 }
@@ -256,41 +241,22 @@ int _parse_args(int argc, char **argv) {
 				print_version(0);
 				return 0;
 			case 14:
-#ifndef WITH_V8
-				fprintf(stderr,"--script-engine-const argument isn't available: Non-v8-linked version.\n");
+				fprintf(stderr,"--script-engine-const argument isn't available: V8 script engine is no longer available.\n");
 				return 10;
-#endif
-				{
-					int break_switch_14=0;
-					for(char *ptr=optarg;*ptr!=0;ptr++) {
-						if(*ptr=='=') {
-							*ptr=0;
-							ptr++;
-							custom_script_engine_const(optarg, ptr);
-							break_switch_14=1;
-							break;
-						}
-					}
-					if(break_switch_14)break;
-					fprintf(stderr, "--script-engine-const: Format: key=val\n");
-					print_help(argv[0]);
-					return 1;
-				}
 			case 15:
-#ifndef WITH_V8
-				fprintf(stderr,"--script-engine-suppress-const argument isn't available: Non-v8-linked version.\n");
+				fprintf(stderr,"--script-engine-suppress-const argument isn't available: V8 script engine is no longer available.\n");
 				return 10;
-#endif
-				do_suppress_se_const(optarg);
 				break;
 			case 17:
 				args_no_readline=1;
 				break;
 			case 18:
-				quickset(&pack_scripts);
+				fprintf(stderr,"--pack-scripts argument isn't available: V8 script engine is no longer available.\n");
+				return 10;
 				break;
 			case 19:
-				quickset(&pack_scripts_out);
+				fprintf(stderr,"--pack-scripts-to argument isn't available: V8 script engine is no longer available.\n");
+				return 10;
 				break;
 			case 20:
 				quickset(&capture_output_file);
@@ -310,11 +276,8 @@ int _parse_args(int argc, char **argv) {
 			quickset(&newAuthServer);
 			break;
 		case 'S':
-#ifndef WITH_V8
-			fprintf(stderr,"-S, --script option isn't available: No V8 linked for this version.\n");
+			fprintf(stderr,"-S, --script option isn't available: V8 script engine is no longer available.\n");
 			return 10;
-#endif
-			quickset(&startup_script);
 			break;
 		case 'c':
 			quickset(&server_code);
@@ -335,7 +298,8 @@ int _parse_args(int argc, char **argv) {
 			print_version(1);
 			return 0;
 		case 'O':
-			enable_omega_system=1;
+			fprintf(stderr, "-O, --omega_system option isn't available: Omega system is no longer available.\n");
+			return 10;
 			break;
 		case 'N':
 			quickset(&custom_gamename);
