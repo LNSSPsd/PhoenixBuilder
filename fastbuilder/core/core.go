@@ -159,6 +159,16 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 			// 	MissHashes: missHash,
 			// 	HitHashes:  hitHash,
 			// })
+		case *packet.Respawn:
+			conn.WritePacket(&packet.Respawn{
+				EntityRuntimeID: conn.GameData().EntityRuntimeID,
+				Position:        p.Position,
+				State:           packet.RespawnStateClientReadyToSpawn,
+			})
+			conn.WritePacket(&packet.PlayerAction{
+				EntityRuntimeID: conn.GameData().EntityRuntimeID,
+				ActionType:      protocol.PlayerActionRespawn,
+			})
 		case *packet.LevelChunk:
 			// pterm.Info.Println("LevelChunk", p.BlobHashes, len(p.BlobHashes), p.CacheEnabled)
 			// go func() {
